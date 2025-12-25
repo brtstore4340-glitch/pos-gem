@@ -481,6 +481,7 @@ export default function PosUI({ onAdminSettings }) {
            <div className="flex items-center gap-2">
               <div className="flex items-center gap-2 text-sm text-slate-500 bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-sm"><User size={16} /> Staff #01</div>
               
+              {/* Discount Menu (Moved Here) */}
               <button 
                 onClick={() => setShowDiscountModal(true)}
                 className={cn("flex items-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm shadow-sm transition-all", btnEffect)}
@@ -488,6 +489,7 @@ export default function PosUI({ onAdminSettings }) {
                 <Tag size={16} /> เมนูส่วนลด
               </button>
 
+              {/* Daily Report Button */}
               <button onClick={() => setShowReport(true)} className={cn("px-4 py-1.5 bg-white text-slate-700 rounded-lg border border-slate-200 text-sm font-bold hover:bg-slate-50 hover:text-boots-base shadow-sm transition-all flex items-center gap-2", btnEffect)} title="Daily Report">
                  <FileText size={16} /> Daily Report
               </button>
@@ -534,6 +536,7 @@ export default function PosUI({ onAdminSettings }) {
                     <div className="font-bold text-slate-800 text-base line-clamp-1">{item.name}</div>
                     <div className="text-xs text-slate-400 font-mono mb-1">{item.sku}</div>
                     
+                    {/* Discount Input Injection */}
                     {isItemChecked && (
                         <div className="mt-1 flex items-center gap-2 animate-in slide-in-from-left-2">
                             <span className="text-xs font-bold text-orange-600">ส่วนลด:</span>
@@ -590,6 +593,7 @@ export default function PosUI({ onAdminSettings }) {
 
         {/* Footer */}
         <div className="bg-slate-900 text-white p-6 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] z-20">
+           {/* Detailed Summary */}
            <div className="flex justify-between items-end mb-4 border-b border-slate-700 pb-4">
               <div className="flex gap-8 text-sm">
                  <div>
