@@ -10,33 +10,16 @@ export default function ReceiptModal({ order, onClose }) {
 
   return (
     <>
-      {/* 🟢 Improved Print CSS: แก้หน้าขาว 100% */}
       <style>{`
         @media print {
-          /* ซ่อนทุกอย่างบนจอ */
-          body * {
-            visibility: hidden;
+          body * { visibility: hidden; }
+          #receipt-area, #receipt-area * { visibility: visible !important; }
+          #receipt-area { 
+            position: absolute !important; top: 0 !important; left: 0 !important; 
+            width: 100% !important; height: auto !important; 
+            background: white !important; display: block !important; padding: 20px; 
           }
-          /* แสดงเฉพาะส่วน Print */
-          #receipt-area,
-          #receipt-area * {
-            visibility: visible !important;
-          }
-          #receipt-area {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: auto !important;
-            background: white !important;
-            display: block !important;
-            padding: 20px;
-          }
-          /* ซ่อน backdrop และ modal wrapper */
-          .fixed.inset-0 {
-            background: none !important;
-            backdrop-filter: none !important;
-          }
+          .fixed.inset-0 { background: none !important; backdrop-filter: none !important; }
         }
       `}</style>
 
@@ -51,12 +34,8 @@ export default function ReceiptModal({ order, onClose }) {
             <CheckCircle size={16} /> บันทึกสำเร็จ
           </div>
           <div className="flex gap-2">
-            <button onClick={handlePrint} className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600" title="Print">
-              <Printer size={18} />
-            </button>
-            <button onClick={onClose} className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600" title="Close">
-              <X size={18} />
-            </button>
+            <button onClick={handlePrint} className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600" title="Print"><Printer size={18} /></button>
+            <button onClick={onClose} className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600" title="Close"><X size={18} /></button>
           </div>
         </div>
 
@@ -104,9 +83,36 @@ export default function ReceiptModal({ order, onClose }) {
               <span>VAT (7%)</span>
               <span>{(order.summary.subtotal - (order.summary.subtotal / 1.07)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
             </div>
+
+            {/* Discount Breakdown */}
+            {order.adjustments?.coupons?.length > 0 && (
+              <div className="flex justify-between text-slate-500 text-xs">
+                <span>Coupons</span>
+                <span className="text-red-600">-{order.adjustments.coupons.reduce((a,c)=>a+c.couponValue,0).toLocaleString()}</span>
+              </div>
+            )}
+            {order.adjustments?.allowance > 0 && (
+              <div className="flex justify-between text-slate-500 text-xs">
+                <span>Allowance</span>
+                <span className="text-red-600">-{Number(order.adjustments.allowance).toLocaleString()}</span>
+              </div>
+            )}
+            {order.adjustments?.topup > 0 && (
+              <div className="flex justify-between text-slate-500 text-xs">
+                <span>Topup Discount</span>
+                <span className="text-red-600">-{Number(order.adjustments.topup).toLocaleString()}</span>
+              </div>
+            )}
+            {order.adjustments?.billDiscount?.amount > 0 && (
+               <div className="flex justify-between text-slate-500 text-xs">
+                <span>Bill Discount ({order.adjustments.billDiscount.percent}%)</span>
+                <span className="text-red-600">-{Number(order.adjustments.billDiscount.amount).toLocaleString()}</span>
+              </div>
+            )}
+
             <div className="flex justify-between text-slate-800 font-bold text-lg mt-2">
-              <span>TOTAL</span>
-              <span>฿{order.summary.subtotal.toLocaleString()}</span>
+              <span>TOTAL (Net)</span>
+              <span>฿{(order.summary.netTotal || order.summary.subtotal).toLocaleString()}</span>
             </div>
           </div>
 

@@ -105,20 +105,18 @@ export const posService = {
     } catch (err) { console.error(err); return []; }
   },
 
-  // --- SCAN ITEM (CRITICAL) ---
+  // --- SCAN ITEM ---
   scanItem: async (keyword) => {
     await new Promise(resolve => setTimeout(resolve, 300));
     const cleanKey = keyword.trim();
     if (!cleanKey) throw new Error('กรุณาระบุคำค้นหา');
     try {
-      // 1. Exact Match ID
       const docRef = doc(db, 'products', cleanKey);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists() && docSnap.data().ProductStatus?.startsWith('0')) { 
           const data = docSnap.data(); 
           return { sku: docSnap.id, name: data.ProductDesc, price: Number(data.SellPrice), ...data }; 
       }
-      // 2. Barcode
       const qBarcode = query(collection(db, 'products'), where('barcode', '==', cleanKey), limit(1));
       const barcodeSnap = await getDocs(qBarcode);
       if (!barcodeSnap.empty) { 
@@ -126,12 +124,10 @@ export const posService = {
           if (data.ProductStatus?.startsWith('0')) 
               return { sku: data.barcode, name: data.ProductDesc, price: Number(data.SellPrice), ...data }; 
       }
-      // 3. Search Fallback
       const results = await posService.searchProducts(cleanKey);
       if (results.length > 0) return results[0];
       throw new Error('ไม่พบสินค้า: ' + cleanKey);
     } catch (error) { 
-        console.error("Scan Error:", error);
         if (error.message.includes('ไม่พบสินค้า')) throw error; 
         throw new Error('เกิดข้อผิดพลาดในการค้นหา'); 
     }
