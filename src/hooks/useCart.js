@@ -8,11 +8,13 @@ export const useCart = () => {
   const [billDiscount, setBillDiscount] = useState({ percent: 0, amount: 0 });
   const [coupons, setCoupons] = useState([]);
   const [allowance, setAllowance] = useState(0);
+  const [topup, setTopup] = useState(0); // [FIX] Added State
+  
   const [lastScanned, setLastScanned] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- 🧠 CALCULATION ENGINE (useMemo - Loop Free) ---
+  // --- 🧠 CALCULATION ENGINE ---
   const { summary, enrichedItems } = useMemo(() => {
     let sumPromoTotal = 0;
     let sumTotalItems = 0;
@@ -21,7 +23,6 @@ export const useCart = () => {
 
     // 1. Calculate Per-Item
     const processedItems = cartItems.map(item => {
-      // Clone item to avoid mutation bugs
       const newItem = { ...item };
 
       // A. Promotion
@@ -33,13 +34,11 @@ export const useCart = () => {
       const manualDiscAmount = (promoPrice * manualPercent) / 100;
       const finalLineTotal = promoPrice - manualDiscAmount;
 
-      // Assign calculated values
       newItem.calculatedTotal = finalLineTotal; 
       newItem.badgeText = promoResult.badgeText;
       newItem.promoDiscount = promoResult.discountAmount;
       newItem.manualDiscountAmount = -manualDiscAmount;
 
-      // Accumulate
       sumPromoTotal += finalLineTotal;
       sumTotalItems += newItem.qty;
       sumPromoDiscount += promoResult.discountAmount;
@@ -56,8 +55,9 @@ export const useCart = () => {
     const totalCouponValue = coupons.reduce((sum, c) => sum + (c.couponValue || 0), 0);
     const totalAfterCoupons = totalAfterBillDisc - totalCouponValue;
 
-    // 4. Allowance
-    const finalNetTotal = totalAfterCoupons - allowance;
+    // 4. Allowance & Topup
+    const totalAfterAllowance = totalAfterCoupons - allowance;
+    const finalNetTotal = totalAfterAllowance - topup; // Apply Topup
 
     return {
       enrichedItems: processedItems,
@@ -72,13 +72,13 @@ export const useCart = () => {
         manualItemDiscount: sumManualItemDiscount,
         billDiscountAmount: -billDiscAmount,
         couponTotal: -totalCouponValue,
-        allowance: -allowance
+        allowance: -allowance,
+        topup: -topup
       }
     };
-  }, [cartItems, billDiscount, coupons, allowance]);
+  }, [cartItems, billDiscount, coupons, allowance, topup]);
 
   // --- Actions ---
-
   const addToCart = async (skuOrItem, quantity = 1) => {
     setIsLoading(true);
     setError(null);
@@ -126,6 +126,7 @@ export const useCart = () => {
     setBillDiscount({ percent: 0, amount: 0 });
     setCoupons([]);
     setAllowance(0);
+    setTopup(0);
     setLastScanned(null);
   };
 
@@ -150,13 +151,18 @@ export const useCart = () => {
   const updateAllowance = (amount) => {
     setAllowance(parseFloat(amount) || 0);
   };
+  
+  const updateTopup = (amount) => {
+    setTopup(parseFloat(amount) || 0);
+  };
 
   return { 
-    cartItems: enrichedItems, // Return calculated items to UI
+    cartItems: enrichedItems,
     addToCart, decreaseItem, removeFromCart, clearCart, 
     summary, lastScanned, isLoading, error,
     setManualItemDiscount, updateBillDiscount, billDiscount,
     addCoupon, removeCoupon, coupons,
-    updateAllowance, allowance
+    updateAllowance, allowance,
+    updateTopup, topup // [FIX] Return topup
   };
 };
