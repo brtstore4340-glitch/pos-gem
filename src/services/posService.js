@@ -138,6 +138,22 @@ export const posService = {
     } catch (error) { if (error.message.includes('ไม่พบสินค้า')) throw error; throw new Error('เกิดข้อผิดพลาดในการค้นหา'); }
   },
 
+  // --- SYNC & UPLOAD ---
+  getLastDBUpdate: async () => {
+    try {
+      const q = query(collection(db, 'products'), orderBy('updatedAt', 'desc'), limit(1));
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const data = snapshot.docs[0].data();
+        return data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date();
+      }
+      return null;
+    } catch (e) {
+      console.warn("Failed to get DB update time", e);
+      return null;
+    }
+  },
+
   uploadProductAllDept: async (products, onProgress) => {
     const existingMap = new Map();
     const querySnapshot = await getDocs(collection(db, 'products'));
