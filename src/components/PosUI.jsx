@@ -8,6 +8,10 @@ import ProductLookupModal from './ProductLookupModal';
 import DailyReportModal from './DailyReportModal';
 import { posService } from '../services/posService';
 
+// Version Control
+const APP_VERSION = "1.2.0";
+const APP_UPDATED = "2025-12-26";
+
 export default function PosUI({ onAdminSettings }) {
   const { 
     cartItems, addToCart: originalAddToCart, decreaseItem, removeFromCart, clearCart, 
@@ -15,7 +19,7 @@ export default function PosUI({ onAdminSettings }) {
     setManualItemDiscount, updateBillDiscount, billDiscount,
     addCoupon, removeCoupon, coupons,
     updateAllowance, allowance,
-    topup // <--- [FIX] Added topup extraction
+    topup 
   } = useCart();
 
   const [lastOrder, setLastOrder] = useState(null);
@@ -33,7 +37,11 @@ export default function PosUI({ onAdminSettings }) {
   // Discount Modal Inner State
   const [activeTab, setActiveTab] = useState('discount'); // discount, coupon, allowance
   const [discountSubTab, setDiscountSubTab] = useState('bill'); // bill, items
+  const [discountCheckedItems, setDiscountCheckedItems] = useState(new Set());
   
+  // DB Status State
+  const [dbLastUpdate, setDbLastUpdate] = useState(null);
+
   // Coupon Input State
   const [couponInput, setCouponInput] = useState({ type: '', value: '', code: '' });
   const [showCouponInput, setShowCouponInput] = useState(false); 
@@ -43,7 +51,20 @@ export default function PosUI({ onAdminSettings }) {
 
   const lastItemDetail = lastScanned ? cartItems.find(i => (i.sku === lastScanned || i.id === lastScanned)) : null;
 
+  // Load DB Status
+  useEffect(() => {
+    posService.getLastDBUpdate().then(setDbLastUpdate);
+  }, []);
+
   // --- Handlers ---
+  const toggleDiscountCheck = (id) => {
+    setDiscountCheckedItems(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+    });
+  };
 
   const handleScanAction = async (skuOrItem) => {
     if (showCouponInput) {
@@ -86,7 +107,7 @@ export default function PosUI({ onAdminSettings }) {
             billDiscount,
             coupons,
             allowance,
-            topup // <--- [FIX] Persist topup to database
+            topup 
         }
     };
     setIsSaving(true);
@@ -226,28 +247,28 @@ export default function PosUI({ onAdminSettings }) {
 
                             {discountSubTab === 'items' && (
                                 <div>
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="border-b border-slate-200 text-slate-500 text-sm"><th className="p-3">สินค้า</th><th className="p-3 text-right">ยอดก่อนลด</th><th className="p-3 text-center w-32">ลดเพิ่ม (%)</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            {cartItems.map((item, idx) => (
-                                                <tr key={idx} className="border-b border-slate-100">
-                                                    <td className="p-3 font-medium">{item.name} <span className="text-slate-400 text-xs">x{item.qty}</span></td>
-                                                    <td className="p-3 text-right font-mono">{(item.price * item.qty).toLocaleString()}</td>
-                                                    <td className="p-3">
-                                                        <input 
-                                                            type="number" 
-                                                            value={item.manualDiscountPercent || ''}
-                                                            onChange={(e) => setManualItemDiscount(item.id || item.sku, e.target.value)}
-                                                            className="w-full border border-slate-300 rounded-lg px-2 py-1 text-center font-bold focus:border-boots-base outline-none"
-                                                            placeholder="0"
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                    <h3 className="text-slate-500 font-bold mb-4 text-sm">เลือกสินค้าที่ต้องการลดราคา (Check items to enable discount input in cart)</h3>
+                                    <div className="space-y-2">
+                                        {cartItems.map((item, idx) => {
+                                            const isChecked = discountCheckedItems.has(item.id || item.sku);
+                                            return (
+                                                <div key={idx} 
+                                                     onClick={() => toggleDiscountCheck(item.id || item.sku)}
+                                                     className={cn("flex items-center gap-4 p-3 rounded-xl border cursor-pointer transition-all", isChecked ? "border-boots-base bg-blue-50" : "border-slate-200 hover:bg-slate-50")}
+                                                >
+                                                    <div className={cn("w-6 h-6 rounded border-2 flex items-center justify-center", isChecked ? "bg-boots-base border-boots-base text-white" : "border-slate-300 bg-white")}>
+                                                        {isChecked && <CheckCircle size={16} />}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="font-bold text-slate-800">{item.name}</div>
+                                                        <div className="text-xs text-slate-400">{item.sku}</div>
+                                                    </div>
+                                                    <div className="font-bold text-slate-600">฿{(item.price * item.qty).toLocaleString()}</div>
+                                                </div>
+                                            );
+                                        })}
+                                        {cartItems.length === 0 && <p className="text-slate-400 text-center py-4">ไม่มีสินค้าในตะกร้า</p>}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -265,7 +286,7 @@ export default function PosUI({ onAdminSettings }) {
                                     <Tag size={40} /> Vendor Coupon
                                 </button>
                                 <button onClick={() => openCouponInput('boots')} className={cn("h-40 rounded-2xl flex flex-col items-center justify-center gap-4 text-white text-xl font-bold bg-blue-900 hover:bg-blue-800 shadow-lg", btnEffect)}>
-                                    <CheckCircle size={40} /> Boots Coupon
+                                    <CheckCircle size={40} /> Mobile coupon
                                 </button>
                             </div>
 
@@ -435,16 +456,35 @@ export default function PosUI({ onAdminSettings }) {
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-           <div className="flex items-center gap-3">
-              <img src="https://store.boots.co.th/images/boots-logo.png" alt="Boots Logo" className="h-8 w-auto object-contain" />
-              <div className="h-6 w-px bg-slate-300"></div>
-              <span className="font-bold text-slate-800 text-2xl">รายการขาย</span>
+           <div className="flex flex-col">
+              <div className="flex items-center gap-3">
+                 <img src="https://store.boots.co.th/images/boots-logo.png" alt="Boots Logo" className="h-8 w-auto object-contain" />
+                 <div className="h-6 w-px bg-slate-300"></div>
+                 <span className="font-bold text-slate-800 text-2xl">รายการขาย</span>
+              </div>
+              <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-400 font-mono">
+                  <span>v{APP_VERSION} ({APP_UPDATED})</span>
+                  {dbLastUpdate && (
+                      <>
+                        <span>•</span>
+                        <span>DB Update: {dbLastUpdate.toLocaleString('th-TH')}</span>
+                      </>
+                  )}
+              </div>
            </div>
            
            {/* BUTTON GROUP */}
            <div className="flex items-center gap-2">
               <div className="flex items-center gap-2 text-sm text-slate-500 bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-sm"><User size={16} /> Staff #01</div>
               
+              {/* Discount Menu (Moved Here) */}
+              <button 
+                onClick={() => setShowDiscountModal(true)}
+                className={cn("flex items-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm shadow-sm transition-all", btnEffect)}
+              >
+                <Tag size={16} /> เมนูส่วนลด
+              </button>
+
               {/* Daily Report Button */}
               <button onClick={() => setShowReport(true)} className={cn("px-4 py-1.5 bg-white text-slate-700 rounded-lg border border-slate-200 text-sm font-bold hover:bg-slate-50 hover:text-boots-base shadow-sm transition-all flex items-center gap-2", btnEffect)} title="Daily Report">
                  <FileText size={16} /> Daily Report
@@ -482,6 +522,7 @@ export default function PosUI({ onAdminSettings }) {
               const normalTotal = price * qty;
               const lineTotal = item.calculatedTotal !== undefined ? item.calculatedTotal : normalTotal; 
               const discountVal = normalTotal - lineTotal;
+              const isItemChecked = discountCheckedItems.has(item.id || item.sku);
 
               return (
               <div key={item.id || item.sku} className={cn("grid grid-cols-12 gap-2 p-3 border-b border-slate-50 items-center hover:bg-slate-50 transition-colors group relative", lastScanned === item.sku && "bg-blue-50/60")}>
@@ -490,6 +531,22 @@ export default function PosUI({ onAdminSettings }) {
                  <div className="col-span-4">
                     <div className="font-bold text-slate-800 text-base line-clamp-1">{item.name}</div>
                     <div className="text-xs text-slate-400 font-mono mb-1">{item.sku}</div>
+                    
+                    {/* Discount Input Injection */}
+                    {isItemChecked && (
+                        <div className="mt-1 flex items-center gap-2 animate-in slide-in-from-left-2">
+                            <span className="text-xs font-bold text-orange-600">ส่วนลด:</span>
+                            <input 
+                                type="number" 
+                                autoFocus
+                                value={item.manualDiscountPercent || ''}
+                                onChange={(e) => setManualItemDiscount(item.id || item.sku, e.target.value)}
+                                className="w-16 border border-orange-300 rounded px-1 py-0.5 text-center font-bold text-sm focus:border-orange-500 outline-none bg-orange-50"
+                                placeholder="0"
+                            />
+                            <span className="text-xs font-bold text-slate-500">%</span>
+                        </div>
+                    )}
                     
                     {item.badgeText ? (
                         <span className="inline-flex items-center gap-1 text-[10px] text-white px-2 py-0.5 rounded-md font-semibold shadow-sm mt-0.5" style={{ backgroundColor: '#184290' }}>
@@ -558,14 +615,6 @@ export default function PosUI({ onAdminSettings }) {
                      </div>
                  )}
               </div>
-              
-              {/* Discount Menu Button */}
-              <button 
-                onClick={() => setShowDiscountModal(true)}
-                className={cn("flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-bold text-sm shadow-md transition-all", btnEffect)}
-              >
-                <Tag size={18} /> เมนูส่วนลด (Discount)
-              </button>
            </div>
 
            <div className="flex justify-between items-start mb-6">

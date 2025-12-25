@@ -10,8 +10,14 @@ export default function DailyReportModal({ onClose }) {
   const [expandedRow, setExpandedRow] = useState(null);
   const [summary, setSummary] = useState({ totalSales: 0, totalVoid: 0, count: 0, totalItems: 0, totalDiscount: 0 });
 
-  // Filter States (Default to Today)
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  // Filter States (Default to Bangkok Today)
+  const getBangkokDate = () => {
+    // Returns YYYY-MM-DD in Bangkok timezone
+    const d = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Bangkok' });
+    return d.split(',')[0]; 
+  };
+
+  const [selectedDate, setSelectedDate] = useState(getBangkokDate());
   const [startTime, setStartTime] = useState('00:00');
   const [endTime, setEndTime] = useState('23:59');
 
@@ -200,7 +206,7 @@ export default function DailyReportModal({ onClose }) {
                                             <tr key={i} className="hover:bg-slate-50">
                                               <td className="p-2 font-mono text-slate-500">{item.sku}</td>
                                               <td className="p-2 font-mono text-slate-500">{item.barcode || '-'}</td>
-                                              <td className="p-2 font-medium">{item.name}</td>
+                                              <td className="p-2 font-medium">{item.name || item.ProductDesc || item.sku}</td>
                                               <td className="p-2 text-right">{(item.price || 0).toLocaleString()}</td>
                                               <td className="p-2 text-center font-bold">{item.qty}</td>
                                               <td className="p-2 text-right text-red-500">{discount > 0 ? `-${discount.toLocaleString()}` : '-'}</td>
@@ -271,7 +277,7 @@ export default function DailyReportModal({ onClose }) {
                                          )}
                                       </div>
                                       <div>
-                                         <div className="font-bold text-sm text-black">{item.name}</div>
+                                         <div className="font-bold text-sm text-black">{item.name || item.ProductDesc || item.sku}</div>
                                          <div className="text-gray-500 text-[10px]">
                                             {item.qty} x ฿{(item.price || 0).toLocaleString()}
                                             {itemDiscount > 0 && <span className="text-red-600 ml-2 bg-red-50 px-1 rounded">ส่วนลด -฿{itemDiscount.toLocaleString()}</span>}

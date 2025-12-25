@@ -67,3 +67,12 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+node_modules/
+dist/
+build/
+.env
+.env.*
+*.log
+.DS_Store
+.firebase/
