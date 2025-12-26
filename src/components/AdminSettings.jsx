@@ -1,200 +1,130 @@
-﻿import React, { useState, useEffect } from 'react';
-import Papa from 'papaparse';
-import { Upload, Database, FileText, CheckCircle, AlertCircle, RefreshCw, ArrowLeft, Trash2, Lock } from 'lucide-react';
+﻿import React, { useState, useRef } from 'react';
+import { Upload, X, CheckCircle, AlertTriangle, FileText, Loader2, Database } from 'lucide-react';
 import { posService } from '../services/posService';
 import { cn } from '../utils/cn';
 
-export default function AdminSettings({ onBack }) {
-  const [stats, setStats] = useState({ count: 0, lastUpdated: null });
-  const [hasMaster, setHasMaster] = useState(false);
-  
-  // State แยกสำหรับแต่ละ Uploader
-  const [uploadStatus, setUploadStatus] = useState({
-    master: { loading: false, progress: 0, log: null },
-    print: { loading: false, progress: 0, log: null },
-    maint: { loading: false, progress: 0, log: null }
-  });
+export default function AdminSettings({ onClose }) {
+  const [uploadStatus, setUploadStatus] = useState('idle');
+  const [progress, setProgress] = useState({ phase: '', percent: 0, total: 0, success: 0, failed: 0, errors: [] });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
 
-  useEffect(() => { loadStats(); }, []);
-
-  const loadStats = async () => {
-    const s = await posService.getProductStats();
-    setStats(s);
-    setHasMaster(s.count > 0);
+  const handleFileSelect = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+      setUploadStatus('idle');
+      setProgress({ phase: 'Ready', percent: 0, total: 0, success: 0, failed: 0, errors: [] });
+    }
   };
 
-  // 1. Handle ProductAllDept (CSV)
-  const handleMasterUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    updateStatus('master', { loading: true, progress: 0, log: null });
-
-    Papa.parse(file, {
-      header: true, skipEmptyLines: true, worker: true,
-      complete: async (results) => {
-        try {
-          const data = results.data;
-          if (data.length === 0) throw new Error('ไฟล์ว่างเปล่า');
-          
-          const count = await posService.uploadProductAllDept(data, (curr, total) => {
-            updateStatus('master', { progress: Math.round((curr/total)*100) });
-          });
-          
-          updateStatus('master', { loading: false, log: { type: 'success', msg: '✅ Upload Complete: ' + count } });
-          loadStats();
-        } catch (err) {
-          updateStatus('master', { loading: false, log: { type: 'error', msg: err.message } });
-        }
-      },
-      error: () => updateStatus('master', { loading: false, log: { type: 'error', msg: 'Read CSV Failed' } })
-    });
-    e.target.value = '';
-  };
-
-  // 2. Handle ItemMasterPrintOnDeph (XLS)
-  const handlePrintUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    updateStatus('print', { loading: true, progress: 0, log: null });
+  const startUpload = async () => {
+    if (!selectedFile) return;
+    setUploadStatus('uploading');
     
     try {
-      const count = await posService.uploadItemMasterPrint(file, (curr, total) => {
-         updateStatus('print', { progress: Math.round((curr/total)*100) });
+      await posService.uploadMasterDataOptimized(selectedFile, (stats) => {
+        setProgress(stats);
       });
-      updateStatus('print', { loading: false, log: { type: 'success', msg: '✅ Updated ' + count + ' matched items' } });
+      setUploadStatus('done');
     } catch (err) {
-      updateStatus('print', { loading: false, log: { type: 'error', msg: err.message } });
+      console.error(err);
+      setUploadStatus('error');
+      setProgress(prev => ({ ...prev, phase: 'Failed', errors: [err.message, ...prev.errors] }));
     }
-    e.target.value = '';
-  };
-
-  // 3. Handle ItemMaintananceEvent (XLS)
-  const handleMaintUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    updateStatus('maint', { loading: true, progress: 0, log: null });
-
-    try {
-      const count = await posService.uploadItemMaintenance(file, (curr, total) => {
-         updateStatus('maint', { progress: Math.round((curr/total)*100) });
-      });
-      updateStatus('maint', { loading: false, log: { type: 'success', msg: '✅ Updated ' + count + ' matched items' } });
-    } catch (err) {
-      updateStatus('maint', { loading: false, log: { type: 'error', msg: err.message } });
-    }
-    e.target.value = '';
-  };
-
-  const updateStatus = (key, val) => {
-    setUploadStatus(prev => ({ ...prev, [key]: { ...prev[key], ...val } }));
-  };
-
-  const handleClearDatabase = async () => {
-    if (!window.confirm('⚠️ ลบข้อมูลทั้งหมด?')) return;
-    updateStatus('master', { loading: true, log: { type: 'info', msg: 'Deleting...' } });
-    await posService.clearDatabase();
-    updateStatus('master', { loading: false, log: { type: 'success', msg: 'Deleted All' } });
-    loadStats();
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6 font-sans">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <button onClick={onBack} className="p-2 bg-white rounded-full shadow-sm"><ArrowLeft size={24} /></button>
-            <h1 className="text-2xl font-bold text-boots-base">Data Management Center</h1>
-          </div>
-          <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-xl shadow-sm">
-             <Database size={20} className="text-blue-500"/>
-             <span className="font-bold text-slate-700">{stats.count.toLocaleString()} Items</span>
-             {hasMaster && <button onClick={handleClearDatabase} className="text-red-500 hover:bg-red-50 p-2 rounded-lg"><Trash2 size={18}/></button>}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* Card 1: ProductAllDept */}
-          <UploadCard 
-            title="1. ProductAllDept" 
-            desc="Master File (.csv)" 
-            accept=".csv"
-            status={uploadStatus.master}
-            onChange={handleMasterUpload}
-            icon={<FileText size={32} />}
-            active={true}
-            required={!hasMaster}
-          />
-
-          {/* Card 2: ItemMasterPrintOnDeph */}
-          <UploadCard 
-            title="2. ItemMasterPrintOnDeph" 
-            desc="Enrich Data (.xls)" 
-            accept=".xls,.xlsx"
-            status={uploadStatus.print}
-            onChange={handlePrintUpload}
-            icon={<FileText size={32} />}
-            active={hasMaster}
-          />
-
-          {/* Card 3: ItemMaintananceEvent */}
-          <UploadCard 
-            title="3. ItemMaintananceEvent" 
-            desc="Maintenance Data (.xls)" 
-            accept=".xls,.xlsx"
-            status={uploadStatus.maint}
-            onChange={handleMaintUpload}
-            icon={<FileText size={32} />}
-            active={hasMaster}
-          />
-
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function UploadCard({ title, desc, accept, status, onChange, icon, active, required }) {
-  return (
-    <div className={cn("bg-white rounded-2xl shadow-sm border overflow-hidden relative transition-all", active ? "border-slate-200 hover:shadow-md" : "border-slate-100 opacity-60 grayscale")}>
-      {!active && (
-        <div className="absolute inset-0 z-10 bg-slate-100/50 flex flex-col items-center justify-center text-slate-400">
-          <Lock size={32} className="mb-2" />
-          <span className="text-sm font-semibold">Waiting for Master</span>
-        </div>
-      )}
-      
-      <div className="p-6 border-b border-slate-50 flex justify-between items-start">
-        <div>
-          <h3 className="text-lg font-bold text-slate-800">{title}</h3>
-          <p className="text-sm text-slate-500">{desc}</p>
-          {required && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full mt-1 inline-block">Required First</span>}
-        </div>
-        <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", active ? "bg-boots-light text-boots-base" : "bg-slate-100 text-slate-400")}>{icon}</div>
-      </div>
-
-      <div className="p-6">
-        {!status.loading ? (
-          <div className="relative group cursor-pointer">
-            <input type="file" accept={accept} onChange={onChange} disabled={!active} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
-            <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center group-hover:bg-slate-50 transition-colors">
-              <Upload size={24} className="mx-auto text-slate-400 mb-2" />
-              <span className="text-sm font-medium text-slate-600">Select File</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+      <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Database size={20} /></div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">Database Management</h2>
+              <p className="text-xs text-slate-500">Update product master data</p>
             </div>
           </div>
-        ) : (
-          <div className="py-8 text-center">
-            <RefreshCw size={24} className="mx-auto animate-spin text-boots-base mb-2" />
-            <div className="text-xl font-bold text-boots-base">{status.progress}%</div>
-          </div>
-        )}
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors"><X size={20} /></button>
+        </div>
 
-        {status.log && (
-          <div className={cn("mt-4 p-3 rounded-lg text-xs flex items-center gap-2", status.log.type === 'success' ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700")}>
-            {status.log.type === 'success' ? <CheckCircle size={14}/> : <AlertCircle size={14}/>}
-            {status.log.msg}
+        <div className="p-8 flex flex-col gap-6 overflow-y-auto">
+          
+          <div className={cn("border-2 border-dashed rounded-xl p-8 text-center transition-all", 
+              uploadStatus === 'uploading' ? "border-blue-200 bg-blue-50/50 pointer-events-none opacity-50" : "border-slate-300 hover:border-blue-400 hover:bg-slate-50 cursor-pointer"
+          )} onClick={() => uploadStatus !== 'uploading' && fileInputRef.current?.click()}>
+            <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".xlsx,.xls,.csv" className="hidden" />
+            
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                {uploadStatus === 'uploading' ? <Loader2 size={32} className="animate-spin" /> : <Upload size={32} />}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-700">{selectedFile ? selectedFile.name : "Click to select file"}</h3>
+                <p className="text-sm text-slate-400">{selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : "Supports Excel (.xlsx, .xls) or CSV"}</p>
+              </div>
+            </div>
           </div>
-        )}
+
+          {(selectedFile || uploadStatus !== 'idle') && (
+            <div className="bg-slate-50 rounded-xl border border-slate-200 p-5 space-y-4 animate-in slide-in-from-bottom-2">
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <span>{progress.phase || 'Ready'}</span>
+                  <span>{progress.percent}%</span>
+                </div>
+                <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-500 transition-all duration-300 ease-out" style={{ width: `${progress.percent}%` }}></div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm text-center">
+                  <div className="text-xs text-slate-400 mb-1">Total</div>
+                  <div className="text-xl font-bold text-slate-800">{progress.total.toLocaleString()}</div>
+                </div>
+                <div className="bg-white p-3 rounded-lg border border-green-100 shadow-sm text-center">
+                  <div className="text-xs text-green-500 mb-1">Success</div>
+                  <div className="text-xl font-bold text-green-600">{progress.success.toLocaleString()}</div>
+                </div>
+                <div className="bg-white p-3 rounded-lg border border-red-100 shadow-sm text-center">
+                  <div className="text-xs text-red-500 mb-1">Failed</div>
+                  <div className="text-xl font-bold text-red-600">{progress.failed.toLocaleString()}</div>
+                </div>
+              </div>
+
+              {progress.errors.length > 0 && (
+                <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-100 text-xs">
+                  <div className="font-bold text-red-700 mb-2 flex items-center gap-2"><AlertTriangle size={14} /> Errors ({progress.errors.length})</div>
+                  <ul className="list-disc list-inside space-y-1 text-red-600 max-h-32 overflow-y-auto">
+                    {progress.errors.slice(0, 20).map((err, i) => (
+                      <li key={i} className="truncate">{err}</li>
+                    ))}
+                    {progress.errors.length > 20 && <li>...and {progress.errors.length - 20} more</li>}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
+
+        <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+          <button onClick={onClose} disabled={uploadStatus === 'uploading'} className="px-6 py-2 rounded-lg text-slate-600 hover:bg-slate-200 font-bold transition-colors disabled:opacity-50">Close</button>
+          
+          {uploadStatus === 'idle' && selectedFile && (
+            <button onClick={startUpload} className="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+              <Upload size={18} /> Start Upload
+            </button>
+          )}
+          
+          {uploadStatus === 'done' && (
+            <button onClick={onClose} className="px-6 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold shadow-md flex items-center gap-2">
+              <CheckCircle size={18} /> Done
+            </button>
+          )}
+        </div>
+
       </div>
     </div>
   );
