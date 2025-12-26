@@ -105,6 +105,11 @@ export const posService = {
     } catch (err) { console.error(err); return []; }
   },
 
+  // [FIX] Add 'search' alias to prevent "function search missing" errors
+  search: async (keyword) => {
+    return posService.searchProducts(keyword);
+  },
+
   // --- SCAN ITEM ---
   scanItem: async (keyword) => {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -124,6 +129,7 @@ export const posService = {
           if (data.ProductStatus?.startsWith('0')) 
               return { sku: data.barcode, name: data.ProductDesc, price: Number(data.SellPrice), ...data }; 
       }
+      // Use the main search function
       const results = await posService.searchProducts(cleanKey);
       if (results.length > 0) return results[0];
       throw new Error('ไม่พบสินค้า: ' + cleanKey);
