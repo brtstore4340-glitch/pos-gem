@@ -83,23 +83,77 @@ export default function DailyReportModal({ onClose }) {
 
   return (
     <>
-      {/* 🟢 PRINT STYLING & FONT */}
+      {/* 🟢 PRINT STYLING - NOTO SANS THAI */}
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
+        
         #print-section { display: none; }
+        
         @media print {
-          @page { margin: 0.5cm; size: A4 portrait; }
-          body * { visibility: hidden; }
+          @page { 
+            margin: 1.5cm 1cm; 
+            size: A4 portrait; 
+          }
+          
+          body * { 
+            visibility: hidden; 
+          }
+          
           #print-section, #print-section * { 
             visibility: visible !important; 
-            color: black !important;
-            font-family: 'Kanit', sans-serif !important;
+            color: #1a1a1a !important;
+            font-family: 'Noto Sans Thai', sans-serif !important;
           }
+          
           #print-section { 
             display: block !important; 
-            position: fixed; left: 0; top: 0; width: 100%; height: 100%; 
-            background: white !important; z-index: 99999; 
+            position: fixed; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: white !important; 
+            z-index: 99999;
+            padding: 20px 30px;
           }
-          .modal-overlay { display: none !important; }
+          
+          .modal-overlay { 
+            display: none !important; 
+          }
+          
+          /* Print-specific styling */
+          .print-header {
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+          }
+          
+          .print-summary-box {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+          }
+          
+          .print-table th {
+            background: #f1f5f9 !important;
+            font-weight: 600;
+            padding: 10px 8px;
+          }
+          
+          .print-table td {
+            padding: 8px;
+          }
+          
+          .print-barcode {
+            opacity: 0.7;
+          }
+          
+          .print-footer-total {
+            background: #f8fafc !important;
+            font-weight: 700;
+          }
         }
       `}</style>
 
@@ -230,90 +284,272 @@ export default function DailyReportModal({ onClose }) {
         </div>
       </div>
 
-      {/* --- PRINT LAYOUT (MODERN MINIMAL) --- */}
+      {/* --- PRINT LAYOUT (MODERN DESIGN - NOTO SANS THAI) --- */}
       <div id="print-section">
-         <div className="text-center mb-6 pb-4 border-b border-black">
-            <h1 className="text-2xl font-bold mb-1 tracking-tight">รายงานสรุปยอดขาย (Daily Sales Report)</h1>
-            <p className="text-sm text-gray-600">วันที่: {new Date(selectedDate).toLocaleDateString('th-TH')} | ช่วงเวลา: {startTime} - {endTime}</p>
+         {/* Header */}
+         <div className="print-header text-center">
+            <h1 className="text-3xl font-bold mb-2" style={{color: '#2563eb', letterSpacing: '-0.5px'}}>
+              รายงานสรุปยอดขาย
+            </h1>
+            <p className="text-sm" style={{color: '#64748b', fontWeight: '400'}}>
+              Daily Sales Report
+            </p>
+            <p className="text-xs mt-2" style={{color: '#94a3b8'}}>
+              วันที่: {new Date(selectedDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })} 
+              {' '}| ช่วงเวลา: {startTime} - {endTime}
+            </p>
          </div>
 
-         {/* Print Summary Box */}
-         <div className="flex justify-between items-center mb-6 border border-gray-300 rounded-lg p-3 bg-gray-50 text-sm">
-            <div><strong>บิลทั้งหมด:</strong> {summary.count}</div>
-            <div><strong>จำนวนชิ้น:</strong> {summary.totalItems}</div>
-            <div><strong>ยอดรวม:</strong> ฿{(summary.totalSales + summary.totalDiscount).toLocaleString()}</div>
-            <div className="text-red-600"><strong>ส่วนลด:</strong> -฿{summary.totalDiscount.toLocaleString()}</div>
-            <div className="font-bold text-lg"><strong>สุทธิ:</strong> ฿{summary.totalSales.toLocaleString()}</div>
+         {/* Summary Box */}
+         <div className="print-summary-box">
+            <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', fontSize: '11px'}}>
+               <div>
+                  <div style={{color: '#64748b', marginBottom: '4px', fontWeight: '500'}}>จำนวนบิล</div>
+                  <div style={{fontSize: '18px', fontWeight: '700', color: '#1e293b'}}>{summary.count}</div>
+               </div>
+               <div>
+                  <div style={{color: '#64748b', marginBottom: '4px', fontWeight: '500'}}>รายการสินค้า</div>
+                  <div style={{fontSize: '18px', fontWeight: '700', color: '#1e293b'}}>{summary.totalItems}</div>
+               </div>
+               <div>
+                  <div style={{color: '#64748b', marginBottom: '4px', fontWeight: '500'}}>ยอดขายรวม</div>
+                  <div style={{fontSize: '18px', fontWeight: '700', color: '#2563eb'}}>
+                    ฿{(summary.totalSales + summary.totalDiscount).toLocaleString()}
+                  </div>
+               </div>
+               <div>
+                  <div style={{color: '#64748b', marginBottom: '4px', fontWeight: '500'}}>ส่วนลด</div>
+                  <div style={{fontSize: '18px', fontWeight: '700', color: '#dc2626'}}>
+                    -฿{summary.totalDiscount.toLocaleString()}
+                  </div>
+               </div>
+               <div style={{borderLeft: '2px solid #cbd5e1', paddingLeft: '16px'}}>
+                  <div style={{color: '#64748b', marginBottom: '4px', fontWeight: '500'}}>ยอดสุทธิ</div>
+                  <div style={{fontSize: '20px', fontWeight: '700', color: '#059669'}}>
+                    ฿{summary.totalSales.toLocaleString()}
+                  </div>
+               </div>
+            </div>
          </div>
 
-         <table className="w-full text-xs border-collapse">
+         {/* Table */}
+         <table className="print-table" style={{width: '100%', borderCollapse: 'collapse', fontSize: '11px'}}>
             <thead>
-               <tr className="border-b-2 border-black text-gray-700">
-                  <th className="text-left p-2 w-16">เวลา</th>
-                  <th className="text-left p-2 w-24">เลขที่บิล</th>
-                  <th className="text-left p-2">รายละเอียดสินค้า</th>
-                  <th className="text-right p-2 w-24">ยอดรวม (Net)</th>
+               <tr style={{borderBottom: '2px solid #cbd5e1'}}>
+                  <th style={{textAlign: 'left', width: '60px', color: '#475569'}}>เวลา</th>
+                  <th style={{textAlign: 'left', width: '80px', color: '#475569'}}>เลขที่บิล</th>
+                  <th style={{textAlign: 'left', color: '#475569'}}>รายละเอียดสินค้า</th>
+                  <th style={{textAlign: 'right', width: '100px', color: '#475569'}}>ยอดสุทธิ</th>
                </tr>
             </thead>
             <tbody>
                {orders.map((order) => (
-                   <tr key={order.id} className="border-b border-gray-200">
-                      <td className="p-2 align-top text-gray-500 pt-3">{order.timestamp.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</td>
-                      <td className="p-2 align-top font-mono text-[10px] text-gray-500 pt-3">{order.id.slice(0, 8)}</td>
-                      <td className="p-2 pt-3">
-                          {order.items.map((item, i) => {
-                             const normalTotal = (item.price || 0) * (item.qty || 0);
-                             const finalTotal = item.calculatedTotal !== undefined ? Number(item.calculatedTotal) : normalTotal;
-                             const itemDiscount = normalTotal - finalTotal;
+                  <tr key={order.id} style={{borderBottom: '1px solid #e2e8f0'}}>
+                     <td style={{verticalAlign: 'top', paddingTop: '12px', color: '#64748b', fontSize: '10px'}}>
+                        {order.timestamp.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                     </td>
+                     <td style={{verticalAlign: 'top', paddingTop: '12px'}}>
+                        <div style={{fontFamily: 'monospace', fontSize: '9px', color: '#94a3b8'}}>
+                          {order.id.slice(0, 8)}
+                        </div>
+                     </td>
+                     <td style={{paddingTop: '12px', paddingBottom: '12px'}}>
+                         {order.items.map((item, i) => {
+                            const normalTotal = (item.price || 0) * (item.qty || 0);
+                            const finalTotal = item.calculatedTotal !== undefined ? Number(item.calculatedTotal) : normalTotal;
+                            const itemDiscount = normalTotal - finalTotal;
 
-                             return (
-                                <div key={i} className="mb-3 flex items-start justify-between group">
-                                   <div className="flex gap-3">
-                                      <div className="w-[50px] flex-shrink-0">
-                                         {(item.barcode && item.barcode !== '-') ? (
-                                           <canvas id={`barcode-${order.id}-${i}`} className="w-full h-[20px] opacity-80"></canvas>
-                                         ) : (
-                                           <div className="text-[9px] text-gray-300 font-mono">{item.sku}</div>
-                                         )}
-                                      </div>
-                                      <div>
-                                         <div className="font-bold text-sm text-black">{item.name || item.ProductDesc || item.sku}</div>
-                                         <div className="text-gray-500 text-[10px]">
-                                            {item.qty} x ฿{(item.price || 0).toLocaleString()}
-                                            {itemDiscount > 0 && <span className="text-red-600 ml-2 bg-red-50 px-1 rounded">ส่วนลด -฿{itemDiscount.toLocaleString()}</span>}
-                                         </div>
-                                      </div>
-                                   </div>
-                                   <div className="text-right font-medium">
-                                       ฿{finalTotal.toLocaleString()}
-                                   </div>
-                                </div>
-                             );
-                          })}
-                      </td>
-                      <td className="p-2 align-top text-right font-bold pt-3 text-sm">
-                          ฿{(order.summary?.subtotal || 0).toLocaleString()}
-                          {order.status === 'void' && <div className="text-red-600 text-[10px] border border-red-600 inline-block px-1 rounded mt-1">VOID</div>}
-                      </td>
-                   </tr>
+                            return (
+                               <div key={i} style={{
+                                 display: 'flex', 
+                                 justifyContent: 'space-between', 
+                                 alignItems: 'flex-start',
+                                 marginBottom: i < order.items.length - 1 ? '10px' : '0',
+                                 paddingBottom: i < order.items.length - 1 ? '10px' : '0',
+                                 borderBottom: i < order.items.length - 1 ? '1px dashed #e2e8f0' : 'none'
+                               }}>
+                                  <div style={{display: 'flex', gap: '12px', flex: 1}}>
+                                     {/* Barcode */}
+                                     <div style={{width: '55px', flexShrink: 0}}>
+                                        {(item.barcode && item.barcode !== '-') ? (
+                                          <canvas 
+                                            id={`barcode-${order.id}-${i}`} 
+                                            className="print-barcode"
+                                            style={{width: '100%', height: '22px'}}
+                                          ></canvas>
+                                        ) : (
+                                          <div style={{
+                                            fontSize: '8px', 
+                                            color: '#cbd5e1', 
+                                            fontFamily: 'monospace',
+                                            textAlign: 'center',
+                                            padding: '4px 0'
+                                          }}>
+                                            {item.sku}
+                                          </div>
+                                        )}
+                                     </div>
+                                     
+                                     {/* Product Info */}
+                                     <div style={{flex: 1}}>
+                                        <div style={{
+                                          fontWeight: '600', 
+                                          color: '#1e293b',
+                                          marginBottom: '3px',
+                                          fontSize: '11px'
+                                        }}>
+                                          {item.name || item.ProductDesc || item.sku}
+                                        </div>
+                                        <div style={{
+                                          fontSize: '9px', 
+                                          color: '#64748b',
+                                          display: 'flex',
+                                          gap: '8px',
+                                          alignItems: 'center'
+                                        }}>
+                                          <span>จำนวน: {item.qty}</span>
+                                          <span>×</span>
+                                          <span>฿{(item.price || 0).toLocaleString()}</span>
+                                          {itemDiscount > 0 && (
+                                            <span style={{
+                                              color: '#dc2626',
+                                              background: '#fee2e2',
+                                              padding: '2px 6px',
+                                              borderRadius: '3px',
+                                              fontSize: '8px',
+                                              fontWeight: '600'
+                                            }}>
+                                              ส่วนลด -฿{itemDiscount.toLocaleString()}
+                                            </span>
+                                          )}
+                                        </div>
+                                     </div>
+                                     
+                                     {/* Item Total */}
+                                     <div style={{
+                                       textAlign: 'right',
+                                       fontWeight: '600',
+                                       color: '#334155',
+                                       fontSize: '11px',
+                                       minWidth: '70px'
+                                     }}>
+                                        ฿{finalTotal.toLocaleString()}
+                                     </div>
+                                  </div>
+                               </div>
+                            );
+                         })}
+                     </td>
+                     <td style={{
+                       verticalAlign: 'top', 
+                       textAlign: 'right', 
+                       paddingTop: '12px',
+                       fontWeight: '700',
+                       fontSize: '12px',
+                       color: '#1e293b'
+                     }}>
+                         ฿{(order.summary?.subtotal || 0).toLocaleString()}
+                         {order.status === 'void' && (
+                           <div style={{
+                             fontSize: '8px',
+                             color: '#dc2626',
+                             border: '1px solid #dc2626',
+                             display: 'inline-block',
+                             padding: '2px 6px',
+                             borderRadius: '3px',
+                             marginTop: '4px',
+                             fontWeight: '600'
+                           }}>
+                             VOID
+                           </div>
+                         )}
+                     </td>
+                  </tr>
                ))}
             </tbody>
             <tfoot>
-               <tr className="border-t-2 border-black">
-                  <td colSpan="3" className="p-2 text-right text-gray-600">ยอดรวมก่อนส่วนลด</td>
-                  <td className="p-2 text-right">฿{(summary.totalSales + summary.totalDiscount).toLocaleString()}</td>
+               <tr style={{borderTop: '2px solid #cbd5e1'}}>
+                  <td colSpan="3" style={{
+                    textAlign: 'right', 
+                    padding: '10px 8px',
+                    color: '#64748b',
+                    fontSize: '11px',
+                    fontWeight: '500'
+                  }}>
+                    ยอดรวมก่อนหักส่วนลด
+                  </td>
+                  <td style={{
+                    textAlign: 'right',
+                    padding: '10px 8px',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}>
+                    ฿{(summary.totalSales + summary.totalDiscount).toLocaleString()}
+                  </td>
                </tr>
                <tr>
-                  <td colSpan="3" className="p-2 text-right text-red-600">ส่วนลดท้ายบิล/รายการ</td>
-                  <td className="p-2 text-right text-red-600">-฿{summary.totalDiscount.toLocaleString()}</td>
+                  <td colSpan="3" style={{
+                    textAlign: 'right',
+                    padding: '8px',
+                    color: '#dc2626',
+                    fontSize: '11px',
+                    fontWeight: '500'
+                  }}>
+                    หักส่วนลดทั้งหมด
+                  </td>
+                  <td style={{
+                    textAlign: 'right',
+                    padding: '8px',
+                    color: '#dc2626',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}>
+                    -฿{summary.totalDiscount.toLocaleString()}
+                  </td>
                </tr>
-               <tr className="bg-gray-100 font-bold text-base">
-                  <td colSpan="3" className="p-3 text-right">ยอดขายสุทธิ (Grand Total)</td>
-                  <td className="p-3 text-right">฿{summary.totalSales.toLocaleString()}</td>
+               <tr className="print-footer-total" style={{borderTop: '2px solid #2563eb'}}>
+                  <td colSpan="3" style={{
+                    textAlign: 'right',
+                    padding: '12px 8px',
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    color: '#1e293b'
+                  }}>
+                    ยอดขายสุทธิทั้งสิ้น (Grand Total)
+                  </td>
+                  <td style={{
+                    textAlign: 'right',
+                    padding: '12px 8px',
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: '#059669'
+                  }}>
+                    ฿{summary.totalSales.toLocaleString()}
+                  </td>
                </tr>
             </tfoot>
          </table>
-         <div className="mt-8 text-center text-[10px] text-gray-400">Software by Store 4340 | Printed at {new Date().toLocaleString('th-TH')}</div>
+         
+         {/* Footer */}
+         <div style={{
+           marginTop: '30px',
+           paddingTop: '15px',
+           borderTop: '1px solid #e2e8f0',
+           textAlign: 'center',
+           fontSize: '9px',
+           color: '#94a3b8'
+         }}>
+            <div>Boots POS System | Store 4340</div>
+            <div style={{marginTop: '4px'}}>
+              พิมพ์เมื่อ: {new Date().toLocaleString('th-TH', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </div>
+         </div>
       </div>
     </>
   );
