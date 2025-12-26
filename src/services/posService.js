@@ -105,10 +105,7 @@ export const posService = {
     } catch (err) { console.error(err); return []; }
   },
 
-  // [FIX] Add 'search' alias to prevent "function search missing" errors
-  search: async (keyword) => {
-    return posService.searchProducts(keyword);
-  },
+  search: async (keyword) => { return posService.searchProducts(keyword); },
 
   // --- SCAN ITEM ---
   scanItem: async (keyword) => {
@@ -129,7 +126,6 @@ export const posService = {
           if (data.ProductStatus?.startsWith('0')) 
               return { sku: data.barcode, name: data.ProductDesc, price: Number(data.SellPrice), ...data }; 
       }
-      // Use the main search function
       const results = await posService.searchProducts(cleanKey);
       if (results.length > 0) return results[0];
       throw new Error('ไม่พบสินค้า: ' + cleanKey);
@@ -139,7 +135,6 @@ export const posService = {
     }
   },
 
-  // --- SYSTEM STATUS ---
   getLastDBUpdate: async () => {
     try {
       const q = query(collection(db, 'products'), orderBy('updatedAt', 'desc'), limit(1));
@@ -149,49 +144,97 @@ export const posService = {
         return data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date();
       }
       return null;
-    } catch (e) {
-      console.warn("Failed to get DB update time", e);
-      return null;
-    }
+    } catch (e) { console.warn("Failed to get DB update time", e); return null; }
   },
 
-  // --- UPLOAD / SYNC ---
-  uploadProductAllDept: async (products, onProgress) => {
-    const existingMap = new Map();
-    const querySnapshot = await getDocs(collection(db, 'products'));
-    querySnapshot.forEach((doc) => existingMap.set(doc.id, doc.data().DateLastAmended));
-    const toUpdate = products.filter((row) => {
-      const status = row.ProductStatus ? row.ProductStatus.trim() : '';
-      if (!status.startsWith('0')) return false;
-      const id = row.GridProductCode?.trim() || row.ProductCode?.trim();
-      if (!id) return false;
-      const oldDate = existingMap.get(id);
-      const newDate = row.DateLastAmended;
-      if (!oldDate) return true;
-      if (oldDate !== newDate) return true;
-      return false; 
+  // --- OPTIMIZED UPLOAD ---
+  uploadMasterDataOptimized: async (file, onProgress) => {
+    const startTime = Date.now();
+    if (onProgress) onProgress({ phase: 'Parsing', percent: 0, total: 0, success: 0, failed: 0, errors: [] });
+    
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer);
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+    
+    const total = rows.length;
+    if (total === 0) return { success: 0, failed: 0, errors: ['File is empty'] };
+
+    if (onProgress) onProgress({ phase: 'Processing', percent: 10, total, success: 0, failed: 0, errors: [] });
+
+    const batches = [];
+    const BATCH_SIZE = 500;
+    let currentBatch = writeBatch(db);
+    let countInBatch = 0;
+    
+    let successCount = 0;
+    let failCount = 0;
+    const errors = [];
+
+    rows.forEach((row, index) => {
+      try {
+        const rawCode = row['ProductCode'] || row['GridProductCode'] || row['Product Code'] || '';
+        const cleanCode = String(rawCode).trim();
+        
+        if (!cleanCode) throw new Error(`Row ${index + 2}: Missing Product Code`);
+
+        const docRef = doc(db, 'products', cleanCode);
+        const productData = {
+          ProductCode: cleanCode,
+          Barcode: String(row['Barcode'] || row['Bar Code'] || '').trim(),
+          ProductDesc: String(row['ProductDesc'] || row['Description'] || '').trim(),
+          SellPrice: parseFloat(row['SellPrice'] || row['Price'] || 0),
+          VatRate: parseFloat(row['VatRate'] || row['Vat'] || 0),
+          ...row, 
+          updatedAt: serverTimestamp()
+        };
+
+        const keywords = generateKeywords(productData.ProductDesc);
+        if (productData.Barcode) keywords.push(productData.Barcode);
+        if (cleanCode) keywords.push(cleanCode);
+        productData.keywords = keywords;
+
+        currentBatch.set(docRef, productData, { merge: true });
+        countInBatch++;
+        successCount++;
+
+        if (countInBatch >= BATCH_SIZE) {
+          batches.push(currentBatch);
+          currentBatch = writeBatch(db);
+          countInBatch = 0;
+        }
+      } catch (err) {
+        failCount++;
+        if (errors.length < 20) errors.push(err.message);
+      }
     });
-    const BATCH_SIZE = 400; let processed = 0; const total = toUpdate.length; const chunks = []; for (let i = 0; i < total; i += BATCH_SIZE) chunks.push(toUpdate.slice(i, i + BATCH_SIZE));
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i]; const batch = writeBatch(db);
-      chunk.forEach(row => {
-        const productCode = row.GridProductCode?.trim() || row.ProductCode?.trim();
-        const docRef = doc(db, 'products', productCode);
-        const searchKeywords = generateKeywords(row.ProductDesc); 
-        if (row.Barcode) searchKeywords.push(row.Barcode.trim());
-        if (productCode) searchKeywords.push(productCode.trim());
-        batch.set(docRef, { ...row, keywords: searchKeywords, SellPrice: parseFloat(row.SellPrice || 0), VatRate: parseFloat(row.VatRate || 0), barcode: row.Barcode?.trim(), ProductDesc: row.ProductDesc?.trim(), updatedAt: serverTimestamp() }, { merge: true });
-      });
-      await batch.commit(); processed += chunk.length; if (onProgress) onProgress(processed, total); await new Promise(r => setTimeout(r, 50));
+
+    if (countInBatch > 0) batches.push(currentBatch);
+
+    const CONCURRENCY_LIMIT = 5;
+    let completedBatches = 0;
+    
+    async function runBatches() {
+        const executing = [];
+        for (const batch of batches) {
+            const p = batch.commit().then(() => {
+                completedBatches++;
+                const percent = 20 + Math.floor((completedBatches / batches.length) * 80);
+                if (onProgress) onProgress({ phase: 'Uploading', percent, total, success: successCount, failed: failCount, errors });
+            });
+            executing.push(p);
+            if (executing.length >= CONCURRENCY_LIMIT) {
+                await Promise.race(executing);
+            }
+        }
+        await Promise.all(executing);
     }
-    return processed;
+
+    await runBatches();
+    if (onProgress) onProgress({ phase: 'Done', percent: 100, total, success: successCount, failed: failCount, errors });
+    return { success: successCount, failed: failCount, time: Date.now() - startTime };
   },
-  
-  hasMasterData: async () => { try { const coll = collection(db, 'products'); const snapshot = await getCountFromServer(coll); return snapshot.data().count > 0; } catch (e) { return false; } },
-  uploadExcelUpdate: async (file, mappingLogic, onProgress) => { const buffer = await file.arrayBuffer(); const workbook = XLSX.read(buffer); const firstSheetName = workbook.SheetNames[0]; const worksheet = workbook.Sheets[firstSheetName]; const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' }); const existingIds = new Set(); const querySnapshot = await getDocs(collection(db, 'products')); querySnapshot.forEach((doc) => existingIds.add(doc.id)); const updates = []; for (let i = 1; i < rows.length; i++) { const row = rows[i]; const itemCode = String(row[1]).trim(); if (itemCode && existingIds.has(itemCode)) { const updateData = mappingLogic(row); if (updateData) updates.push({ id: itemCode, data: updateData }); } } if (updates.length === 0) return 0; const BATCH_SIZE = 400; let processed = 0; const total = updates.length; for (let i = 0; i < total; i += BATCH_SIZE) { const chunk = updates.slice(i, i + BATCH_SIZE); const batch = writeBatch(db); chunk.forEach(item => { const docRef = doc(db, 'products', item.id); batch.set(docRef, { ...item.data, updatedAt: serverTimestamp() }, { merge: true }); }); await batch.commit(); processed += chunk.length; if (onProgress) onProgress(processed, total); await new Promise(r => setTimeout(r, 50)); } return processed; },
-  uploadItemMasterPrint: async (file, onProgress) => { return posService.uploadExcelUpdate(file, (row) => ({ description_print: row[5], dept: row[11], class: row[13], merchandise: row[20], regPrice_print: row[24], method_print: row[29], unitPrice_print: row[31], dealPrice_print: row[35], dealQty_print: row[40], limit_print: row[44], mpg_print: row[47], tax_print: row[50], brand_print: row[53] }), onProgress); },
-  uploadItemMaintenance: async (file, onProgress) => { return posService.uploadExcelUpdate(file, (row) => ({ description_maint: row[5], type_maint: row[11], dept_maint: row[13], class_maint: row[17], regPrice_maint: row[21], method_maint: row[24], unitPrice_maint: row[27], dealPrice_maint: row[31], dealQty_maint: row[37], limitQty_maint: row[42], mpGroup_maint: row[45] }), onProgress); },
-  getProductStats: async () => { try { const coll = collection(db, 'products'); const snapshot = await getCountFromServer(coll); return { count: snapshot.data().count, lastUpdated: new Date() }; } catch (e) { return { count: 0, lastUpdated: null }; } },
-  clearDatabase: async (onProgress) => { const BATCH_SIZE = 400; let totalDeleted = 0; while (true) { const q = query(collection(db, 'products'), limit(BATCH_SIZE)); const snapshot = await getDocs(q); if (snapshot.empty) break; const batch = writeBatch(db); snapshot.forEach((doc) => batch.delete(doc.ref)); await batch.commit(); totalDeleted += snapshot.size; if (onProgress) onProgress(totalDeleted); await new Promise(r => setTimeout(r, 50)); } return totalDeleted; },
+
+  // --- LEGACY/OTHER ---
   createOrder: async (orderData) => { const { addDoc, collection, serverTimestamp } = await import('firebase/firestore'); const docRef = await addDoc(collection(db, 'invoices'), { ...orderData, createdAt: serverTimestamp(), status: 'paid' }); return docRef.id; }
 };
