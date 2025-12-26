@@ -163,6 +163,6 @@ export const useCart = () => {
     setManualItemDiscount, updateBillDiscount, billDiscount,
     addCoupon, removeCoupon, coupons,
     updateAllowance, allowance,
-    updateTopup, topup // [FIX] Return topup explicitly
+    updateTopup, topup // [FIX] Return topup
   };
 };
