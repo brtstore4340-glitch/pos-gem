@@ -23,54 +23,120 @@ export default function DailyReportModal({ onClose }) {
 
   useEffect(() => { loadData(); }, []);
 
-  // Generate barcodes
+  // Generate barcodes (optimized with cleanup)
   useEffect(() => {
-    if (orders.length > 0) {
+    if (orders.length === 0) return;
+
+    // Debounce to prevent excessive re-renders
+    const timer = setTimeout(() => {
       orders.forEach((order) => {
         order.items?.forEach((item, index) => {
           try {
-            const barcodeValue = item.barcode || item.sku || 'N/A';
-            if (barcodeValue && barcodeValue !== 'N/A') {
-              const canvas = document.getElementById(`barcode-${order.id}-${index}`);
-              if (canvas) {
-                JsBarcode(canvas, barcodeValue, {
-                  format: 'CODE128', width: 1, height: 20, displayValue: false, margin: 0
-                });
-              }
+            const barcodeValue = item.barcode || item.sku;
+            if (!barcodeValue || barcodeValue === '-') return;
+
+            const canvasId = `barcode-${order.id}-${index}`;
+            const canvas = document.getElementById(canvasId);
+            
+            if (canvas && canvas.getContext) {
+              // Clear previous barcode
+              const ctx = canvas.getContext('2d');
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              
+              // Generate new barcode
+              JsBarcode(canvas, barcodeValue, {
+                format: 'CODE128',
+                width: 1,
+                height: 20,
+                displayValue: false,
+                margin: 0,
+                background: 'transparent'
+              });
             }
-          } catch (err) { console.error('Barcode error:', err); }
+          } catch (err) {
+            console.error(`Barcode generation failed for ${item.sku}:`, err.message);
+          }
         });
       });
-    }
+    }, 100); // 100ms debounce
+
+    // Cleanup
+    return () => clearTimeout(timer);
   }, [orders]);
 
   const loadData = async () => {
     setLoading(true);
     setExpandedRow(null);
     try {
+        // Validate date inputs
+        if (!selectedDate || !startTime || !endTime) {
+          throw new Error('กรุณาระบุวันที่และเวลาให้ครบถ้วน');
+        }
+
         const start = new Date(`${selectedDate}T${startTime}:00`);
         const end = new Date(`${selectedDate}T${endTime}:59`);
-        const data = await posService.getSalesReport(start, end);
-        setOrders(data || []);
         
-        // --- Calculate Summary ---
-        const validOrders = (data || []).filter(o => o.status !== 'void');
-        const totalSales = validOrders.reduce((sum, o) => sum + (Number(o.summary?.subtotal) || 0), 0);
-        const totalItems = validOrders.reduce((sum, o) => sum + (Number(o.summary?.totalItems) || 0), 0);
+        // Validate date objects
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          throw new Error('รูปแบบวันที่หรือเวลาไม่ถูกต้อง');
+        }
+
+        if (start > end) {
+          throw new Error('เวลาเริ่มต้นต้องน้อยกว่าเวลาสิ้นสุด');
+        }
+
+        const data = await posService.getSalesReport(start, end);
+        
+        // Validate response data
+        if (!Array.isArray(data)) {
+          console.warn('Invalid data format received:', data);
+          setOrders([]);
+          setSummary({ totalSales: 0, totalVoid: 0, count: 0, totalItems: 0, totalDiscount: 0 });
+          return;
+        }
+
+        setOrders(data);
+        
+        // --- Calculate Summary with validation ---
+        const validOrders = data.filter(o => o && o.status !== 'void' && o.summary);
+        
+        const totalSales = validOrders.reduce((sum, o) => {
+          const subtotal = Number(o.summary?.subtotal);
+          return sum + (isNaN(subtotal) ? 0 : subtotal);
+        }, 0);
+
+        const totalItems = validOrders.reduce((sum, o) => {
+          const items = Number(o.summary?.totalItems);
+          return sum + (isNaN(items) ? 0 : items);
+        }, 0);
         
         const totalDiscount = validOrders.reduce((sum, o) => {
-            const billDiscount = o.items?.reduce((isum, item) => {
+            const billDiscount = (o.items || []).reduce((isum, item) => {
                 const price = Number(item.price) || 0;
                 const qty = Number(item.qty) || 0;
                 const normalTotal = price * qty;
-                const soldTotal = (item.calculatedTotal !== undefined) ? Number(item.calculatedTotal) : normalTotal;
-                return isum + (normalTotal - soldTotal);
-            }, 0) || 0;
-            return sum + billDiscount + (Number(o.summary?.discount) || 0);
+                const soldTotal = item.calculatedTotal !== undefined ? Number(item.calculatedTotal) || 0 : normalTotal;
+                return isum + Math.max(0, normalTotal - soldTotal); // Prevent negative discounts
+            }, 0);
+            const orderDiscount = Number(o.summary?.discount) || 0;
+            return sum + billDiscount + orderDiscount;
         }, 0);
         
-        setSummary({ totalSales, totalVoid: 0, count: validOrders.length, totalItems, totalDiscount });
-    } catch (err) { console.error("Report Error:", err); } finally { setLoading(false); }
+        setSummary({ 
+          totalSales: Math.max(0, totalSales), 
+          totalVoid: 0, 
+          count: validOrders.length, 
+          totalItems: Math.max(0, totalItems), 
+          totalDiscount: Math.max(0, totalDiscount) 
+        });
+    } catch (err) { 
+      console.error("Report Error:", err); 
+      alert(`เกิดข้อผิดพลาด: ${err.message}`);
+      setOrders([]);
+      setSummary({ totalSales: 0, totalVoid: 0, count: 0, totalItems: 0, totalDiscount: 0 });
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleVoid = async (orderId) => {
@@ -285,16 +351,16 @@ export default function DailyReportModal({ onClose }) {
       </div>
 
       {/* --- PRINT LAYOUT (MODERN DESIGN - NOTO SANS THAI) --- */}
-      <div id="print-section">
+      <div id="print-section" role="article" aria-label="Daily Sales Report">
          {/* Header */}
-         <div className="print-header text-center">
+         <div className="print-header text-center" role="banner">
             <h1 className="text-3xl font-bold mb-2" style={{color: '#2563eb', letterSpacing: '-0.5px'}}>
               รายงานสรุปยอดขาย
             </h1>
             <p className="text-sm" style={{color: '#64748b', fontWeight: '400'}}>
               Daily Sales Report
             </p>
-            <p className="text-xs mt-2" style={{color: '#94a3b8'}}>
+            <p className="text-xs mt-2" style={{color: '#94a3b8'}} aria-label={`Report date: ${new Date(selectedDate).toLocaleDateString('th-TH')} from ${startTime} to ${endTime}`}>
               วันที่: {new Date(selectedDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })} 
               {' '}| ช่วงเวลา: {startTime} - {endTime}
             </p>
