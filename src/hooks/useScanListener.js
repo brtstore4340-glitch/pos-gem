@@ -1,20 +1,61 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 
-export function useScanListener(onScan, onCheckout) {
+export function useScanListener(onScan, onCheckout, onSearchToggle) {
   const inputRef = useRef(null);
   const [inputValue, setInputValue] = useState('');
 
+  // Auto-focus logic
   useEffect(() => {
-    if (inputRef.current) inputRef.current.focus();
+    const focusInput = () => {
+        if (inputRef.current) inputRef.current.focus();
+    };
+    
+    // Initial focus
+    focusInput();
 
     const handleGlobalKeyDown = (e) => {
-      if (e.key === 'F12') { e.preventDefault(); onCheckout?.(); }
-      if (document.activeElement.tagName !== 'INPUT' && inputRef.current) { inputRef.current.focus(); }
+      // F12 Checkout Shortcut
+      if (e.key === 'F12') {
+          e.preventDefault();
+          if (onCheckout) onCheckout();
+          return;
+      }
+      
+      // Ctrl+/ Search Toggle (Product Lookup Modal)
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+          e.preventDefault();
+          if (onSearchToggle) onSearchToggle();
+          return;
+      }
+      
+      // Escape key can be handled by individual modals
+      // but we can provide global blur if needed
+      if (e.key === 'Escape') {
+          // Let modals handle their own Escape first
+          // If not handled, refocus scanner input
+          if (document.activeElement.tagName !== 'INPUT' &&
+              document.activeElement.tagName !== 'TEXTAREA') {
+              focusInput();
+          }
+      }
+      
+      // Keep focus on hidden input if not typing elsewhere
+      if (document.activeElement.tagName !== 'INPUT' &&
+          document.activeElement.tagName !== 'TEXTAREA' &&
+          inputRef.current) {
+          inputRef.current.focus();
+      }
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [onCheckout]);
+    // Also re-focus on click anywhere
+    window.addEventListener('click', focusInput);
+
+    return () => {
+        window.removeEventListener('keydown', handleGlobalKeyDown);
+        window.removeEventListener('click', focusInput);
+    };
+  }, [onCheckout, onSearchToggle]);
 
   const handleInputKeyDown = (e) => {
     if (e.key === 'Enter') {

@@ -1,4 +1,12 @@
 {
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20",
+    "region": "asia-southeast1"
+  },
   "hosting": {
     "public": "dist",
     "ignore": [

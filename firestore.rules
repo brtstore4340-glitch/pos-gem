@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && getUserData().role == 'admin';
+    }
+    
+    function isSupervisor() {
+      return isSignedIn() && (getUserData().role == 'supervisor' || getUserData().role == 'admin');
+    }
+    
+    function isCashier() {
+      return isSignedIn() && (getUserData().role == 'cashier' || getUserData().role == 'supervisor' || getUserData().role == 'admin');
+    }
+    
+    // Products Collection
+    // - Public read only for active products (ProductStatus starts with '0')
+    // - Write restricted to admins only
+    match /products/{productId} {
+      allow read: if resource.data.ProductStatus != null 
+                  && resource.data.ProductStatus is string
+                  && resource.data.ProductStatus.size() > 0
+                  && resource.data.ProductStatus[0] == '0';
+      allow write: if isAdmin();
+    }
+    
+    // Invoices Collection
+    // - Read limited to authenticated users (cashier role or higher)
+    // - Write via Cloud Functions ONLY - client direct writes denied
+    // - This ensures all invoice operations go through business logic
+    match /invoices/{invoiceId} {
+      allow read: if isCashier();
+      allow write: if false; // Force all writes through Cloud Functions
+    }
+    
+    // Users Collection
+    // - Admins can read/write all user documents
+    // - Users can read their own profile only
+    // - Direct writes restricted (should go through admin functions)
+    match /users/{userId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow write: if isAdmin();
+    }
+    
+    // Settings Collection
+    // - Read by authenticated users
+    // - Write restricted to admins
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    
+    // Stock Ledger Collection (future use)
+    // - Read by authenticated users
+    // - Write via Cloud Functions only
+    match /stockLedger/{ledgerId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Force all writes through Cloud Functions
+    }
+    
+    // Default: Deny all access to any other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

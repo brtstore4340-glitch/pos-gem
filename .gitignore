@@ -76,3 +76,6 @@ build/
 *.log
 .DS_Store
 .firebase/
+*.bak
+*.bak_*
+*.tmp

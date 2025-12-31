@@ -1,0 +1,147 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "POS Navbar Patch (SAFE Preview)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$ErrorActionPreference='Continue'; $SafeMode=$true; ",
+
+        "$exclude='\\\\node_modules\\\\|\\\\dist\\\\|\\\\build\\\\|\\\\.next\\\\|\\\\out\\\\|\\\\coverage\\\\'; ",
+        "$exts='*.jsx','*.tsx','*.js','*.ts'; ",
+
+        "function Info($m){Write-Host ('• '+$m) -ForegroundColor Cyan}; ",
+        "function Ok($m){Write-Host ('✔ '+$m) -ForegroundColor Green}; ",
+        "function Warn($m){Write-Host ('⚠ '+$m) -ForegroundColor Yellow}; ",
+        "function Err($m){Write-Host ('✖ '+$m) -ForegroundColor Red}; ",
+
+        "function Save-Preview([string]$path,[string]$content){ $out=\"$path.patched.preview\"; Set-Content -Path $out -Value $content -Encoding UTF8; Ok \"SAFE MODE: wrote preview -> $out\" }; ",
+
+        "Info \"SAFE Preview: scanning...\"; ",
+        "$files=@(); try{ $files=Get-ChildItem -Recurse -File -Include $exts | Where-Object {$_.FullName -notmatch $exclude} } catch { Err \"Scan failed: $($_.Exception.Message)\"; return }; ",
+
+        "$candidates=@(); foreach($f in $files){ try{ $t=Get-Content $f.FullName -Raw; if($t -match 'lucide-react' -and $t -match '\\bInventory\\b' -and $t -match '\\bOrder\\b' -and $t -match '\\bPOS\\b'){ $candidates += $f.FullName } } catch { Warn \"Read fail: $($f.FullName)\" } }; ",
+
+        "if($candidates.Count -eq 0){ ",
+        "  Warn 'No candidates found.'; ",
+        "  Info 'Run search:'; ",
+        "  Write-Host 'Get-ChildItem -Recurse -File -Include *.jsx,*.tsx,*.js,*.ts | Select-String -Pattern \"Inventory\",\"Order\",\"POS\",\"lucide-react\",\"Dashboard\",\"Report\",\"Setting\",\"Settings\" -SimpleMatch | Select-Object -First 50' -ForegroundColor Gray; ",
+        "  return ",
+        "}; ",
+
+        "Ok (\"Found {0} candidate(s)\" -f $candidates.Count); $candidates | ForEach-Object { Write-Host ('  - '+$_) }; ",
+
+        "foreach($path in $candidates){ ",
+        "  Info (\"Patching -> \"+$path); ",
+        "  try{ ",
+        "    $content=Get-Content $path -Raw; $orig=$content; ",
+
+        "    if($content -match \"from\\s+['\\\"]lucide-react['\\\"]\"){ ",
+        "      $content=[regex]::Replace($content, ",
+        "        '(import\\s*\\{\\s*)([^}]*)(\\s*\\}\\s*from\\s*[\\'\\\"]lucide-react[\\'\\\"]\\s*;?)', ",
+        "        { param($m) ",
+        "          $pre=$m.Groups[1].Value; $mid=$m.Groups[2].Value; $post=$m.Groups[3].Value; ",
+        "          $items=$mid -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }; ",
+        "          if($items -notcontains 'Package'){ $items += 'Package' }; ",
+        "          if($items -notcontains 'ShoppingCart'){ $items += 'ShoppingCart' }; ",
+        "          $items=$items | Select-Object -Unique; ",
+        "          return $pre + ($items -join ', ') + $post ",
+        "        }, 1) ",
+        "    }; ",
+
+        "    $content=[regex]::Replace($content, ",
+        "      '(\\bInventory\\b[\\s\\S]{0,250}?)(<\\s*(Box|Package2)\\b|icon\\s*:\\s*(Box|Package2)\\b)', ",
+        "      { param($m) ",
+        "        $head=$m.Groups[1].Value; $tail=$m.Value.Substring($head.Length); ",
+        "        $tail=$tail -replace '(<\\s*(Box|Package2)\\b)','<Package'; ",
+        "        $tail=$tail -replace 'icon\\s*:\\s*(Box|Package2)\\b','icon: Package'; ",
+        "        return $head+$tail ",
+        "      }, 'IgnoreCase'); ",
+
+        "    $content=[regex]::Replace($content, ",
+        "      '(\\bOrder\\b[\\s\\S]{0,250}?)(<\\s*(ShoppingBag|Truck|ClipboardList|FileText|ReceiptText|Clipboard)\\b|icon\\s*:\\s*(ShoppingBag|Truck|ClipboardList|FileText|ReceiptText|Clipboard)\\b)', ",
+        "      { param($m) ",
+        "        $head=$m.Groups[1].Value; $tail=$m.Value.Substring($head.Length); ",
+        "        $tail=$tail -replace '(<\\s*(ShoppingBag|Truck|ClipboardList|FileText|ReceiptText|Clipboard)\\b)','<ShoppingCart'; ",
+        "        $tail=$tail -replace 'icon\\s*:\\s*(ShoppingBag|Truck|ClipboardList|FileText|ReceiptText|Clipboard)\\b','icon: ShoppingCart'; ",
+        "        return $head+$tail ",
+        "      }, 'IgnoreCase'); ",
+
+        "    $content=[regex]::Replace($content, ",
+        "      '<ShoppingCart\\b([^>]*)>', ",
+        "      { param($m) ",
+        "        $tag=$m.Value; ",
+        "        $tag=$tag -replace '\\sfill\\s*=\\s*[\\'\\\"][^\\'\\\"]*[\\'\\\"]',''; ",
+        "        $tag=$tag -replace '\\sclassName\\s*=\\s*{?\\s*[\\'\\\"][^\\'\\\"]*\\bfill-[^\\'\\\"]*[\\'\\\"][^}]*}?',''; ",
+        "        return $tag ",
+        "      }, 'IgnoreCase'); ",
+
+        "    $content=[regex]::Replace($content, ",
+        "      'className\\s*=\\s*(\"|\\')([^\"\\']*\\b(rounded|rounded-lg|rounded-xl|rounded-2xl)\\b[^\"\\']*\\b(border|border-\\S+)\\b[^\"\\']*\\b(flex|inline-flex)\\b[^\"\\']*\\bitems-center\\b[^\"\\']*\\bjustify-center\\b[^\"\\']*)\\1', ",
+        "      { param($m) ",
+        "        $q=$m.Groups[1].Value; $cl=$m.Groups[2].Value; ",
+        "        if($cl -match 'dark:bg-white' -or $cl -match 'dark:text-slate-900'){ return $m.Value }; ",
+        "        return \"className=$q$cl dark:bg-white dark:text-slate-900 dark:border-white$q\" ",
+        "      }); ",
+
+        "    $content=$content -replace '\\bh-screen\\b','min-h-dvh h-dvh'; ",
+
+        "    if($content -ne $orig){ Save-Preview $path $content } else { Warn (\"No changes in: \"+$path) } ",
+        "  } catch { Err (\"Patch failed: \"+$path+\" :: \"+$_.Exception.Message) } ",
+        "}; ",
+
+        "Ok 'DONE (SAFE Preview). Open *.patched.preview files.'"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+
+    {
+      "label": "POS Navbar Patch (APPLY from Preview)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$ErrorActionPreference='Continue'; ",
+        "function Info($m){Write-Host ('• '+$m) -ForegroundColor Cyan}; ",
+        "function Ok($m){Write-Host ('✔ '+$m) -ForegroundColor Green}; ",
+        "function Warn($m){Write-Host ('⚠ '+$m) -ForegroundColor Yellow}; ",
+        "function Backup($p){ if(!(Test-Path ($p+'.bak'))){ Copy-Item $p ($p+'.bak') -Force } }; ",
+
+        "$previews=Get-ChildItem -Recurse -File -Filter '*.patched.preview' | Where-Object { $_.FullName -notmatch '\\\\node_modules\\\\|\\\\dist\\\\|\\\\build\\\\|\\\\.next\\\\|\\\\out\\\\|\\\\coverage\\\\' }; ",
+        "if($previews.Count -eq 0){ Warn 'No *.patched.preview found. Run SAFE Preview task first.'; return }; ",
+
+        "Ok (\"Found {0} preview file(s)\" -f $previews.Count); ",
+        "foreach($p in $previews){ ",
+        "  $target = $p.FullName -replace '\\.patched\\.preview$',''; ",
+        "  if(Test-Path $target){ ",
+        "    Backup $target; ",
+        "    Copy-Item $p.FullName $target -Force; ",
+        "    Ok (\"APPLIED -> \"+$target+\" (backup: .bak)\"); ",
+        "  } else { ",
+        "    Warn (\"Target missing, skip -> \"+$target); ",
+        "  } ",
+        "}; ",
+        "Ok 'DONE (APPLY).'"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    }
+  ]
+}

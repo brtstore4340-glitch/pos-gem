@@ -1,89 +1,116 @@
-﻿import { useState, useMemo } from 'react';
-import { calculateLine } from '../services/promotionEngine';
+﻿import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { posService } from '../services/posService';
 
-export const useCart = () => {
+
+const toNumber = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const lineTotalOf = (item) => {
+  const price = toNumber(item?.price);
+  const qty = toNumber(item?.qty || 0);
+  const normalTotal = price * qty;
+  if (item?.calculatedTotal !== undefined && item?.calculatedTotal !== null) {
+    const lt = toNumber(item.calculatedTotal);
+    return lt > 0 ? lt : normalTotal;
+  }
+  return normalTotal;
+};export const useCart = () => {
   const [cartItems, setCartItems] = useState([]);
   
   // Discount States
   const [billDiscount, setBillDiscount] = useState({ percent: 0, amount: 0 });
   const [coupons, setCoupons] = useState([]);
   const [allowance, setAllowance] = useState(0);
-  const [topup, setTopup] = useState(0); // [FIX] Added State
+  const [topup, setTopup] = useState(0);
   
   const [lastScanned, setLastScanned] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Server-side summary state
+  const [serverSummary, setServerSummary] = useState(null);
 
-  // --- 🧠 CALCULATION ENGINE ---
-  const { summary, enrichedItems } = useMemo(() => {
-    let sumPromoTotal = 0;
-    let sumTotalItems = 0;
-    let sumPromoDiscount = 0;
-    let sumManualItemDiscount = 0;
+  // Debounce for calculation to avoid spamming Cloud Functions
+  const calculateTimeout = useRef(null);
 
-    // 1. Calculate Per-Item
-    const processedItems = cartItems.map(item => {
-      const newItem = { ...item };
+  // --- 🧠 SERVER CALCULATION ENGINE ---
+  const triggerCalculation = useCallback(async () => {
+    // If empty, reset summary
+    if (cartItems.length === 0) {
+      setServerSummary(null);
+      return;
+    }
 
-      // A. Promotion
-      const promoResult = calculateLine(newItem); 
-      const promoPrice = promoResult.finalTotal;
-      
-      // B. Manual Item Discount
-      const manualPercent = newItem.manualDiscountPercent || 0;
-      const manualDiscAmount = (promoPrice * manualPercent) / 100;
-      const finalLineTotal = promoPrice - manualDiscAmount;
+    // Debounce
+    if (calculateTimeout.current) clearTimeout(calculateTimeout.current);
 
-      newItem.calculatedTotal = finalLineTotal; 
-      newItem.badgeText = promoResult.badgeText;
-      newItem.promoDiscount = promoResult.discountAmount;
-      newItem.manualDiscountAmount = -manualDiscAmount;
+    calculateTimeout.current = setTimeout(async () => {
+      try {
+        const payload = {
+          items: cartItems.map(i => ({ ...i, qty: i.qty || 1 })),
+          billDiscountPercent: billDiscount.percent,
+          coupons,
+          allowance,
+          topup
+        };
 
-      sumPromoTotal += finalLineTotal;
-      sumTotalItems += newItem.qty;
-      sumPromoDiscount += promoResult.discountAmount;
-      sumManualItemDiscount += -manualDiscAmount;
-
-      return newItem;
-    });
-
-    // 2. Bill-Wide Discount
-    const billDiscAmount = (sumPromoTotal * billDiscount.percent) / 100;
-    const totalAfterBillDisc = sumPromoTotal - billDiscAmount;
-
-    // 3. Coupons
-    const totalCouponValue = coupons.reduce((sum, c) => sum + (c.couponValue || 0), 0);
-    const totalAfterCoupons = totalAfterBillDisc - totalCouponValue;
-
-    // 4. Allowance & Topup
-    const totalAfterAllowance = totalAfterCoupons - allowance;
-    const finalNetTotal = totalAfterAllowance - topup; // Apply Topup
-
-    return {
-      enrichedItems: processedItems,
-      summary: {
-        subtotal: sumPromoTotal,
-        totalItems: sumTotalItems,
-        discount: sumPromoDiscount + sumManualItemDiscount,
-        netTotal: Math.max(0, finalNetTotal),
+        const result = await posService.calculateOrder(payload);
         
-        // Breakdown
-        promoDiscount: sumPromoDiscount,
-        manualItemDiscount: sumManualItemDiscount,
-        billDiscountAmount: -billDiscAmount,
-        couponTotal: -totalCouponValue,
-        allowance: -allowance,
-        topup: -topup
+        // Update both items (for badge/promo text) and summary
+        // We merge result items back to cartItems to show badges/discounts
+        // BUT we must be careful not to override local state like "qty" if user is typing fast
+        // For "Thin Client", source of truth is Server, so we SHOULD update.
+        // However, to keep UI snappy, maybe just update "enrichment" fields.
+        
+        // Let's update the cartItems with enriched data from server (badges, prices)
+        // We trust the server's calculation for "calculatedTotal" etc.
+        setCartItems(prev => {
+           // Map server items back to local items order? 
+           // Or just replace? Replacing is safer for sync.
+           // But if user added item while request in flight? 
+           // Optimistic UI implies we keep local changes.
+           // For V1.1, let's just replace and see if it feels laggy.
+           // Ideally, we match by ID.
+           
+           return result.items.map(serverItem => {
+             const local = prev.find(p => (p.sku || p.id) === (serverItem.sku || serverItem.id));
+             // If local has changed qty since request, we might have a sync issue.
+             // But usually for "calculate", we just display result.
+             return { ...local, ...serverItem };
+           });
+        });
+
+        setServerSummary(result.summary);
+      } catch (err) {
+        console.error("Calculation Error:", err);
+        // Don't block UI, just keep old summary or show warning?
       }
-    };
+    }, 500); // 500ms debounce
   }, [cartItems, billDiscount, coupons, allowance, topup]);
+
+  // Trigger calculation when dependencies change
+  useEffect(() => {
+    triggerCalculation();
+    return () => {
+        if (calculateTimeout.current) clearTimeout(calculateTimeout.current);
+    };
+  }, [triggerCalculation]);
+
 
   // --- Actions ---
   const addToCart = async (skuOrItem, quantity = 1) => {
     setIsLoading(true);
     setError(null);
     try {
-      const product = skuOrItem;
+      // 1. Resolve Item (if string SKU passed) - though UI usually passes object from scan
+      let product = skuOrItem;
+      if (typeof skuOrItem === 'string') {
+          // It's a SKU scan
+          product = await posService.scanItem(skuOrItem);
+      }
+      
       if (!product || (!product.sku && !product.id)) throw new Error('Invalid Product');
 
       setCartItems(prev => {
@@ -97,8 +124,12 @@ export const useCart = () => {
         return [...prev, { ...product, qty: quantity, manualDiscountPercent: 0 }];
       });
       setLastScanned(product.sku || product.id);
+      
+      // Calculation will trigger via useEffect
+      
     } catch (err) {
       setError(err.message);
+      // Optional: Play error sound here
     } finally {
       setIsLoading(false);
     }
@@ -128,6 +159,7 @@ export const useCart = () => {
     setAllowance(0);
     setTopup(0);
     setLastScanned(null);
+    setServerSummary(null);
   };
 
   const setManualItemDiscount = (id, percent) => {
@@ -156,13 +188,34 @@ export const useCart = () => {
     setTopup(parseFloat(amount) || 0);
   };
 
+  // Construct Summary Object (Fallback to local simple calc if server not ready?)
+  // For thin client, we prefer waiting for server, but we can show "Calculating..."
+  const displaySummary = serverSummary || {
+  subtotal: toNumber(subtotal),
+      totalItems: cartItems.reduce((a,b) => a + (b.qty||0), 0),
+      discount: 0,
+  netTotal: Math.max(0, toNumber(netTotal)),
+      vatTotal: 0,
+      grandTotal: 0,
+      // Breakdown
+      promoDiscount: 0,
+      manualItemDiscount: 0,
+      billDiscountAmount: 0,
+      couponTotal: 0,
+      allowance: 0,
+      topup: 0
+  };
+
   return { 
-    cartItems: enrichedItems,
+    cartItems,
     addToCart, decreaseItem, removeFromCart, clearCart, 
-    summary, lastScanned, isLoading, error,
+    summary: displaySummary, 
+    lastScanned, isLoading, error,
     setManualItemDiscount, updateBillDiscount, billDiscount,
     addCoupon, removeCoupon, coupons,
     updateAllowance, allowance,
-    updateTopup, topup // [FIX] Return topup
+    updateTopup, topup
   };
 };
+
+

@@ -1,26 +1,193 @@
-﻿exports.calculateCartSummary = (items) => {
-  let subtotal = 0;
-  let totalItems = 0;
+﻿/**
+ * Safe Mapper to handle inconsistent field names from API/DB
+ * Maps various casing to standard keys.
+ */
+const normalizeItem = (item) => {
+  const getVal = (keys) => {
+    for (const key of keys) {
+      if (item[key] !== undefined && item[key] !== null) return item[key];
+    }
+    return undefined;
+  };
 
-  const processedItems = items.map(item => {
-    const total = item.price * item.qty;
-    subtotal += total;
-    totalItems += item.qty;
-    return { ...item, total };
+  return {
+    // Identity
+    id: item.id || item.sku || item.GridProductCode || item.ProductCode,
+    sku: item.sku || item.id || item.GridProductCode || item.ProductCode, // Standardize SKU
+    name: item.name || item.ProductDesc || item.desc || item.description,
+    
+    // Price & Qty
+    qty: parseInt(item.qty || 0),
+    unitPrice: parseFloat(getVal(['unitPrice', 'UnitPrice', 'SellPrice', 'regPrice', 'RegPrice']) || 0),
+    
+    // Promotion Fields
+    method: String(getVal(['method', 'Method', 'method_maint', 'Method_maint']) || '0').trim(),
+    dealQty: parseInt(getVal(['dealQty', 'DealQty', 'dealQty_maint']) || 0),
+    dealPrice: parseFloat(getVal(['dealPrice', 'DealPrice', 'dealPrice_maint']) || 0),
+    
+    // Manual Discount
+    manualDiscountPercent: parseFloat(item.manualDiscountPercent || 0),
+    
+    // Pass through original
+    originalItem: item
+  };
+};
+
+/**
+ * Generates the Thai Promotion Badge Text based on rules
+ */
+const getPromotionBadge = (item) => {
+  const { method, dealQty, dealPrice, unitPrice } = item;
+
+  if (method === '0' || !method) return null;
+
+  // METHOD 8: Buy N Get 1 Free style
+  if (method === '8') {
+    if (dealQty <= 1) return null;
+    if (dealQty === 2) return "ซื้อ 1 แถม 1";
+    if (dealQty === 3) return "ซื้อ 3 แถม 1";
+    return `ซื้อ ${dealQty} แถม 1`; 
+  }
+
+  // METHOD 9: Bundle Price
+  if (method === '9') {
+    if (dealQty <= 1 || dealPrice <= 0) return null;
+    return `ซื้อ ${dealQty} ชิ้น ในราคา ${dealPrice.toLocaleString()}`;
+  }
+
+  // METHOD 1: Special Price
+  if (method === '1') {
+    if (dealPrice <= 0) return null;
+    let percent = 0;
+    if (unitPrice > 0) {
+      percent = Math.round((1 - (dealPrice / unitPrice)) * 100);
+    }
+    if (percent <= 0) return `ราคาพิเศษ ${dealPrice.toLocaleString()}`;
+    return `ราคาพิเศษ ${dealPrice.toLocaleString()} ลด ${percent}%`;
+  }
+
+  return null;
+};
+
+/**
+ * Calculates the total price, discount, and line total for an item
+ */
+const calculateLine = (rawItem) => {
+  const item = normalizeItem(rawItem);
+  const { qty, unitPrice, method, dealQty, dealPrice } = item;
+
+  let total = 0;
+  let discountAmount = 0; // Should be <= 0
+
+  // Default: Normal Price
+  total = qty * unitPrice;
+
+  // --- LOGIC IMPLEMENTATION ---
+  
+  if (method === '8' && dealQty > 0) {
+    // Rule: Pick <dealQty>, Pay for (<dealQty> - 1)
+    const freeCount = Math.floor(qty / dealQty);
+    const paidQty = qty - freeCount;
+    const calculatedTotal = paidQty * unitPrice;
+    
+    discountAmount = calculatedTotal - (qty * unitPrice);
+    total = calculatedTotal;
+
+  } else if (method === '9' && dealQty > 0 && dealPrice > 0) {
+    // Rule: Buy dealQty items for dealPrice
+    const groups = Math.floor(qty / dealQty);
+    const remainder = qty % dealQty;
+    const calculatedTotal = (groups * dealPrice) + (remainder * unitPrice);
+    
+    discountAmount = calculatedTotal - (qty * unitPrice);
+    total = calculatedTotal;
+
+  } else if (method === '1' && dealPrice > 0) {
+    // Rule: Immediate price change
+    const calculatedTotal = qty * dealPrice;
+    
+    discountAmount = calculatedTotal - (qty * unitPrice);
+    total = calculatedTotal;
+  }
+
+  // Safety
+  total = Math.max(0, total);
+
+  return {
+    finalTotal: total,
+    discountAmount: discountAmount,
+    badgeText: getPromotionBadge(item),
+    normalizedItem: item
+  };
+};
+
+exports.calculateCartSummary = (items, billDiscountPercent = 0, coupons = [], allowance = 0, topup = 0) => {
+  let sumPromoTotal = 0;
+  let sumTotalItems = 0;
+  let sumPromoDiscount = 0;
+  let sumManualItemDiscount = 0;
+
+  const processedItems = items.map(rawItem => {
+    // 1. Promotion Calculation
+    const { finalTotal: promoPrice, discountAmount: promoDisc, badgeText, normalizedItem } = calculateLine(rawItem);
+
+    // 2. Manual Item Discount
+    const manualPercent = normalizedItem.manualDiscountPercent || 0;
+    const manualDiscAmount = (promoPrice * manualPercent) / 100;
+    const finalLineTotal = promoPrice - manualDiscAmount;
+
+    sumPromoTotal += finalLineTotal;
+    sumTotalItems += normalizedItem.qty;
+    sumPromoDiscount += promoDisc;
+    sumManualItemDiscount += -manualDiscAmount;
+
+    return {
+      ...rawItem, // Keep original fields
+      calculatedTotal: Number(finalLineTotal.toFixed(2)),
+      badgeText,
+      promoDiscount: Number(promoDisc.toFixed(2)),
+      manualDiscountAmount: Number((-manualDiscAmount).toFixed(2))
+    };
   });
 
+  // 3. Bill-Wide Discount
+  const billDiscAmount = (sumPromoTotal * billDiscountPercent) / 100;
+  const totalAfterBillDisc = sumPromoTotal - billDiscAmount;
+
+  // 4. Coupons
+  const totalCouponValue = coupons.reduce((sum, c) => sum + (c.couponValue || 0), 0);
+  const totalAfterCoupons = totalAfterBillDisc - totalCouponValue;
+
+  // 5. Allowance & Topup
+  const totalAfterAllowance = totalAfterCoupons - allowance;
+  const grandTotal = totalAfterAllowance - topup; 
+
+  // VAT Calculation (Inclusive 7%)
+  // grandTotal = net + vat
+  // net = grandTotal / 1.07
   const vatRate = 7;
-  const grandTotal = subtotal;
-  const netTotal = grandTotal / (1 + (vatRate / 100));
-  const vatTotal = grandTotal - netTotal;
+  const safeGrandTotal = Math.max(0, grandTotal);
+  const netTotal = safeGrandTotal / (1 + (vatRate / 100));
+  const vatTotal = safeGrandTotal - netTotal;
 
   return {
     items: processedItems,
     summary: {
-      totalItems,
-      subtotal: Number(subtotal.toFixed(2)),
+      totalItems: sumTotalItems,
+      subtotal: Number(sumPromoTotal.toFixed(2)),
+      
+      // Discount Breakdown
+      promoDiscount: Number(sumPromoDiscount.toFixed(2)),
+      manualItemDiscount: Number(sumManualItemDiscount.toFixed(2)),
+      billDiscountAmount: Number((-billDiscAmount).toFixed(2)),
+      couponTotal: Number((-totalCouponValue).toFixed(2)),
+      allowance: Number((-allowance).toFixed(2)),
+      topup: Number((-topup).toFixed(2)),
+
+      // Final
       vatTotal: Number(vatTotal.toFixed(2)),
-      grandTotal: Number(grandTotal.toFixed(2))
+      netTotal: Number(netTotal.toFixed(2)), // Base amount before VAT
+      grandTotal: Number(safeGrandTotal.toFixed(2))
     }
   };
 };
