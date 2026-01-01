@@ -17,7 +17,11 @@ export default function PosUI({ onAdminSettings }) {
     updateAllowance, allowance
   } = useCart();
 
-  const [lastOrder, setLastOrder] = useState(null);
+  
+/* AUTO-FIX: SUBTOTAL (COMP) */
+const cart = useCart();
+const subtotal = (cart?.subtotal ?? cart?.summary?.subtotal ?? 0);
+const [lastOrder, setLastOrder] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isVoidMode, setIsVoidMode] = useState(false);
   const [nextQty, setNextQty] = useState(1);
@@ -501,7 +505,7 @@ export default function PosUI({ onAdminSettings }) {
                  </div>
 
                  <div className="col-span-2 text-right">
-                    <div className="text-lg font-bold text-slate-600">เธฟ{price.toLocaleString()}</div>
+                    <div className="text-lg font-bold text-slate-600">ราคาสินค้า{price.toLocaleString()}</div>
                  </div>
 
                  <div className="col-span-2 flex justify-center">
@@ -512,14 +516,14 @@ export default function PosUI({ onAdminSettings }) {
 
                  <div className="col-span-1 text-right">
                     {discountVal > 0 ? (
-                        <div className="text-sm font-bold text-red-600">-เธฟ{discountVal.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
+                        <div className="text-sm font-bold text-red-600">ลดราคา{discountVal.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
                     ) : (
                         <div className="text-slate-300">-</div>
                     )}
                  </div>
 
                  <div className="col-span-2 text-right relative pr-8"> 
-                    <div className="text-xl font-bold text-boots-base">เธฟ{lineTotal.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}</div>
+                    <div className="text-xl font-bold text-boots-base">ชิ้น{lineTotal.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}</div>
                     <button 
                         onClick={() => removeFromCart(item.id || item.sku)} 
                         className={cn("absolute right-0 top-1/2 -translate-y-1/2 p-2 bg-white text-red-500 rounded-full shadow border border-red-100 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50", btnEffect)}
@@ -538,18 +542,18 @@ export default function PosUI({ onAdminSettings }) {
            <div className="flex justify-between items-end mb-4 border-b border-slate-700 pb-4">
               <div className="flex gap-8 text-sm">
                  <div>
-                    <div className="text-slate-400 mb-1">เธขเธญเธ”เธฃเธงเธกเธชเธดเธเธเนเธฒ</div>
-                    <div className="font-bold">{summary.subtotal.toLocaleString()}</div>
+                    <div className="text-slate-400 mb-1">ราคาสินคา</div>
+                    <div className="font-bold">{(summary?.subtotal ?? 0).toLocaleString()}</div>
                  </div>
                  {summary.billDiscountAmount < 0 && (
                      <div>
-                        <div className="text-slate-400 mb-1">เธชเนเธงเธเธฅเธ”เธ—เนเธฒเธขเธเธดเธฅ</div>
+                        <div className="text-slate-400 mb-1">ส่วนลด</div>
                         <div className="font-bold text-orange-400">{summary.billDiscountAmount.toLocaleString()}</div>
                      </div>
                  )}
                  {summary.couponTotal < 0 && (
                      <div>
-                        <div className="text-slate-400 mb-1">เธเธนเธเธญเธ</div>
+                        <div className="text-slate-400 mb-1">ลดคูปอง</div>
                         <div className="font-bold text-orange-400">{summary.couponTotal.toLocaleString()}</div>
                      </div>
                  )}
@@ -566,16 +570,16 @@ export default function PosUI({ onAdminSettings }) {
                 onClick={() => setShowDiscountModal(true)}
                 className={cn("flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-bold text-sm shadow-md transition-all", btnEffect)}
               >
-                <Tag size={18} /> เน€เธกเธเธนเธชเนเธงเธเธฅเธ” (Discount)
+                <Tag size={18} /> ส่วนลด” (Discount)
               </button>
            </div>
 
            <div className="flex justify-between items-start mb-6">
               <div className="flex gap-8">
-                 <div><div className="text-slate-400 text-sm font-medium mb-1">เธเธณเธเธงเธเธเธดเนเธเธฃเธงเธก</div><div className="text-4xl font-bold text-white">{summary.totalItems} <span className="text-lg text-slate-500 font-normal">Items</span></div></div>
+                 <div><div className="text-slate-400 text-sm font-medium mb-1">จำนวนสินค้า</div><div className="text-4xl font-bold text-white">{summary.totalItems} <span className="text-lg text-slate-500 font-normal">Items</span></div></div>
                  {(summary.discount > 0 || summary.billDiscountAmount < 0 || summary.couponTotal < 0 || summary.allowance < 0) && (
                      <div>
-                        <div className="text-orange-400 text-sm font-medium mb-1">เธฃเธงเธกเธชเนเธงเธเธฅเธ”เธชเธธเธ—เธเธด</div>
+                        <div className="text-orange-400 text-sm font-medium mb-1">ส่วนลด</div>
                         <div className="text-4xl font-bold text-orange-400">
                             -เธฟ{(Math.abs(summary.discount + summary.billDiscountAmount + summary.couponTotal + summary.allowance)).toLocaleString()}
                         </div>
@@ -587,7 +591,7 @@ export default function PosUI({ onAdminSettings }) {
            
            <button onClick={handleCheckout} disabled={cartItems.length === 0 || isLoading || isSaving} className={cn("w-full bg-boots-base hover:bg-blue-600 text-white h-20 rounded-xl text-2xl font-bold flex items-center justify-center gap-4 shadow-lg shadow-boots-base/30 disabled:opacity-50 disabled:cursor-not-allowed", btnEffect)}>
               {isSaving ? <Loader2 className="animate-spin w-8 h-8" /> : <ShoppingCart className="w-8 h-8" />}
-              <span>เธเธณเธฃเธฐเน€เธเธดเธ (Checkout)</span>
+              <span>ชำระเงิน(Checkout)</span>
               <span className="bg-white/20 text-white text-sm px-3 py-1 rounded font-normal">F12</span>
            </button>
         </div>
@@ -595,4 +599,8 @@ export default function PosUI({ onAdminSettings }) {
     </div>
   );
 }
+
+
+
+
 

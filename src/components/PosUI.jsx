@@ -1,25 +1,22 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Search, ScanBarcode, Trash2, Loader2, AlertCircle, X, Tag, Package, MinusCircle, FileText, Hash, Percent, Ticket, Gift, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Search, ScanBarcode, Trash2, Loader2, Tag, Package, Percent, Ticket, Gift, CheckCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useCart } from '../hooks/useCart';
 import { useScanListener } from '../hooks/useScanListener';
 import ReceiptModal from './ReceiptModal';
 import ProductLookupModal from './ProductLookupModal';
 import DailyReportModal from './DailyReportModal';
+import PosUploadModal from "./PosUploadModal"; 
 import { posService } from '../services/posService';
 import { useTheme } from '../context/ThemeContext';
-import PosUploadModal from "./PosUploadModal";
 
-// รับ props isDarkMode จากข้างนอก (ถ้ามี)
 export default function PosUI({ isDarkMode: externalDarkMode }) {
   const theme = useTheme();
   const { 
     cartItems, addToCart: originalAddToCart, decreaseItem, removeFromCart, clearCart, 
-    summary, lastScanned, isLoading, error,
+    summary, lastScanned, isLoading,
     setManualItemDiscount, updateBillDiscount, billDiscount,
-    addCoupon, removeCoupon, coupons,
-    updateAllowance, allowance,
-    topup
+    addCoupon, coupons, allowance, topup
   } = useCart();
 
   const [lastOrder, setLastOrder] = useState(null);
@@ -33,6 +30,38 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
   // Modal States
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
+
+  // --- Search UX Enhancements (Arrow select + Enter pick + Search Hits) ---
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
+  const [searchHits, setSearchHits] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("pos_search_hits") || "{}"); }
+    catch { return {}; }
+  });
+
+  const bumpSearchHit = (sku) => {
+    try {
+      const key = (sku || "").toString();
+      if (!key) return;
+      const next = { ...(searchHits || {}) };
+      next[key] = (next[key] || 0) + 1;
+      setSearchHits(next);
+      localStorage.setItem("pos_search_hits", JSON.stringify(next));
+    } catch {}
+  };
+
+  const handleInputKeyDownWrapper = async (e) => {
+    if (showDropdown && suggestions.length > 0 && !isVoidMode && !showDiscountModal) {
+      if (e.key === "ArrowDown") { e.preventDefault(); setSelectedSuggestionIndex(i => Math.min(i + 1, suggestions.length - 1)); return; }
+      if (e.key === "ArrowUp")   { e.preventDefault(); setSelectedSuggestionIndex(i => Math.max(i - 1, 0)); return; }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const sel = suggestions[selectedSuggestionIndex];
+        if (sel?.sku) { bumpSearchHit(sel.sku); await handleSelectSuggestion(sel.sku); }
+        return;
+      }
+    }
+    handleInputKeyDown(e);
+  };
   const [showProductLookup, setShowProductLookup] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
@@ -47,12 +76,11 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
   const [couponInput, setCouponInput] = useState({ type: '', value: '', code: '' });
   const [showCouponInput, setShowCouponInput] = useState(false); 
 
-  // --- Styles Helper ---
-  const headerIconStyle = cn(
-    "p-2 rounded-lg transition-all shadow-sm border",
-    isDarkMode 
-      ? "bg-white border-white text-slate-900 shadow-[0_0_12px_rgba(255,255,255,0.3)]" 
-      : "bg-white border-slate-200 text-slate-600" 
+  const iconButtonStyle = cn(
+  "p-2.5 rounded-xl transition-all shadow-sm border flex items-center justify-center relative",
+  isDarkMode 
+    ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700" 
+    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50" 
   );
 
   const lastItemDetail = lastScanned ? cartItems.find(i => (i.sku === lastScanned || i.id === lastScanned)) : null;
@@ -132,33 +160,18 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
   };
 
   useEffect(() => {
-  const timer = setTimeout(async () => {
-    if (inputValue.length >= 2 && !isVoidMode && !showDiscountModal) {
-      try {
+    const timer = setTimeout(async () => {
+      if (inputValue.length >= 2 && !isVoidMode && !showDiscountModal) { 
         const results = await posService.searchProducts(inputValue);
         setSuggestions(results);
         setShowDropdown(results.length > 0);
-      } catch (e) {
-        console.error(e);
-        setSuggestions([]);
-        setShowDropdown(false);
-      }
-    } else {
-      setSuggestions([]);
-      setShowDropdown(false);
-    }
-  }, 300);
-
-  return () => clearTimeout(timer);
-}, [inputValue, isVoidMode, showDiscountModal]);
+      } else { setSuggestions([]); setShowDropdown(false); }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [inputValue, isVoidMode, showDiscountModal]);
 
   const handleSelectSuggestion = (sku) => {
     posService.scanItem(sku).then(item => { handleScanAction(item); });
-  };
-
-  const openCouponInput = (type) => {
-      setCouponInput({ type, value: '', code: '' });
-      setShowCouponInput(true);
   };
 
   const handleSaveCoupon = () => {
@@ -177,263 +190,271 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
 
   return (
     <div className={cn(
-         "min-h-0 h-full w-full font-['Noto_Sans_Thai'] flex flex-col overflow-hidden relative transition-colors duration-300",
-         isDarkMode ? "bg-slate-950 text-slate-100 selection:bg-blue-900" : "bg-slate-50 text-slate-900 selection:bg-blue-100"
+         "h-full min-h-0 w-full font-['Noto_Sans_Thai'] flex overflow-hidden relative transition-colors duration-300",
+         isDarkMode ? "bg-slate-950 text-slate-100" : "bg-[#F3F5F9] text-slate-900"
     )} onClick={() => setShowDropdown(false)}>
 
-      {/* --- Main Content Area --- */}
-      <div className="flex-1 flex gap-4 overflow-hidden p-3 pb-0 pt-4 min-h-0 items-start">
-          
-          {/* LEFT SIDE (Scanner & Monitor) */}
-          <div className="w-[35%] flex flex-col gap-3 h-full min-h-0 self-start">
-            
-            {/* 1. Scanner Input Card */}
-            <div className={cn("p-4 rounded-2xl shadow-sm border relative transition-colors shrink-0", 
-                isVoidMode 
-                    ? "border-red-500 bg-red-50" 
-                    : (isDarkMode ? "bg-slate-900 border-slate-800 shadow-slate-900/10" : "bg-white border-slate-200")
-            )}>
-               <div className="flex justify-between items-center mb-3">
-                 <div className="flex items-center gap-2">
-                     {/* ใช้ headerIconStyle: พื้นขาวใน Dark Mode */}
-                     <div className={cn(headerIconStyle, isVoidMode && "bg-red-100 text-red-500 border-red-200 shadow-none")}>
-                        {isVoidMode ? <MinusCircle size={18}/> : <ScanBarcode size={18}/>}
-                     </div>
-                     <h2 className={cn("text-sm font-bold uppercase tracking-wider", isVoidMode ? "text-red-600" : (isDarkMode ? "text-slate-400" : "text-slate-600"))}>
-                       {isVoidMode ? 'VOID MODE' : 'SCANNER'}
-                     </h2>
-                 </div>
-                 
-                 <button 
-                   onClick={() => { setIsVoidMode(!isVoidMode); inputRef.current?.focus(); }}
-                   className={cn("text-xs font-bold px-3 py-1.5 rounded-lg border transition-all shadow-sm", 
-                      isVoidMode ? "bg-red-500 text-white border-red-500" : (isDarkMode ? "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50")
-                   )}
-                 >
-                   {isVoidMode ? 'EXIT VOID' : 'VOID ITEM'}
-                 </button>
+      {/* --- LEFT SIDE: SCANNER & FOOTAGE --- */}
+      <div className="w-[35%] max-w-[450px] flex flex-col p-4 gap-4">
+        
+        {/* 1. SCAN PRODUCT BOX */}
+        <div className={cn("p-5 rounded-2xl shadow-sm border relative transition-colors", 
+             isVoidMode 
+                ? "border-red-500 bg-red-50" 
+                : (isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-white")
+        )}>
+            <div className="flex justify-between items-center mb-4">
+               <div className="flex items-center gap-2 text-slate-500">
+                  <ScanBarcode size={20} />
+                  <span className="text-xs font-bold tracking-widest uppercase">Scan Product</span>
                </div>
+               {isVoidMode && <span className="text-xs font-bold text-white bg-red-500 px-2 py-0.5 rounded">VOID MODE</span>}
                
-               <div className="relative">
-                <input 
-                  ref={inputRef}
-                  value={inputValue}
-                  onChange={onInputChangeWrapper}
-                  onKeyDown={handleInputKeyDown}
-                  disabled={isLoading || lastOrder || isSaving || showDiscountModal}
-                  type="text" 
-                  placeholder={isVoidMode ? "สแกนเพื่อลบ..." : "สแกนบาร์โค้ด..."}
-                  autoComplete="off"
-                  className={cn("w-full pl-4 pr-4 py-3 rounded-xl border-2 outline-none transition-all shadow-inner text-xl font-bold placeholder:font-normal placeholder:text-base", 
-                      isVoidMode 
-                        ? "border-red-300 text-red-600 bg-white" 
-                        : (isDarkMode ? "bg-slate-950 border-slate-700 text-white focus:border-boots-base placeholder:text-slate-600" : "border-slate-200 text-slate-800 focus:border-boots-base bg-slate-50 focus:bg-white")
+               <button 
+                  onClick={() => { setIsVoidMode(!isVoidMode); inputRef.current?.focus(); }}
+                  className={cn("text-[10px] font-bold px-2 py-1 rounded border transition-all leading-normal", 
+                     isVoidMode ? "bg-white text-red-500 border-red-200" : "bg-slate-100 text-slate-500"
                   )}
-                />
-                
-                {nextQty > 1 && (
-                   <div className="absolute -top-2 right-0 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 animate-in zoom-in">
-                      <Hash size={10} /> {'Qty: ' + nextQty}
-                   </div>
-                )}
-                
-                {showDropdown && !isVoidMode && (
-                  <div className={cn("absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl border overflow-hidden z-50 max-h-[300px] overflow-y-auto", isDarkMode ? "bg-slate-800 border-slate-700 shadow-slate-950/50" : "bg-white border-slate-200")}>
-                    {suggestions.map((item) => (
-                      <div key={item.sku} onClick={() => handleSelectSuggestion(item.sku)} className={cn("p-3 border-b cursor-pointer flex justify-between items-center", isDarkMode ? "border-slate-700 hover:bg-slate-700" : "border-slate-50 hover:bg-blue-50")}>
-                        <div><div className={cn("font-bold", isDarkMode ? "text-white" : "text-slate-800")}>{item.name}</div><div className="text-xs text-slate-400">{'SKU: ' + item.sku}</div></div><div className="text-boots-base font-bold">{'฿' + item.price.toLocaleString()}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-               </div>
-               {error && (<div className="mt-2 bg-red-50 text-red-600 px-3 py-2 rounded-lg border border-red-100 flex items-center gap-2"><AlertCircle size={16} /><span className="text-xs font-medium">{error}</span></div>)}
+               >
+                  {isVoidMode ? 'CANCEL' : 'VOID ITEM'}
+               </button>
             </div>
-
-            {/* 2. Monitor Card (Last Scanned) */}
-            <div className={cn("flex-1 p-4 flex flex-col relative overflow-hidden transition-colors rounded-2xl border shadow-sm", 
-                isVoidMode 
-                    ? "border-red-200 bg-red-50/50" 
-                    : (isDarkMode ? "bg-slate-900 border-slate-800 shadow-slate-900/10" : "bg-white border-slate-200")
-            )}>
-               <div className="flex items-center gap-2 mb-2 z-10">
-                     {/* Icon Header: พื้นขาวใน Dark Mode */}
-                     <div className={cn(headerIconStyle, !isDarkMode && "text-amber-600 bg-amber-50 border-amber-100")}>
-                        {/* Inventory icon */}
-                        <Package size={18} className={isDarkMode ? "text-slate-900" : ""} />
-                     </div>
-                    <h2 className={cn("text-sm font-bold uppercase tracking-wider", isDarkMode ? "text-slate-400" : "text-slate-500")}>Inventory Monitor</h2>
-               </div>
-
-               {lastItemDetail ? (
-                 <div className="flex-1 flex flex-col items-center justify-center animate-in slide-in-from-right-4 duration-300 text-center relative z-10">
-                    <div className={cn("w-36 h-36 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg border-4", 
-                        isVoidMode 
-                            ? "bg-red-500 border-white text-white" 
-                            : "bg-gradient-to-br from-amber-200 to-amber-500 border-white text-amber-900"
-                    )}>
-                       {isVoidMode ? <MinusCircle size={64}/> : <Package size={72} strokeWidth={1.5} className="drop-shadow-md text-white/90" />}
-                    </div>
-                    
-                    <h3 className={cn("text-2xl font-bold leading-tight mb-2 line-clamp-2 px-2 min-h-[4rem] flex items-center justify-center", isDarkMode ? "text-white" : "text-slate-800")}>{lastItemDetail.name}</h3>
-                    
-                    <div className={cn("text-sm font-mono mb-6 px-3 py-1 rounded-full border", isDarkMode ? "bg-slate-800 border-slate-700 text-slate-400" : "bg-slate-100 border-slate-200 text-slate-500")}>{lastItemDetail.sku}</div>
-                    
-                    {isVoidMode ? (
-                      <div className="text-red-600 font-bold text-3xl animate-pulse bg-red-100 px-6 py-2 rounded-xl border border-red-200">REMOVED -1</div>
-                    ) : (
-                      <div className={cn("flex flex-col items-center w-full rounded-xl py-3 border", isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-100")}>
-                        <div className="text-sm text-slate-400 font-medium mb-1">ราคาต่อหน่วย</div>
-                        <div className={cn("text-5xl font-bold tracking-tighter drop-shadow-sm", isDarkMode ? "text-white" : "text-slate-800")}>
-                            {'฿' + ((lastItemDetail.calculatedTotal !== undefined ? lastItemDetail.calculatedTotal : (lastItemDetail.price * lastItemDetail.qty)) / lastItemDetail.qty).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}
-                        </div>
-                      </div>
-                    )}
-                 </div>
-               ) : (
-                 <div className="flex-1 flex flex-col items-center justify-center text-slate-300">
-                     <div className={cn("w-32 h-32 rounded-full flex items-center justify-center mb-4 border-2 border-dashed", isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200")}>
-                        <Package size={60} className={cn("opacity-40", isDarkMode ? "text-slate-600" : "text-slate-400")} />
-                     </div>
-                     <p className="text-xl font-medium text-slate-400">Ready to Scan</p>
-                 </div>
-               )}
-               
-               <div className={cn("absolute bottom-0 right-0 pointer-events-none transition-opacity", isDarkMode ? "opacity-[0.02] text-white" : "opacity-5 text-slate-900")}>
-                   <Package size={200} />
-               </div>
-
-               <div className="mt-auto pt-4 z-10">
-                  <button onClick={() => setShowProductLookup(true)} className={cn("w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-base transition-colors border shadow-sm", 
-                      isDarkMode ? "bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700" : "bg-white hover:bg-slate-50 text-slate-600 border-slate-200"
-                  )}><Search size={20} /> ค้นหาสินค้า (Lookup)</button>
-               </div>
-            </div>
-          </div>
-
-          {/* RIGHT SIDE (Cart) */}
-          <div className={cn("w-[65%] flex flex-col rounded-t-2xl shadow-xl border overflow-hidden relative h-full min-h-0 self-start", 
-              isDarkMode ? "bg-slate-900 border-slate-800 shadow-slate-950/50" : "bg-white border-slate-200 shadow-slate-200/50"
-          )}>
             
-            {/* Table Head */}
-            <div className={cn("grid grid-cols-12 gap-2 px-4 py-4 border-b text-base font-bold shadow-sm z-20 shrink-0", 
-                isDarkMode ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-slate-100 border-slate-200 text-slate-700"
-            )}>
-               <div className="col-span-1 text-center">#</div>
-               <div className="col-span-4 pl-2">รายการสินค้า</div>
-               <div className="col-span-2 text-right">ราคา</div>
-               <div className="col-span-2 text-center">จำนวน</div>
-               <div className="col-span-1 text-right text-red-500">ลด</div>
-               <div className="col-span-2 text-right pr-4">รวม</div>
-            </div>
-
-            {/* Table Body - DYNAMIC SCROLL */}
-            <div className={cn("flex-1 overflow-y-auto px-2 py-2 scrollbar-hide content-start", isDarkMode ? "bg-slate-900" : "bg-white")}>
-              {cartItems.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-slate-300 pb-20">
-                    <div className={cn("p-8 rounded-full mb-4 border", isDarkMode ? "bg-white border-white text-slate-900 shadow-[0_0_12px_rgba(255,255,255,0.25)]" : "bg-slate-50 border-slate-100")}>
-                        <ShoppingCart size={64} className={cn("opacity-20", isDarkMode ? "text-slate-900" : "text-slate-500")} />
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+              <input 
+                ref={inputRef}
+                value={inputValue}
+                onChange={onInputChangeWrapper}
+                onKeyDown={handleInputKeyDownWrapper}
+                disabled={isLoading || lastOrder || isSaving || showDiscountModal}
+                type="text" 
+                placeholder={isVoidMode ? "สแกนเพื่อลบ..." : "สแกนบาร์โค้ด หรือใส่จำนวน (เช่น 5*)"}
+                autoComplete="off"
+                className={cn("w-full pl-12 pr-4 py-3.5 rounded-xl border-2 outline-none transition-all text-lg font-bold placeholder:font-normal placeholder:text-base leading-normal", 
+                  isVoidMode 
+                    ? "border-red-300 text-red-600 bg-white" 
+                    : (isDarkMode ? "bg-slate-950 border-slate-700 text-white focus:border-blue-500" : "border-slate-200 text-slate-800 focus:border-[#0B2A97] bg-white")
+                )}
+              />
+              {/* Qty Indicator */}
+              {nextQty > 1 && (
+                    <div className="absolute top-1/2 -translate-y-1/2 right-3 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-md shadow-md animate-in zoom-in">
+                       x{nextQty}
                     </div>
-                    <p className="text-xl font-medium text-slate-400">ตะกร้าว่างเปล่า</p>
-                    <p className="text-sm text-slate-500 mt-2">เริ่มสแกนสินค้าเพื่อเพิ่มรายการ</p>
-                </div>
-              ) : (
-                cartItems.map((item, index) => {
-                  const price = item.price || 0;
-                  const qty = item.qty || 0;
-                  const normalTotal = price * qty;
-                  const lineTotal = item.calculatedTotal !== undefined ? item.calculatedTotal : normalTotal; 
-                  const discountVal = normalTotal - lineTotal;
-                  const isItemChecked = discountCheckedItems.has(item.id || item.sku);
-
-                  return (
-                  <div key={item.id || item.sku} className={cn("grid grid-cols-12 gap-2 p-3 border-b items-center transition-colors group relative rounded-lg mx-1", 
-                      isDarkMode ? "border-slate-800 hover:bg-slate-800 text-slate-200" : "border-slate-50 hover:bg-blue-50 text-slate-800",
-                      lastScanned === item.sku && (isDarkMode ? "bg-slate-800 border-slate-700" : "bg-blue-50 border-blue-100")
-                  )}>
-                      <div className="col-span-1 flex justify-center"><div className={cn("w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold shadow-sm", isDarkMode ? "bg-slate-800 border-slate-700 text-slate-400" : "bg-slate-100 border-slate-200 text-slate-500")}>{cartItems.length - index}</div></div>
-                      
-                      <div className="col-span-4 pl-2">
-                         <div className="font-bold text-base line-clamp-1">{item.name}</div>
-                         <div className="flex items-center gap-2 mt-0.5">
-                            <span className={cn("text-[11px] font-mono px-1.5 rounded border", isDarkMode ? "bg-slate-800 border-slate-700 text-slate-400" : "bg-slate-100 border-slate-200 text-slate-500")}>{item.sku}</span>
-                            {item.badgeText && <span className="text-[10px] bg-blue-600 text-white px-1.5 rounded-sm font-bold shadow-sm">{item.badgeText}</span>}
-                         </div>
-                         {isItemChecked && (
-                            <div className="mt-1 flex items-center gap-2 animate-in slide-in-from-left-2">
-                                <input 
-                                    type="number" autoFocus
-                                    value={item.manualDiscountPercent || ''}
-                                    onChange={(e) => setManualItemDiscount(item.id || item.sku, e.target.value)}
-                                    className="w-16 border border-orange-300 rounded px-1 py-0.5 text-center font-bold text-xs focus:border-orange-500 outline-none bg-orange-50 text-slate-900"
-                                    placeholder="%"
-                                />
-                            </div>
-                         )}
-                      </div>
-
-                      <div className="col-span-2 text-right font-medium text-base">{'฿' + price.toLocaleString()}</div>
-
-                      <div className="col-span-2 flex justify-center">
-                         <div className={cn("border px-4 py-1 rounded-lg font-bold shadow-sm min-w-[3.5rem] text-center text-base", isDarkMode ? "bg-slate-800 border-slate-700 text-white" : "bg-white border-slate-200 text-slate-800")}>
-                            {qty}
-                         </div>
-                      </div>
-
-                      <div className="col-span-1 text-right">
-                         {discountVal > 0 ? <div className="text-xs font-bold text-red-500 bg-red-500/10 px-1 py-0.5 rounded inline-block">{'-' + discountVal.toLocaleString()}</div> : <div className="text-slate-400 text-xs">-</div>}
-                      </div>
-
-                      <div className="col-span-2 text-right relative pr-4"> 
-                         <div className="text-lg font-bold">{'฿' + lineTotal.toLocaleString()}</div>
-                         <button 
-                            onClick={() => removeFromCart(item.id || item.sku)} 
-                            className="absolute -right-2 top-1/2 -translate-y-1/2 p-2 bg-transparent border border-red-500/30 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white shadow-sm z-10"
-                         >
-                            <Trash2 size={16} />
-                         </button>
-                      </div>
-                  </div>
-                )})
               )}
             </div>
 
-            {/* Footer Summary - FIXED BOTTOM */}
-            <div className={cn("p-4 z-30 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] shrink-0", isDarkMode ? "bg-slate-950 text-white" : "bg-slate-900 text-white")}>
-               <div className="flex justify-between items-center mb-4 px-2">
-                    <div className="flex gap-8">
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Items</span>
-                            <span className="text-2xl font-bold text-white leading-none">{summary.totalItems}</span>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Subtotal</span>
-                            <span className="text-2xl font-bold text-white leading-none">{summary.subtotal.toLocaleString()}</span>
-                        </div>
-                        {(totalDiscountDisplay > 0) && (
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Savings</span>
-                                <span className="text-2xl font-bold text-red-500 leading-none">{'-' + totalDiscountDisplay.toLocaleString()}</span>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex flex-col items-end">
-                        <span className="text-[11px] font-bold text-blue-300 uppercase tracking-widest mb-1">Net Total Payment</span>
-                        <div className="text-5xl font-bold text-white leading-none tracking-tight">{'฿' + summary.netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                    </div>
-               </div>
-               
-               <button onClick={handleCheckout} disabled={cartItems.length === 0 || isLoading || isSaving} className="w-full bg-boots-base hover:bg-blue-600 text-white h-16 rounded-2xl text-2xl font-bold flex items-center justify-center gap-4 shadow-lg shadow-boots-base/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.99] border border-white/10">
-                  {isSaving ? <Loader2 className="animate-spin w-6 h-6" /> : <ShoppingCart size={28} className="fill-white/20" />}
-                  <span>ชำระเงิน (Checkout)</span>
-               </button>
+            {/* Hint */}
+            <div className="mt-2 flex items-center gap-1 text-[10px] text-slate-400 leading-normal">
+               <span className="bg-yellow-100 text-yellow-700 px-1 rounded">Tip:</span> พิมพ์ 5* เพื่อสแกน 5 ชิ้น
             </div>
-          </div>
+            
+            {/* Search Dropdown */}
+            {showDropdown && !isVoidMode && (
+                  <div className={cn("absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl border overflow-hidden z-50 max-h-[300px] overflow-y-auto", isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+                    {suggestions.map((item) => (
+                      <div key={item.sku} onClick={() => handleSelectSuggestion(item.sku)} className={cn("p-3 border-b cursor-pointer flex justify-between items-center hover:bg-blue-50 dark:hover:bg-slate-700", isDarkMode ? "border-slate-700" : "border-slate-50")}>
+                        <div><div className="font-bold leading-normal">{item.name}</div><div className="text-xs text-slate-400">SKU: {item.sku}</div></div>
+                        <div className="text-blue-600 font-bold">{item.price}</div>
+                      </div>
+                    ))}
+                  </div>
+            )}
+        </div>
+
+        {/* 2. LAST SCANNED */}
+        <div className={cn(
+            "h-[280px] rounded-2xl shadow-sm border relative overflow-hidden flex flex-col items-center justify-center p-6 transition-colors",
+            isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-white"
+        )}>
+            <div className="absolute top-4 left-4 flex items-center gap-2 text-slate-400">
+               <Package size={16} />
+               <span className="text-[10px] font-bold tracking-widest uppercase">Last Scanned</span>
+            </div>
+
+            {lastItemDetail ? (
+               <div className="text-center w-full animate-in slide-in-from-bottom-4 fade-in duration-300">
+                  <div className="mb-4 relative inline-block">
+                     <div className={cn("w-24 h-24 rounded-2xl flex items-center justify-center shadow-lg mx-auto", 
+                        isVoidMode ? "bg-red-100 text-red-500" : "bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600"
+                     )}>
+                        <Package size={48} strokeWidth={1.5} />
+                     </div>
+                     <div className="absolute -bottom-2 -right-2 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-md">
+                        x{lastItemDetail.qty}
+                     </div>
+                  </div>
+                  
+                  <h3 className={cn("text-lg font-bold leading-normal mb-2 line-clamp-2 px-4 min-h-[3.5rem] flex items-center justify-center", isDarkMode ? "text-white" : "text-slate-800")}>
+                     {lastItemDetail.name}
+                  </h3>
+                  
+                  <div className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight">
+                     {((lastItemDetail.calculatedTotal !== undefined ? lastItemDetail.calculatedTotal : (lastItemDetail.price * lastItemDetail.qty))).toLocaleString()}
+                  </div>
+                  <div className="text-sm text-slate-400 mt-1">
+                     {lastItemDetail.sku}
+                  </div>
+               </div>
+            ) : (
+               <div className="flex flex-col items-center justify-center opacity-30">
+                  <ScanBarcode size={64} className="mb-4" />
+                  <span className="text-sm font-bold leading-normal">พร้อมใช้งาน</span>
+               </div>
+            )}
+            
+            <div className="absolute bottom-4 left-4 right-4">
+               <div className="grid grid-cols-1 gap-2">
+                 <button
+                   onClick={() => setShowProductLookup(true)}
+                   className={cn(
+                     "w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors leading-normal",
+                     isDarkMode ? "bg-slate-800 text-slate-200 hover:bg-slate-700" : "bg-[#F3F5F9] text-slate-600 hover:bg-slate-200"
+                   )}
+                 >
+                   <Search size={16} /> ค้นหาสินค้า
+                 </button>
+               </div>
+           </div>
+        </div>
       </div>
 
-      {/* Modals */}
+      {/* --- RIGHT SIDE --- */}
+      <div className={cn("flex-1 flex flex-col m-4 ml-0 rounded-3xl overflow-hidden shadow-xl border relative",
+          isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-white shadow-slate-200"
+      )}>
+         
+         {/* CART HEADER */}
+         <div className={cn(
+             "grid grid-cols-12 px-6 py-4 text-[13px] font-extrabold tracking-wider border-b",
+             isDarkMode ? "border-slate-800 text-slate-400 bg-slate-900" : "border-slate-100 text-slate-500 bg-white"
+         )}>
+             <div className="col-span-1">No.</div>
+             <div className="col-span-4 leading-normal">สินค้า</div>
+             <div className="col-span-2 text-right leading-normal">ราคา/หน่วย</div>
+             <div className="col-span-1 text-center leading-normal">จำนวน</div>
+             <div className="col-span-2 text-center leading-normal">ส่วนลด</div>
+             <div className="col-span-2 text-right leading-normal">รวม</div>
+         </div>
+
+         {/* CART LIST */}
+         <div className="flex-1 overflow-y-auto px-4 py-2 scrollbar-hide">
+            {cartItems.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-slate-300 pb-10">
+                   <ShoppingCart size={48} className="mb-4 opacity-20" />
+                   <p className="font-medium leading-normal">ตะกร้าว่างเปล่า</p>
+                </div>
+            ) : (
+                cartItems.map((item, index) => {
+                    const lineTotal = item.calculatedTotal !== undefined ? item.calculatedTotal : (item.price * item.qty); 
+                    const normalPrice = item.normalPrice || item.price;
+                    const discountVal = (normalPrice - item.price) * item.qty;
+
+                    return (
+                       <div key={item.id || item.sku} className={cn("grid grid-cols-12 px-2 py-4 border-b items-center text-sm group hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors", isDarkMode ? "border-slate-800 text-slate-200" : "border-slate-50 text-slate-700")}>
+                          <div className="col-span-1 text-slate-400 text-xs">{cartItems.length - index}</div>
+                          
+                          <div className="col-span-4 pr-2">
+                             <div className="font-bold truncate text-base leading-normal">{item.name}</div>
+                             <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[10px] text-slate-400 font-mono">{item.sku}</span>
+                                {item.badgeText && <span className="text-[9px] bg-red-100 text-red-600 px-1 rounded font-bold leading-normal">{item.badgeText}</span>}
+                             </div>
+                          </div>
+                          
+                          <div className="col-span-2 text-right font-medium text-slate-500">
+                             {item.price.toLocaleString()}
+                          </div>
+                          
+                          <div className="col-span-1 flex justify-center">
+                             <div className="w-8 h-8 rounded-lg border flex items-center justify-center bg-white dark:bg-slate-700 dark:border-slate-600 text-xs font-bold shadow-sm">
+                                {item.qty}
+                             </div>
+                          </div>
+                          
+                          <div className="col-span-2 text-center">
+                              {discountVal > 0 ? (
+                                  <span className="text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded text-xs font-bold">
+                                      -{discountVal.toLocaleString()}
+                                  </span>
+                              ) : (
+                                  <span className="text-slate-300">-</span>
+                              )}
+                          </div>
+
+                          <div className="col-span-2 text-right font-bold text-lg relative group">
+                             {lineTotal.toLocaleString()}
+                             <button 
+                                onClick={() => removeFromCart(item.id || item.sku)}
+                                className="absolute right-full mr-2 top-1/2 -translate-y-1/2 p-2 bg-red-50 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white shadow-sm"
+                             >
+                                <Trash2 size={16} />
+                             </button>
+                          </div>
+                       </div>
+                    );
+                })
+            )}
+         </div>
+
+         {/* FOOTER */}
+         <div className="bg-[#0B1221] text-white p-6 shrink-0 relative overflow-hidden">
+             <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+             <div className="flex justify-between items-end relative z-10">
+                 <div className="flex flex-col gap-1">
+                     <span className="text-slate-400 text-sm font-medium leading-normal">จำนวนชิ้นรวม</span>
+                     <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold tracking-tight">{summary.totalItems}</span>
+                        <span className="text-slate-500 text-lg">Items</span>
+                     </div>
+                     {totalDiscountDisplay > 0 && (
+                        <div className="text-red-400 text-sm mt-1 animate-pulse leading-normal">
+                           ประหยัดไป ฿{totalDiscountDisplay.toLocaleString()}
+                        </div>
+                     )}
+                 </div>
+
+                 <div className="flex flex-col items-end gap-4">
+                     <div className="text-right">
+                        <span className="text-slate-400 text-sm font-medium block mb-1 leading-normal">ยอดสุทธิ (Net Total)</span>
+                        <span className="text-5xl font-bold tracking-tighter">
+                           <span className="text-2xl align-top mr-1"></span>
+                           {summary.netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </span>
+                     </div>
+                 </div>
+             </div>
+
+             <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between">
+                 
+                 <button 
+                    onClick={() => setShowDiscountModal(true)}
+                    className={cn(
+                        "px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors leading-normal",
+                        "bg-white/10 text-white hover:bg-white/20 border border-white/10"
+                    )}
+                 >
+                    <Tag size={18} />
+                    <span>ส่วนลด</span>
+                    {totalDiscountDisplay > 0 && <span className="ml-1 w-2 h-2 bg-red-500 rounded-full"></span>}
+                 </button>
+
+                 <button 
+                    onClick={handleCheckout} 
+                    disabled={cartItems.length === 0 || isLoading || isSaving}
+                    className="bg-[#1D4ED8] hover:bg-blue-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/50 flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed leading-normal"
+                 >
+                    {isSaving ? <Loader2 className="animate-spin" size={20}/> : <ShoppingCart size={20} />}
+                    <span className="text-lg">ชำระเงิน (Checkout)</span>
+                    <span className="bg-black/20 px-2 py-0.5 rounded text-xs ml-2">F12</span>
+                 </button>
+             </div>
+         </div>
+      </div>
+
+      {/* --- MODALS (Simplified for display) --- */}
       {lastOrder && <ReceiptModal order={lastOrder} onClose={() => setLastOrder(null)} />}
       {showProductLookup && <ProductLookupModal onClose={() => setShowProductLookup(false)} />}
       {showReport && <DailyReportModal onClose={() => setShowReport(false)} />}
@@ -441,53 +462,49 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
         open={showUploadModal}
         onClose={() => setShowUploadModal(false)}
         isDarkMode={isDarkMode}
-        pricingReady={true}
+        pricingReady={true} 
       />
 
-      {/* --- Discount Menu Modal (ปรับ Logo พื้นขาวใน Dark Mode) --- */}
       {showDiscountModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in zoom-in-95 duration-200">
             <div className={cn("w-full max-w-4xl h-[80vh] rounded-3xl shadow-2xl flex overflow-hidden border transition-colors", isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}>
                 
-                {/* Sidebar */}
                 <div className={cn("w-64 p-6 border-r flex flex-col gap-3 transition-colors", isDarkMode ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200")}>
                     <h2 className={cn("text-2xl font-bold mb-6 flex items-center gap-3", isDarkMode ? "text-white" : "text-slate-800")}>
-                        {/* ไอคอน Tag ใน Modal: พื้นขาวใน Dark Mode */}
-                        <span className={headerIconStyle}><Tag size={20} /></span> ส่วนลด
+                        <span className={iconButtonStyle}><Tag size={20} /></span> <span className="leading-normal">ส่วนลด</span>
                     </h2>
                     
-                    <button onClick={() => setActiveTab('discount')} className={cn("flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all", activeTab === 'discount' ? (isDarkMode ? "bg-slate-800 text-boots-base shadow-sm" : "bg-white shadow-md text-boots-base ring-2 ring-boots-base border-transparent") : (isDarkMode ? "text-slate-400 hover:bg-slate-900" : "text-slate-500 hover:bg-slate-100"))}>
+                    <button onClick={() => setActiveTab('discount')} className={cn("flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all leading-normal", activeTab === 'discount' ? "bg-blue-600 text-white shadow-md" : (isDarkMode ? "text-slate-400 hover:bg-slate-900" : "text-slate-500 hover:bg-slate-100"))}>
                         <Percent size={20}/> ส่วนลดทั่วไป
                     </button>
-                    <button onClick={() => setActiveTab('coupon')} className={cn("flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all", activeTab === 'coupon' ? (isDarkMode ? "bg-slate-800 text-boots-base shadow-sm" : "bg-white shadow-md text-boots-base ring-2 ring-boots-base border-transparent") : (isDarkMode ? "text-slate-400 hover:bg-slate-900" : "text-slate-500 hover:bg-slate-100"))}>
+                    <button onClick={() => setActiveTab('coupon')} className={cn("flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all leading-normal", activeTab === 'coupon' ? "bg-blue-600 text-white shadow-md" : (isDarkMode ? "text-slate-400 hover:bg-slate-900" : "text-slate-500 hover:bg-slate-100"))}>
                         <Ticket size={20}/> คูปอง
                     </button>
-                    <button onClick={() => setActiveTab('allowance')} className={cn("flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all", activeTab === 'allowance' ? (isDarkMode ? "bg-slate-800 text-boots-base shadow-sm" : "bg-white shadow-md text-boots-base ring-2 ring-boots-base border-transparent") : (isDarkMode ? "text-slate-400 hover:bg-slate-900" : "text-slate-500 hover:bg-slate-100"))}>
+                    <button onClick={() => setActiveTab('allowance')} className={cn("flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all leading-normal", activeTab === 'allowance' ? "bg-blue-600 text-white shadow-md" : (isDarkMode ? "text-slate-400 hover:bg-slate-900" : "text-slate-500 hover:bg-slate-100"))}>
                         <Gift size={20}/> Allowance
                     </button>
                     <div className="mt-auto">
-                        <button onClick={() => setShowDiscountModal(false)} className={cn("w-full py-4 rounded-xl font-bold shadow-lg transition-colors text-lg", isDarkMode ? "bg-slate-800 hover:bg-slate-700 text-slate-300" : "bg-slate-800 text-white hover:bg-slate-700 shadow-slate-300")}>ปิดหน้าต่าง</button>
+                        <button onClick={() => setShowDiscountModal(false)} className={cn("w-full py-4 rounded-xl font-bold shadow-lg transition-colors text-lg leading-normal", isDarkMode ? "bg-slate-800 hover:bg-slate-700 text-slate-300" : "bg-slate-800 text-white hover:bg-slate-700 shadow-slate-300")}>ปิดหน้าต่าง</button>
                     </div>
                 </div>
 
-                {/* Content Area */}
                 <div className={cn("flex-1 p-10 overflow-y-auto transition-colors", isDarkMode ? "bg-slate-900 text-slate-200" : "bg-white text-slate-800")}>
                     {activeTab === 'discount' && (
                         <div>
                             <div className={cn("flex gap-4 mb-8 border-b pb-6", isDarkMode ? "border-slate-800" : "border-slate-100")}>
-                                <button onClick={() => setDiscountSubTab('bill')} className={cn("px-8 py-3 rounded-xl font-bold transition-all text-lg", discountSubTab === 'bill' ? "bg-boots-base text-white shadow-md" : (isDarkMode ? "bg-slate-800 text-slate-400 hover:bg-slate-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"))}>ลดทั้งบิล</button>
-                                <button onClick={() => setDiscountSubTab('items')} className={cn("px-8 py-3 rounded-xl font-bold transition-all text-lg", discountSubTab === 'items' ? "bg-boots-base text-white shadow-md" : (isDarkMode ? "bg-slate-800 text-slate-400 hover:bg-slate-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"))}>ลดรายสินค้า</button>
+                                <button onClick={() => setDiscountSubTab('bill')} className={cn("px-8 py-3 rounded-xl font-bold transition-all text-lg leading-normal", discountSubTab === 'bill' ? "bg-blue-600 text-white shadow-md" : (isDarkMode ? "bg-slate-800 text-slate-400 hover:bg-slate-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"))}>ลดทั้งบิล</button>
+                                <button onClick={() => setDiscountSubTab('items')} className={cn("px-8 py-3 rounded-xl font-bold transition-all text-lg leading-normal", discountSubTab === 'items' ? "bg-blue-600 text-white shadow-md" : (isDarkMode ? "bg-slate-800 text-slate-400 hover:bg-slate-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"))}>ลดรายสินค้า</button>
                             </div>
 
                             {discountSubTab === 'bill' && (
                                 <div className="max-w-md">
-                                    <label className={cn("block text-lg font-bold mb-3", isDarkMode ? "text-slate-300" : "text-slate-700")}>ส่วนลดทั้งบิล (%)</label>
+                                    <label className={cn("block text-lg font-bold mb-3 leading-normal", isDarkMode ? "text-slate-300" : "text-slate-700")}>ส่วนลดทั้งบิล (%)</label>
                                     <div className="flex gap-4 items-center">
                                         <input 
                                             type="number" 
                                             value={billDiscount.percent} 
                                             onChange={(e) => updateBillDiscount(e.target.value)}
-                                            className={cn("w-full border-2 rounded-2xl px-6 py-4 text-3xl font-bold focus:border-boots-base outline-none transition-colors", isDarkMode ? "bg-slate-950 border-slate-700 text-white placeholder:text-slate-600" : "border-slate-200 bg-slate-50 focus:bg-white")}
+                                            className={cn("w-full border-2 rounded-2xl px-6 py-4 text-3xl font-bold focus:border-blue-600 outline-none transition-colors", isDarkMode ? "bg-slate-950 border-slate-700 text-white placeholder:text-slate-600" : "border-slate-200 bg-slate-50 focus:bg-white")}
                                             placeholder="0"
                                         />
                                         <div className="flex items-center text-slate-400 font-bold text-3xl">%</div>
@@ -497,111 +514,57 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
 
                             {discountSubTab === 'items' && (
                                 <div>
-                                    <h3 className={cn("font-bold mb-4 text-lg", isDarkMode ? "text-slate-400" : "text-slate-500")}>เลือกสินค้าที่ต้องการลดราคา</h3>
+                                    <h3 className={cn("font-bold mb-4 text-lg leading-normal", isDarkMode ? "text-slate-400" : "text-slate-500")}>เลือกสินค้าที่ต้องการลดราคา</h3>
                                     <div className="space-y-3">
                                         {cartItems.map((item, idx) => {
                                             const isChecked = discountCheckedItems.has(item.id || item.sku);
                                             return (
                                                 <div key={idx} 
                                                      onClick={() => toggleDiscountCheck(item.id || item.sku)}
-                                                     className={cn("flex items-center gap-6 p-4 rounded-2xl border-2 cursor-pointer transition-all", isChecked ? "border-boots-base bg-blue-50/10" : (isDarkMode ? "border-slate-800 bg-slate-950 hover:border-slate-700" : "border-slate-100 bg-white hover:border-slate-300"))}
+                                                     className={cn("flex items-center gap-6 p-4 rounded-2xl border-2 cursor-pointer transition-all", isChecked ? "border-blue-600 bg-blue-50/10" : (isDarkMode ? "border-slate-800 bg-slate-950 hover:border-slate-700" : "border-slate-100 bg-white hover:border-slate-300"))}
                                                 >
-                                                    <div className={cn("w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-colors", isChecked ? "bg-boots-base border-boots-base text-white" : (isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-300 bg-white"))}>
+                                                    <div className={cn("w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-colors", isChecked ? "bg-blue-600 border-blue-600 text-white" : (isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-300 bg-white"))}>
                                                         {isChecked && <CheckCircle size={20} />}
                                                     </div>
                                                     <div className="flex-1">
-                                                        <div className={cn("font-bold text-lg", isDarkMode ? "text-white" : "text-slate-800")}>{item.name}</div>
+                                                        <div className={cn("font-bold text-lg leading-normal", isDarkMode ? "text-white" : "text-slate-800")}>{item.name}</div>
                                                         <div className="text-sm text-slate-400 font-mono">{item.sku}</div>
                                                     </div>
-                                                    <div className={cn("font-bold text-xl", isDarkMode ? "text-slate-300" : "text-slate-600")}>{'฿' + (item.price * item.qty).toLocaleString()}</div>
+                                                    <div className={cn("font-bold text-xl", isDarkMode ? "text-slate-300" : "text-slate-600")}>{(item.price * item.qty).toLocaleString()}</div>
+                                                    
+                                                    {isChecked && (
+                                                        <div className="flex items-center gap-2 animate-in zoom-in">
+                                                            <input 
+                                                                type="number" autoFocus
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                value={item.manualDiscountPercent || ''}
+                                                                onChange={(e) => setManualItemDiscount(item.id || item.sku, e.target.value)}
+                                                                className="w-20 border-2 border-orange-300 rounded-lg px-2 py-1 text-center font-bold text-lg focus:border-orange-500 outline-none bg-orange-50 text-slate-900"
+                                                                placeholder="%"
+                                                            />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             );
                                         })}
-                                        {cartItems.length === 0 && <p className="text-slate-400 text-center py-8 text-xl">ไม่มีสินค้าในตะกร้า</p>}
+                                        {cartItems.length === 0 && <p className="text-slate-400 text-center py-8 text-xl leading-normal">ไม่มีสินค้าในตะกร้า</p>}
                                     </div>
                                 </div>
                             )}
                         </div>
                     )}
-
-                    {activeTab === 'coupon' && (
-                        <div>
-                            <h3 className={cn("text-3xl font-bold mb-8", isDarkMode ? "text-white" : "text-slate-800")}>เลือกประเภทคูปอง</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                <button onClick={() => openCouponInput('store')} className="h-48 rounded-3xl flex flex-col items-center justify-center gap-4 text-white text-2xl font-bold bg-gradient-to-br from-sky-400 to-sky-500 shadow-xl hover:scale-105 transition-transform">
-                                    <div className="p-4 bg-white/20 rounded-full backdrop-blur-sm"><Ticket size={48} /></div> Store Coupon
-                                </button>
-                                <button onClick={() => openCouponInput('vendor')} className="h-48 rounded-3xl flex flex-col items-center justify-center gap-4 text-white text-2xl font-bold bg-gradient-to-br from-pink-400 to-pink-500 shadow-xl hover:scale-105 transition-transform">
-                                    <div className="p-4 bg-white/20 rounded-full backdrop-blur-sm"><Tag size={48} /></div> Vendor Coupon
-                                </button>
-                                <button onClick={() => openCouponInput('boots')} className="h-48 rounded-3xl flex flex-col items-center justify-center gap-4 text-white text-2xl font-bold bg-gradient-to-br from-blue-900 to-blue-800 shadow-xl hover:scale-105 transition-transform">
-                                    <div className="p-4 bg-white/20 rounded-full backdrop-blur-sm"><CheckCircle size={48} /></div> Mobile Coupon
-                                </button>
-                            </div>
-                            {/* ... Coupon list ... */}
-                             <div className="mt-10">
-                                <h4 className={cn("font-bold mb-6 text-xl", isDarkMode ? "text-slate-300" : "text-slate-700")}>คูปองที่เพิ่ม ({coupons.length})</h4>
-                                {coupons.length === 0 ? <p className="text-slate-400 text-lg">ยังไม่มีคูปอง</p> : (
-                                    <div className="flex flex-wrap gap-4">
-                                        {coupons.map((c, i) => (
-                                            <div key={i} className={cn("flex items-center gap-3 px-5 py-3 rounded-xl border-2 shadow-sm", isDarkMode ? "bg-slate-950 border-slate-800" : "bg-white border-slate-100")}>
-                                                <div className="text-base">
-                                                    <span className={cn("font-bold uppercase", isDarkMode ? "text-slate-300" : "text-slate-700")}>{c.couponType}</span> 
-                                                    <span className="mx-3 text-slate-500">|</span> 
-                                                    <span className="font-mono text-slate-500">{c.couponCode}</span>
-                                                    <span className="ml-3 font-bold text-red-500 text-lg">{'-฿' + c.couponValue}</span>
-                                                </div>
-                                                <button onClick={() => removeCoupon(c.couponCode)} className="text-slate-400 hover:text-red-500 ml-2"><X size={20}/></button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'allowance' && (
-                        <div className="max-w-md">
-                            <label className={cn("block text-lg font-bold mb-3", isDarkMode ? "text-slate-300" : "text-slate-700")}>จำนวนเงิน Allowance</label>
-                            <div className="relative">
-                                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-2xl">฿</span>
-                                <input 
-                                    type="number" 
-                                    value={allowance}
-                                    onChange={(e) => updateAllowance(e.target.value)}
-                                    className={cn("w-full border-2 rounded-2xl pl-12 pr-6 py-4 text-3xl font-bold focus:border-boots-base outline-none transition-colors", isDarkMode ? "bg-slate-950 border-slate-700 text-white placeholder:text-slate-600" : "border-slate-200 bg-slate-50 focus:bg-white")} 
-                                    placeholder="0.00"
-                                />
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
-
-            {/* Coupon Input Sub-Modal */}
+            {/* Coupon Input */}
             {showCouponInput && (
                 <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/50">
                     <div className={cn("p-8 w-[450px] animate-in zoom-in-95 rounded-2xl shadow-2xl", isDarkMode ? "bg-slate-900 text-white" : "bg-white text-slate-800")}>
-                        <h3 className={cn("text-xl font-bold mb-6 uppercase flex items-center gap-2", isDarkMode ? "text-slate-300" : "text-slate-700")}>
-                             Add {couponInput.type} Coupon
-                        </h3>
-                        {couponInput.type !== 'boots' && (
-                            <div className="mb-6">
-                                <label className="block text-sm font-bold text-slate-500 mb-2">มูลค่าคูปอง (บาท)</label>
-                                <input autoFocus type="number" className={cn("w-full border-2 rounded-xl px-4 py-3 font-bold text-2xl focus:border-boots-base outline-none", isDarkMode ? "bg-slate-950 border-slate-700 text-white" : "border-slate-200")} 
-                                    value={couponInput.value} onChange={e => setCouponInput({...couponInput, value: e.target.value})} />
-                            </div>
-                        )}
-                        <div className="mb-8">
-                            <label className="block text-sm font-bold text-slate-500 mb-2">รหัสคูปอง / Barcode</label>
-                            <input type="text" className={cn("w-full border-2 rounded-xl px-4 py-3 font-mono text-lg focus:border-boots-base outline-none", isDarkMode ? "bg-slate-950 border-slate-700 text-white placeholder:text-slate-600" : "border-slate-200 placeholder:text-slate-400")}
-                                value={couponInput.code} onChange={e => setCouponInput({...couponInput, code: e.target.value})} 
-                                placeholder="Scan or type..."
-                            />
-                        </div>
-                        <div className="flex gap-4">
-                            <button onClick={() => setShowCouponInput(false)} className={cn("flex-1 py-3 rounded-xl font-bold text-lg transition-colors", isDarkMode ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}>ยกเลิก</button>
-                            <button onClick={handleSaveCoupon} className="flex-1 py-3 bg-boots-base text-white rounded-xl font-bold hover:bg-blue-700 text-lg">บันทึก</button>
+                        <h3 className="text-xl font-bold mb-4 leading-normal">Add Coupon ({couponInput.type})</h3>
+                        <input className="w-full border p-2 rounded mb-2 text-black" placeholder="Code" value={couponInput.code} onChange={e=>setCouponInput({...couponInput, code:e.target.value})} />
+                        {couponInput.type !== 'boots' && <input className="w-full border p-2 rounded mb-4 text-black" type="number" placeholder="Value" value={couponInput.value} onChange={e=>setCouponInput({...couponInput, value:e.target.value})} />}
+                        <div className="flex gap-2">
+                             <button onClick={()=>setShowCouponInput(false)} className="flex-1 p-2 bg-gray-200 rounded text-black">Cancel</button>
+                             <button onClick={handleSaveCoupon} className="flex-1 p-2 bg-blue-600 text-white rounded">Save</button>
                         </div>
                     </div>
                 </div>
@@ -611,7 +574,3 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
     </div>
   );
 }
-
-
-
-

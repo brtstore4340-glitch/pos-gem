@@ -13,6 +13,8 @@ const APP_VERSION = "1.2.0";
 const APP_UPDATED = "2025-12-26";
 
 export default function PosUI({ onAdminSettings }) {
+  const sidePanelW = "w-[clamp(320px,34vw,520px)]";
+
   const { 
     cartItems, addToCart: originalAddToCart, decreaseItem, removeFromCart, clearCart, 
     summary, lastScanned, isLoading, error,
@@ -30,7 +32,55 @@ export default function PosUI({ onAdminSettings }) {
   // Modal States
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showProductLookup, setShowProductLookup] = useState(false);
+  
+  // --- Search UX Enhancements (Arrow select + Enter pick + Search Hits) ---
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
+  const [searchHits, setSearchHits] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("pos_search_hits") || "{}"); }
+    catch { return {}; }
+  });
+
+  const bumpSearchHit = (sku) => {
+    try {
+      const key = (sku || "").toString();
+      if (!key) return;
+      const next = { ...(searchHits || {}) };
+      next[key] = (next[key] || 0) + 1;
+      setSearchHits(next);
+      localStorage.setItem("pos_search_hits", JSON.stringify(next));
+    } catch {}
+  };
+
+  const handleInputKeyDownWrapper = async (e) => {
+    // When dropdown is open: arrow up/down move highlight; Enter picks highlighted item.
+    if (showDropdown && suggestions.length > 0 && !isVoidMode && !showDiscountModal) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedSuggestionIndex(i => Math.min(i + 1, suggestions.length - 1));
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedSuggestionIndex(i => Math.max(i - 1, 0));
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const sel = suggestions[selectedSuggestionIndex];
+        if (sel?.sku) {
+          bumpSearchHit(sel.sku);
+          await handleSelectSuggestion(sel.sku);
+          setInputValue("");          // (4.2) clear after choose
+          setShowDropdown(false);
+        }
+        return;
+      }
+    }
+
+    // fallback to original handler
+    handleInputKeyDown(e);
+  };
+const [showProductLookup, setShowProductLookup] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
 
@@ -133,7 +183,17 @@ export default function PosUI({ onAdminSettings }) {
 
   const { inputRef, inputValue, setInputValue, handleInputKeyDown, handleInputChange } = useScanListener(handleScanAction, !lastOrder ? handleCheckout : undefined);
 
-  const onInputChangeWrapper = (e) => {
+  
+  // --- Focus Guard: only auto-focus scan input when POS is in "scan-ready" state ---
+  const canFocusScanInput = !lastOrder && !isSaving && !showDiscountModal && !showProductLookup && !showReport && !showCouponInput;
+
+  useEffect(() => {
+    if (!canFocusScanInput) return;
+    // light auto-focus when returning to POS
+    const t = setTimeout(() => inputRef.current?.focus(), 0);
+    return () => clearTimeout(t);
+  }, [canFocusScanInput]);
+const onInputChangeWrapper = (e) => {
     const val = e.target.value;
     if (val.endsWith('*')) {
       const numberPart = val.slice(0, -1);
@@ -157,9 +217,22 @@ export default function PosUI({ onAdminSettings }) {
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (inputValue.length >= 2 && !isVoidMode && !showDiscountModal) { 
-        const results = await posService.searchProducts(inputValue);
+                let results = await posService.searchProducts(inputValue);
+
+        // sort by hit (desc) then name (asc)
+        const hits = searchHits || {};
+        results = [...results].sort((a, b) => {
+          const ha = hits[(a?.sku || "").toString()] || 0;
+          const hb = hits[(b?.sku || "").toString()] || 0;
+          if (hb !== ha) return hb - ha;
+          const na = (a?.name || "").toString().toLowerCase();
+          const nb = (b?.name || "").toString().toLowerCase();
+          return na.localeCompare(nb);
+        });
+
         setSuggestions(results);
         setShowDropdown(results.length > 0);
+        if (results.length > 0) setSelectedSuggestionIndex(0);
       } else {
         setSuggestions([]);
         setShowDropdown(false);
@@ -168,10 +241,11 @@ export default function PosUI({ onAdminSettings }) {
     return () => clearTimeout(timer);
   }, [inputValue, isVoidMode, showDiscountModal]);
 
-  const handleSelectSuggestion = (sku) => {
-    posService.scanItem(sku).then(item => {
-        handleScanAction(item);
-    });
+    const handleSelectSuggestion = async (sku) => {
+    const item = await posService.scanItem(sku);
+    await handleScanAction(item);
+    setInputValue("");          // (4.2) clear after choose
+    setShowDropdown(false);
   };
 
   const openCouponInput = (type) => {
@@ -194,7 +268,7 @@ export default function PosUI({ onAdminSettings }) {
   };
 
   return (
-    <div className="h-screen w-full bg-slate-100 p-4 font-sans flex gap-4 overflow-hidden" onClick={() => setShowDropdown(false)}>
+    <div className="h-screen w-full bg-slate-100 p-4 font-sans flex gap-4 overflow-hidden items-stretch" onClick={() => setShowDropdown(false)}>
       
       {/* Modals */}
       {lastOrder && <ReceiptModal order={lastOrder} onClose={() => setLastOrder(null)} />}
@@ -376,7 +450,7 @@ export default function PosUI({ onAdminSettings }) {
                {isVoidMode ? <><MinusCircle size={16}/> VOID MODE (สแกนเพื่อลบ)</> : <><ScanBarcode size={16}/> SCAN PRODUCT</>}
              </h2>
              <button 
-               onClick={() => { setIsVoidMode(!isVoidMode); inputRef.current?.focus(); }}
+               onClick={() => { setIsVoidMode(!isVoidMode); if (canFocusScanInput) inputRef.current?.focus(); }}
                className={cn("text-xs font-bold px-3 py-1.5 rounded-lg border", btnEffect, isVoidMode ? "bg-red-600 text-white border-red-600 shadow-red-200" : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200")}
              >
                {isVoidMode ? 'EXIT VOID MODE' : 'SCAN TO VOID'}
@@ -392,8 +466,8 @@ export default function PosUI({ onAdminSettings }) {
               ref={inputRef}
               value={inputValue}
               onChange={onInputChangeWrapper}
-              onKeyDown={handleInputKeyDown}
-              disabled={isLoading || lastOrder || isSaving || showDiscountModal}
+              onKeyDown={handleInputKeyDownWrapper}
+              disabled={isLoading || lastOrder || isSaving || showDiscountModal || showProductLookup || showReport || showCouponInput}
               type="text" 
               placeholder={isVoidMode ? "สแกนสินค้าเพื่อลบออก..." : "สแกนบาร์โค้ด... (พิมพ์ 3* เพื่อระบุจำนวน)"}
               autoComplete="off"
@@ -409,8 +483,16 @@ export default function PosUI({ onAdminSettings }) {
             
             {showDropdown && !isVoidMode && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-[300px] overflow-y-auto z-50">
-                {suggestions.map((item) => (
-                  <div key={item.sku} onClick={() => handleSelectSuggestion(item.sku)} className="p-4 border-b border-slate-50 hover:bg-boots-light/30 cursor-pointer flex justify-between items-center group">
+                {suggestions.map((item, idx) => (
+                  <div
+                    key={item.sku}
+                    onMouseEnter={() => setSelectedSuggestionIndex(idx)}
+                    onClick={async () => { bumpSearchHit(item.sku); await handleSelectSuggestion(item.sku); }}
+                    className={cn(
+                      "p-4 border-b border-slate-50 cursor-pointer flex justify-between items-center group transition-colors",
+                      idx === selectedSuggestionIndex ? "bg-boots-light/40" : "hover:bg-boots-light/30"
+                    )}
+                  >
                     <div><div className="text-slate-800 font-bold">{item.name}</div><div className="text-xs text-slate-400">SKU: {item.sku}</div></div><div className="text-boots-base font-bold">฿{item.price.toLocaleString()}</div>
                   </div>
                 ))}
@@ -423,7 +505,23 @@ export default function PosUI({ onAdminSettings }) {
         {/* Monitor Section */}
         <div className={cn("flex-1 rounded-2xl shadow-sm border p-6 flex flex-col relative overflow-hidden transition-colors", isVoidMode ? "bg-red-50/30 border-red-200" : "bg-white border-slate-200")}>
            <div className="absolute top-0 right-0 p-6 opacity-5 text-slate-400 pointer-events-none"><Package size={180} /></div>
-           <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-auto flex items-center gap-2"><Box size={16} /> {isVoidMode ? 'Void Monitor' : 'Last Scanned'}</h2>
+                      <div className="flex items-center justify-between">
+             <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-auto flex items-center gap-2">
+               <Box size={16} /> {isVoidMode ? 'Void Monitor' : 'Last Scanned'}
+             </h2>
+
+             <button
+               onClick={() => setShowProductLookup(true)}
+               className={cn(
+                 "text-xs font-bold px-3 py-1.5 rounded-lg border flex items-center gap-2",
+                 btnEffect,
+                 "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+               )}
+               title="คนหารายละเอยดสนคา"
+             >
+               <Search size={14} /> คนหารายละเอยดสนคา
+             </button>
+           </div>
            
            {lastItemDetail ? (
              <div className="mt-4 animate-in slide-in-from-right-4 duration-300 text-center relative z-10">
@@ -449,10 +547,7 @@ export default function PosUI({ onAdminSettings }) {
            ) : (
              <div className="flex-1 flex flex-col items-center justify-center text-slate-300"><ScanBarcode size={64} className="mb-4 opacity-50" /><p className="text-lg font-medium">พร้อมใช้งาน</p></div>
            )}
-           <div className="mt-auto pt-6 border-t border-slate-100 flex gap-2">
-              <button onClick={() => setShowProductLookup(true)} className={cn("flex-1 py-3 bg-slate-50 hover:bg-boots-light text-slate-600 hover:text-boots-base rounded-xl font-bold flex items-center justify-center gap-2", btnEffect)}><Search size={20} /> ค้นหาสินค้า</button>
-           </div>
-        </div>
+</div>
       </div>
 
       {/* RIGHT SIDE */}
@@ -646,3 +741,5 @@ export default function PosUI({ onAdminSettings }) {
     </div>
   );
 }
+
+

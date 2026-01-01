@@ -28,7 +28,7 @@ export default function PosUploadModal({ open, onClose, isDarkMode = false, mast
   const [result, setResult] = useState(null);
   const [err, setErr] = useState("");
 
-  const canSecondary = (typeof pricingReady === "boolean") ? pricingReady : masterReady;
+  const canSecondary = masterReady && (typeof pricingReady === "boolean" ? pricingReady : true);
 
   const statusBadge = useMemo(() => {
     if (busy) return { icon: <Loader2 className="animate-spin" size={16} />, text: `${progress.phase} ${progress.percent}%` };

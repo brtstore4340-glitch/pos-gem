@@ -7,7 +7,7 @@ import ReceiptModal from './ReceiptModal';
 import ProductLookupModal from './ProductLookupModal';
 import DailyReportModal from './DailyReportModal';
 import PosUploadModal from "./PosUploadModal";
-import NeuClock from "./NeuClock"; 
+import NeuClock from "../components/NeuClock"; 
 import { posService } from '../services/posService';
 import { useTheme } from '../context/ThemeContext';
 
@@ -197,8 +197,7 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
         isDarkMode ? "bg-slate-900 border-b border-slate-800" : "bg-white border-b border-slate-200"
       )}>
         <div className="flex items-center gap-4">
-          <div className="text-[#0B2A97] font-black text-3xl italic tracking-tighter cursor-pointer">Boots</div>
-          <div className="flex flex-col">
+            <div className="flex flex-col">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">POS System</span>
             <span className="text-[10px] font-bold text-slate-300">v1.2.0</span>
           </div>
@@ -405,7 +404,7 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
             {cartItems.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-300 pb-10">
                 <ShoppingCart size={64} className="mb-4 opacity-20" />
-                <p className="font-medium text-lg">ตะกร้าว่างเปล่า</p>
+                <p className="font-medium text-lg">ยังไม่มีการเลือกซื้อสินค้า</p>
               </div>
             ) : (
               cartItems.map((item, index) => {
