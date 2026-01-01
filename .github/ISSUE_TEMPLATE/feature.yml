@@ -1,0 +1,33 @@
+name: Feature (Module work)
+description: Build a feature for a specific module
+title: "[Feature] "
+labels: ["type: feature", "priority: P2"]
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      options: ["module: M0","module: M1","module: M2","module: M3","module: M4","module: M5","module: M6","module: M7"]
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: ["area: pos-ui","area: catalog","area: pricing","area: auth-security","area: reports-pdf","area: infra-ci"]
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      placeholder: "..."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria (DoD)
+      placeholder: "- ..."
+    validations:
+      required: true

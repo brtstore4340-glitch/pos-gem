@@ -1,0 +1,51 @@
+name: Deploy (Firebase)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install root
+        run: npm ci
+
+      - name: Build web
+        run: npm run build
+
+      - name: Install functions
+        if: ${{ hashFiles('functions/package.json') != '' }}
+        run: |
+          cd functions
+          npm ci
+
+      - name: Build functions (if exists)
+        if: ${{ hashFiles('functions/package.json') != '' }}
+        run: |
+          cd functions
+          npm run build --if-present
+
+      - name: Write Google credentials (from base64 secret)
+        shell: bash
+        run: |
+          echo "${{ secrets.GCP_SA_KEY_JSON_B64 }}" | base64 -d > "$HOME/gcp-sa.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcp-sa.json" >> $GITHUB_ENV
+
+      - name: Deploy hosting + functions
+        run: npx firebase-tools@latest deploy --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive --only hosting,functions

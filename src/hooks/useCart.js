@@ -188,22 +188,34 @@ const lineTotalOf = (item) => {
     setTopup(parseFloat(amount) || 0);
   };
 
+  // --- Local fallback totals (when serverSummary not ready) ---
+  const subtotalLocal = useMemo(() => {
+    return (cartItems ?? []).reduce((sum, it) => sum + lineTotalOf(it), 0);
+  }, [cartItems]);
+
+  const totalItemsLocal = useMemo(() => {
+    return (cartItems ?? []).reduce((a, b) => a + toNumber(b?.qty ?? 0), 0);
+  }, [cartItems]);
+
+  // For fallback UI only: assume discount/vat not computed locally
+  const netTotalLocal = useMemo(() => Math.max(0, subtotalLocal), [subtotalLocal]);
   // Construct Summary Object (Fallback to local simple calc if server not ready?)
   // For thin client, we prefer waiting for server, but we can show "Calculating..."
-  const displaySummary = serverSummary || {
-  subtotal: toNumber(subtotal),
-      totalItems: cartItems.reduce((a,b) => a + (b.qty||0), 0),
-      discount: 0,
-  netTotal: Math.max(0, toNumber(netTotal)),
-      vatTotal: 0,
-      grandTotal: 0,
-      // Breakdown
-      promoDiscount: 0,
-      manualItemDiscount: 0,
-      billDiscountAmount: 0,
-      couponTotal: 0,
-      allowance: 0,
-      topup: 0
+    const displaySummary = serverSummary || {
+    subtotal: subtotalLocal,
+    totalItems: totalItemsLocal,
+    discount: 0,
+    netTotal: netTotalLocal,
+    vatTotal: 0,
+    grandTotal: netTotalLocal,
+
+    // Breakdown
+    promoDiscount: 0,
+    manualItemDiscount: 0,
+    billDiscountAmount: 0,
+    couponTotal: 0,
+    allowance: toNumber(allowance),
+    topup: toNumber(topup),
   };
 
   return { 
@@ -217,5 +229,6 @@ const lineTotalOf = (item) => {
     updateTopup, topup
   };
 };
+
 
 
