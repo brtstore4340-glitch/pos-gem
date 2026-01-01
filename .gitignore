@@ -88,3 +88,9 @@ env.local/
 # ---- Continue / AI agent local configs ----
 .continue/agents/*.yaml
 .continue/agents/*.yml
+.continue/agents/*.yaml
+.continue/agents/*.yml
+.env
+.env.*
+env.local/
+*.env
