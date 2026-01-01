@@ -79,3 +79,12 @@ build/
 *.bak
 *.bak_*
 *.tmp
+# ---- Secrets / local env ----
+.env
+.env.*
+env.local/
+*.env
+
+# ---- Continue / AI agent local configs ----
+.continue/agents/*.yaml
+.continue/agents/*.yml
