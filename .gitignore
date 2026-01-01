@@ -94,3 +94,16 @@ env.local/
 .env.*
 env.local/
 *.env
+# secrets / local env
+.env
+.env.*
+.env.local
+env.local/
+*.env
+
+# Continue agent configs (local)
+.continue/agents/*.yaml
+.continue/agents/*.yml
+
+# node
+node_modules/
