@@ -76,3 +76,9 @@ build/
 *.log
 .DS_Store
 .firebase/
+
+.env.local / 
+env.local/firebasePOSGemi.env
+
+.continue/agents/
+
