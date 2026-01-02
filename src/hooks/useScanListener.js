@@ -1,11 +1,13 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 
-export function useScanListener(onScan, onCheckout, onSearchToggle) {
+export function useScanListener(onScan, onCheckout, onSearchToggle, options = {}) {
   const inputRef = useRef(null);
   const [inputValue, setInputValue] = useState('');
+  const enabled = options?.enabled !== false;
 
   // Auto-focus logic
   useEffect(() => {
+    if (!enabled) return;
     const focusInput = () => {
         if (inputRef.current) inputRef.current.focus();
     };
@@ -55,9 +57,10 @@ export function useScanListener(onScan, onCheckout, onSearchToggle) {
         window.removeEventListener('keydown', handleGlobalKeyDown);
         window.removeEventListener('click', focusInput);
     };
-  }, [onCheckout, onSearchToggle]);
+  }, [enabled, onCheckout, onSearchToggle]);
 
   const handleInputKeyDown = (e) => {
+    if (!enabled) return;
     if (e.key === 'Enter') {
       const value = e.target.value.trim();
       if (value) {

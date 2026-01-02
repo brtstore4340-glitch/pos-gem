@@ -113,7 +113,7 @@ function AppShell() {
             </div>
 
             <div className="flex items-center gap-3">
-                            <ClockWidget isDark={isDark} />
+              <ClockWidget isDark={isDark} />
               <ThemeToggle />
             </div>
 

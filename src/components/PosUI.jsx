@@ -49,19 +49,6 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
     } catch {}
   };
 
-  const handleInputKeyDownWrapper = async (e) => {
-    if (showDropdown && suggestions.length > 0 && !isVoidMode && !showDiscountModal) {
-      if (e.key === "ArrowDown") { e.preventDefault(); setSelectedSuggestionIndex(i => Math.min(i + 1, suggestions.length - 1)); return; }
-      if (e.key === "ArrowUp")   { e.preventDefault(); setSelectedSuggestionIndex(i => Math.max(i - 1, 0)); return; }
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const sel = suggestions[selectedSuggestionIndex];
-        if (sel?.sku) { bumpSearchHit(sel.sku); await handleSelectSuggestion(sel.sku); }
-        return;
-      }
-    }
-    handleInputKeyDown(e);
-  };
   const [showProductLookup, setShowProductLookup] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
@@ -143,7 +130,31 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
     finally { setIsSaving(false); }
   };
 
-  const { inputRef, inputValue, setInputValue, handleInputKeyDown, handleInputChange } = useScanListener(handleScanAction, !lastOrder ? handleCheckout : undefined);
+  const scanEnabled = !showDiscountModal && !showCouponInput && !showProductLookup && !showReport && !showUploadModal && !lastOrder;
+
+  const { inputRef, inputValue, setInputValue, handleInputKeyDown, handleInputChange } = useScanListener(
+    handleScanAction,
+    scanEnabled ? handleCheckout : undefined,
+    () => setShowProductLookup(true),
+    { enabled: scanEnabled }
+  );
+
+  const handleInputKeyDownWrapper = async (e) => {
+    if (scanEnabled && showDropdown && suggestions.length > 0 && !isVoidMode) {
+      if (e.key === "ArrowDown") { e.preventDefault(); setSelectedSuggestionIndex(i => Math.min(i + 1, suggestions.length - 1)); return; }
+      if (e.key === "ArrowUp")   { e.preventDefault(); setSelectedSuggestionIndex(i => Math.max(i - 1, 0)); return; }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const sel = suggestions[selectedSuggestionIndex];
+        if (sel?.sku) {
+          bumpSearchHit(sel.sku);
+          await handleSelectSuggestion(sel.sku);
+        }
+        return;
+      }
+    }
+    handleInputKeyDown(e);
+  };
 
   const onInputChangeWrapper = (e) => {
     const val = e.target.value;
@@ -161,17 +172,39 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
 
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (inputValue.length >= 2 && !isVoidMode && !showDiscountModal) { 
+      if (inputValue.length >= 2 && scanEnabled && !isVoidMode) { 
         const results = await posService.searchProducts(inputValue);
-        setSuggestions(results);
-        setShowDropdown(results.length > 0);
+        const hits = (() => {
+          try { return JSON.parse(localStorage.getItem("pos_search_hits") || "{}"); } catch { return {}; }
+        })();
+        const sorted = [...(results || [])].sort((a, b) => {
+          const ak = (a?.sku || a?.id || "").toString();
+          const bk = (b?.sku || b?.id || "").toString();
+          const ah = hits?.[ak] || 0;
+          const bh = hits?.[bk] || 0;
+          if (bh !== ah) return bh - ah;
+          const an = (a?.name || "").toString();
+          const bn = (b?.name || "").toString();
+          return an.localeCompare(bn, undefined, { sensitivity: "base" });
+        });
+        setSuggestions(sorted);
+        setSelectedSuggestionIndex(0);
+        setShowDropdown(sorted.length > 0);
       } else { setSuggestions([]); setShowDropdown(false); }
     }, 300);
     return () => clearTimeout(timer);
-  }, [inputValue, isVoidMode, showDiscountModal]);
+  }, [inputValue, isVoidMode, scanEnabled]);
 
-  const handleSelectSuggestion = (sku) => {
-    posService.scanItem(sku).then(item => { handleScanAction(item); });
+  const handleSelectSuggestion = async (sku) => {
+    if (!sku) return;
+    setInputValue('');
+    setShowDropdown(false);
+    try {
+      const item = await posService.scanItem(sku);
+      await handleScanAction(item);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleSaveCoupon = () => {
@@ -190,12 +223,12 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
 
   return (
     <div className={cn(
-         "h-full min-h-0 w-full font-['Noto_Sans_Thai'] flex overflow-hidden relative transition-colors duration-300",
+         "h-full min-h-0 w-full font-['Noto_Sans_Thai'] flex gap-0 overflow-hidden relative transition-colors duration-300",
          isDarkMode ? "bg-slate-950 text-slate-100" : "bg-[#F3F5F9] text-slate-900"
     )} onClick={() => setShowDropdown(false)}>
 
       {/* --- LEFT SIDE: SCANNER & FOOTAGE --- */}
-      <div className="w-[35%] max-w-[450px] flex flex-col p-4 gap-4">
+      <div className="w-[35%] max-w-[450px] flex flex-col m-4 mr-2 gap-4 min-h-0">
         
         {/* 1. SCAN PRODUCT BOX */}
         <div className={cn("p-5 rounded-2xl shadow-sm border relative transition-colors", 
@@ -204,33 +237,33 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
                 : (isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-white")
         )}>
             <div className="flex justify-between items-center mb-4">
-               <div className="flex items-center gap-2 text-slate-500">
+               <div className="flex items-center gap-1 text-slate-500">
                   <ScanBarcode size={20} />
                   <span className="text-xs font-bold tracking-widest uppercase">Scan Product</span>
                </div>
                {isVoidMode && <span className="text-xs font-bold text-white bg-red-500 px-2 py-0.5 rounded">VOID MODE</span>}
                
-               <button 
-                  onClick={() => { setIsVoidMode(!isVoidMode); inputRef.current?.focus(); }}
-                  className={cn("text-[10px] font-bold px-2 py-1 rounded border transition-all leading-normal", 
-                     isVoidMode ? "bg-white text-red-500 border-red-200" : "bg-slate-100 text-slate-500"
-                  )}
-               >
-                  {isVoidMode ? 'CANCEL' : 'VOID ITEM'}
-               </button>
+                <button 
+                   onClick={() => { setIsVoidMode(!isVoidMode); if (scanEnabled) inputRef.current?.focus(); }}
+                   className={cn("text-[10px] font-bold px-2 py-1 rounded border transition-all leading-normal", 
+                      isVoidMode ? "bg-white text-red-500 border-red-200" : "bg-slate-100 text-slate-500"
+                   )}
+                >
+                   {isVoidMode ? 'CANCEL' : 'VOID ITEM'}
+                </button>
             </div>
             
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-              <input 
-                ref={inputRef}
-                value={inputValue}
-                onChange={onInputChangeWrapper}
-                onKeyDown={handleInputKeyDownWrapper}
-                disabled={isLoading || lastOrder || isSaving || showDiscountModal}
-                type="text" 
-                placeholder={isVoidMode ? "สแกนเพื่อลบ..." : "สแกนบาร์โค้ด หรือใส่จำนวน (เช่น 5*)"}
-                autoComplete="off"
+                <input 
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={onInputChangeWrapper}
+                  onKeyDown={handleInputKeyDownWrapper}
+                  disabled={isLoading || lastOrder || isSaving || showDiscountModal || showCouponInput || showProductLookup || showReport || showUploadModal}
+                  type="text" 
+                  placeholder={isVoidMode ? "สแกนเพื่อลบ..." : "สแกนบาร์โค้ด หรือใส่จำนวน (เช่น 5*)"}
+                  autoComplete="off"
                 className={cn("w-full pl-12 pr-4 py-3.5 rounded-xl border-2 outline-none transition-all text-lg font-bold placeholder:font-normal placeholder:text-base leading-normal", 
                   isVoidMode 
                     ? "border-red-300 text-red-600 bg-white" 
@@ -252,26 +285,47 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
             
             {/* Search Dropdown */}
             {showDropdown && !isVoidMode && (
-                  <div className={cn("absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl border overflow-hidden z-50 max-h-[300px] overflow-y-auto", isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
-                    {suggestions.map((item) => (
-                      <div key={item.sku} onClick={() => handleSelectSuggestion(item.sku)} className={cn("p-3 border-b cursor-pointer flex justify-between items-center hover:bg-blue-50 dark:hover:bg-slate-700", isDarkMode ? "border-slate-700" : "border-slate-50")}>
-                        <div><div className="font-bold leading-normal">{item.name}</div><div className="text-xs text-slate-400">SKU: {item.sku}</div></div>
-                        <div className="text-blue-600 font-bold">{item.price}</div>
-                      </div>
-                    ))}
+              <div className={cn("absolute top-full left-0 right-0 mt-2 rounded-xl shadow-xl border overflow-hidden z-50 max-h-[300px] overflow-y-auto", isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+                {suggestions.map((item, idx) => (
+                  <div
+                    key={item.sku}
+                    onMouseEnter={() => setSelectedSuggestionIndex(idx)}
+                    onClick={() => { bumpSearchHit(item.sku); handleSelectSuggestion(item.sku); }}
+                    className={cn(
+                      "p-3 border-b cursor-pointer flex justify-between items-center",
+                      idx === selectedSuggestionIndex
+                        ? (isDarkMode ? "bg-slate-700" : "bg-blue-50")
+                        : "hover:bg-blue-50 dark:hover:bg-slate-700",
+                      isDarkMode ? "border-slate-700" : "border-slate-50"
+                    )}
+                  >
+                    <div><div className="font-bold leading-normal">{item.name}</div><div className="text-xs text-slate-400">SKU: {item.sku}</div></div>
+                    <div className="text-blue-600 font-bold">{item.price}</div>
                   </div>
+                ))}
+              </div>
             )}
         </div>
 
         {/* 2. LAST SCANNED */}
         <div className={cn(
-            "h-[280px] rounded-2xl shadow-sm border relative overflow-hidden flex flex-col items-center justify-center p-6 transition-colors",
+            "flex-1 min-h-0 rounded-2xl shadow-sm border relative overflow-hidden flex flex-col items-center justify-center p-6 transition-colors",
             isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-white"
         )}>
-            <div className="absolute top-4 left-4 flex items-center gap-2 text-slate-400">
-               <Package size={16} />
-               <span className="text-[10px] font-bold tracking-widest uppercase">Last Scanned</span>
-            </div>
+             <div className="absolute top-4 left-4 flex items-center gap-2 text-slate-400">
+                <Package size={16} />
+                <span className="text-[10px] font-bold tracking-widest uppercase">Last Scanned</span>
+             </div>
+
+             <button
+               onClick={() => setShowProductLookup(true)}
+               className={cn(
+                 "absolute top-4 right-4 text-[10px] font-bold px-2 py-1 rounded border transition-all leading-normal",
+                 isDarkMode ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700" : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
+               )}
+             >
+               ค้นหารายละเอียดสินค้า
+             </button>
 
             {lastItemDetail ? (
                <div className="text-center w-full animate-in slide-in-from-bottom-4 fade-in duration-300">
@@ -304,24 +358,12 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
                </div>
             )}
             
-            <div className="absolute bottom-4 left-4 right-4">
-               <div className="grid grid-cols-1 gap-2">
-                 <button
-                   onClick={() => setShowProductLookup(true)}
-                   className={cn(
-                     "w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors leading-normal",
-                     isDarkMode ? "bg-slate-800 text-slate-200 hover:bg-slate-700" : "bg-[#F3F5F9] text-slate-600 hover:bg-slate-200"
-                   )}
-                 >
-                   <Search size={16} /> ค้นหาสินค้า
-                 </button>
-               </div>
-           </div>
-        </div>
+            <div className="absolute bottom-4 left-4 right-4" />
+         </div>
       </div>
 
       {/* --- RIGHT SIDE --- */}
-      <div className={cn("flex-1 flex flex-col m-4 ml-0 rounded-3xl overflow-hidden shadow-xl border relative",
+      <div className={cn("flex-1 flex flex-col m-4 ml-2 rounded-3xl overflow-hidden shadow-xl border relative min-h-0",
           isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-white shadow-slate-200"
       )}>
          
@@ -399,57 +441,62 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
          </div>
 
          {/* FOOTER */}
-         <div className="bg-[#0B1221] text-white p-6 shrink-0 relative overflow-hidden">
-             <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+         <div className={cn(
+             "text-white px-5 py-[17px] shrink-0 relative overflow-hidden backdrop-blur-md border-t border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]",
+             isDarkMode ? "bg-[#7497b0]/70" : "bg-[#071e31]/80"
+         )}>
+             <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/20 rounded-full blur-3xl pointer-events-none"></div>
 
-             <div className="flex justify-between items-end relative z-10">
-                 <div className="flex flex-col gap-1">
-                     <span className="text-slate-400 text-sm font-medium leading-normal">จำนวนชิ้นรวม</span>
-                     <div className="flex items-baseline gap-2">
-                        <span className="text-4xl font-bold tracking-tight">{summary.totalItems}</span>
-                        <span className="text-slate-500 text-lg">Items</span>
-                     </div>
-                     {totalDiscountDisplay > 0 && (
-                        <div className="text-red-400 text-sm mt-1 animate-pulse leading-normal">
-                           ประหยัดไป ฿{totalDiscountDisplay.toLocaleString()}
-                        </div>
-                     )}
-                 </div>
+             <div className="relative z-10 translate-y-[2px]">
+               <div className="flex justify-between items-center mb-4">
+                   <div className="flex flex-col">
+                       <span className="text-slate-400 text-xs font-medium leading-normal mb-1">จำนวนชิ้นรวม</span>
+                       <div className="flex items-baseline gap-2">
+                          <span className="text-5xl font-bold tracking-tight">{summary.totalItems}</span>
+                          <span className="text-slate-500 text-base">Items</span>
+                       </div>
+                       {totalDiscountDisplay > 0 && (
+                          <div className="text-red-400 text-sm mt-1 animate-pulse leading-normal">
+                             ประหยัดไป ฿{totalDiscountDisplay.toLocaleString()}
+                          </div>
+                       )}
+                   </div>
 
-                 <div className="flex flex-col items-end gap-4">
-                     <div className="text-right">
-                        <span className="text-slate-400 text-sm font-medium block mb-1 leading-normal">ยอดสุทธิ (Net Total)</span>
-                        <span className="text-5xl font-bold tracking-tighter">
-                           <span className="text-2xl align-top mr-1"></span>
-                           {summary.netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </span>
-                     </div>
-                 </div>
-             </div>
+                   <div className="flex flex-col items-end">
+                       <span className="text-slate-400 text-xs font-medium leading-normal mb-1">ยอดสุทธิ (Net Total)</span>
+                       <div className="flex items-baseline gap-1">
+                          <span className="text-3xl font-bold">฿</span>
+                          <span className="text-6xl font-bold tracking-tighter">
+                             {summary.netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </span>
+                       </div>
+                   </div>
+               </div>
 
-             <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between">
-                 
-                 <button 
-                    onClick={() => setShowDiscountModal(true)}
-                    className={cn(
-                        "px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors leading-normal",
-                        "bg-white/10 text-white hover:bg-white/20 border border-white/10"
-                    )}
-                 >
-                    <Tag size={18} />
-                    <span>ส่วนลด</span>
-                    {totalDiscountDisplay > 0 && <span className="ml-1 w-2 h-2 bg-red-500 rounded-full"></span>}
-                 </button>
+               <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+                   
+                   <button 
+                      onClick={() => setShowDiscountModal(true)}
+                      className={cn(
+                          "px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition-all leading-normal shadow-lg shadow-black/20 -translate-y-[1px] transform-gpu",
+                          "bg-white/10 text-white hover:bg-white/20 active:translate-y-0 active:scale-[0.98] active:bg-[#72a4f7]/70 active:backdrop-blur-md active:shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]"
+                      )}
+                   >
+                      <Tag size={18} />
+                      <span>ส่วนลด</span>
+                      {totalDiscountDisplay > 0 && <span className="ml-1 w-2 h-2 bg-red-500 rounded-full"></span>}
+                   </button>
 
-                 <button 
-                    onClick={handleCheckout} 
-                    disabled={cartItems.length === 0 || isLoading || isSaving}
-                    className="bg-[#1D4ED8] hover:bg-blue-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/50 flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed leading-normal"
-                 >
-                    {isSaving ? <Loader2 className="animate-spin" size={20}/> : <ShoppingCart size={20} />}
-                    <span className="text-lg">ชำระเงิน (Checkout)</span>
-                    <span className="bg-black/20 px-2 py-0.5 rounded text-xs ml-2">F12</span>
-                 </button>
+                   <button 
+                      onClick={handleCheckout} 
+                      disabled={cartItems.length === 0 || isLoading || isSaving}
+                      className="bg-[#1D4ED8] hover:bg-blue-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/50 flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed leading-normal"
+                   >
+                      {isSaving ? <Loader2 className="animate-spin" size={20}/> : <ShoppingCart size={20} />}
+                      <span className="text-lg">ชำระเงิน (Checkout)</span>
+                      <span className="bg-black/20 px-2 py-0.5 rounded text-xs ml-2">F12</span>
+                   </button>
+               </div>
              </div>
          </div>
       </div>
@@ -574,3 +621,7 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
     </div>
   );
 }
+
+
+
+

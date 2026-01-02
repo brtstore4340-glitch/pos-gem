@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
-import { Upload, Database, FileText, CheckCircle, AlertCircle, RefreshCw, ArrowLeft, Trash2, Lock, Search } from 'lucide-react';
+import { Upload, Database, FileText, CheckCircle, AlertCircle, RefreshCw, ArrowLeft, Trash2, Lock, Search, HelpCircle } from 'lucide-react';
 import { posService } from '../services/posService';
 import { cn } from '../utils/cn';
 
@@ -142,6 +142,16 @@ export default function AdminSettings({ onBack }) {
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Items</span>
                 <span className="font-bold text-slate-800 text-xl">{stats.count.toLocaleString()}</span>
              </div>
+             <a
+               href="/readme.html"
+               target="_blank"
+               rel="noreferrer"
+               className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/70 backdrop-blur border border-white/60 text-slate-500 hover:text-boots-base hover:bg-white/90 transition-colors shadow-sm"
+               aria-label="Open readme menu"
+               title="Readme menu"
+             >
+               <HelpCircle size={18} />
+             </a>
              <Database size={24} className="text-blue-500"/>
              {hasMaster && <button onClick={handleClearDatabase} className="ml-4 text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"><Trash2 size={20}/></button>}
           </div>
