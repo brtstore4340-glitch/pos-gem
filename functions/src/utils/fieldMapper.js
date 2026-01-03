@@ -8,11 +8,19 @@ return String(key)
 }
 
 const FIELD_MAP = Object.freeze({
+// Print fields
 'DESCRIPTION PRINT': 'name',
 'REG PRICE': 'unitPrice',
 'DEAL PRICE': 'dealPrice',
 'DEAL QTY': 'dealQty',
-'METHOD': 'method'
+'METHOD': 'method',
+// Maintenance event fields
+'DESCRIPTION MAINT': 'name',
+'REGPRICE MAINT': 'unitPrice',
+'UNITPRICE MAINT': 'unitPrice',
+'DEALPRICE MAINT': 'dealPrice',
+'DEALQTY MAINT': 'dealQty',
+'METHOD MAINT': 'method'
 });
 
 function safeNumber(val) {
@@ -34,11 +42,9 @@ const nk = normalizeKey(k);
 const dest = FIELD_MAP[nk];
 if (!dest) continue;
 
-```
 if (dest === 'unitPrice' || dest === 'dealPrice') out[dest] = safeNumber(v);
 else if (dest === 'dealQty' || dest === 'method') out[dest] = safeInt(v);
 else out[dest] = String(v ?? '');
-```
 
 }
 return out;

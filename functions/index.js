@@ -4,6 +4,7 @@ const admin = require("firebase-admin");
 
 admin.initializeApp();
 const db = admin.firestore();
+const { calculateCartSummary } = require("./src/services/cartService");
 
 const REGION = "asia-southeast1";
 const UPLOAD_DOC = db.collection("system_metadata").doc("upload_status");
@@ -154,6 +155,12 @@ function mapMaintenanceRow(row) {
   if (!upd.description) delete upd.description;
   return { itemCode, upd };
 }
+
+exports.calculateOrder = functions.region(REGION).https.onCall((data, context) => {
+  requireAuth(context);
+  const { items, billDiscountPercent, coupons, allowance, topup } = data || {};
+  return calculateCartSummary(items, billDiscountPercent, coupons, allowance, topup);
+});
 
 exports.beginUpload = functions.region(REGION).https.onCall(async (data, context) => {
   requireAuth(context);

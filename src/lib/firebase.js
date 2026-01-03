@@ -1,6 +1,7 @@
 ﻿import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 // ดึงค่า Config จาก Environment Variables (.env.local)
 const firebaseConfig = {
@@ -21,6 +22,13 @@ if (!firebaseConfig.apiKey) {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const functions = getFunctions(app, 'asia-southeast1');
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
-export { app, db, functions };
+// Configure Google provider
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
+export { app, db, functions, auth, googleProvider };
 

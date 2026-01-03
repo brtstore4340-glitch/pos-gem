@@ -1,5 +1,7 @@
 ﻿import { db } from '../lib/firebase';
+import { functions } from '../lib/firebase';
 import { collection, doc, getDoc, getDocs, writeBatch, getCountFromServer, serverTimestamp, query, limit, where, orderBy, startAt, endAt } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import * as XLSX from 'xlsx';
 
 // --- Helpers ---
@@ -20,11 +22,17 @@ const generateKeywords = (text) => {
   return Array.from(keywords);
 };
 
+const calculateOrderFn = httpsCallable(functions, 'calculateOrder');
+
 // Helper: แปลง Column Letter เป็น Index (A=0, B=1, ...)
 // แต่ใน XLSX แบบ Array of Arrays เรานับ Index ได้เลย
 // B=1, F=5, L=11, N=13, R=17, U=20, V=21, Y=24, AB=27, AD=29, AF=31, AJ=35, AL=37, AO=40, AQ=42, AS=44, AT=45, AV=47, AY=50, BB=53
 
 export const posService = {
+  calculateOrder: async (payload) => {
+    const result = await calculateOrderFn(payload);
+    return result.data;
+  },
   
   // 1. เช็คว่ามี Master Data หรือยัง
   hasMasterData: async () => {

@@ -1,10 +1,24 @@
-import { auth } from './firebaseClient';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { auth, googleProvider } from '../lib/firebase';
+import { signInWithEmailAndPassword, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 
-// Placeholder for authentication logic
+/**
+ * Sign in with Google
+ */
+export async function signInWithGoogle() {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return { success: true, data: result.user, error: null };
+  } catch (error) {
+    console.error('Google Sign-In Error:', error);
+    return { success: false, data: null, error: error.message };
+  }
+}
+
+/**
+ * Sign in with email and password
+ */
 export async function login(email, password) {
   try {
-    // Implement login logic
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { success: true, data: userCredential.user, error: null };
   } catch (error) {
@@ -12,6 +26,9 @@ export async function login(email, password) {
   }
 }
 
+/**
+ * Sign out
+ */
 export async function logout() {
   try {
     await signOut(auth);
@@ -21,5 +38,17 @@ export async function logout() {
   }
 }
 
-// Add more auth-related functions as needed
+/**
+ * Get current user
+ */
+export function getCurrentUser() {
+  return auth.currentUser;
+}
+
+/**
+ * Listen to auth state changes
+ */
+export function onAuthChange(callback) {
+  return onAuthStateChanged(auth, callback);
+}
 

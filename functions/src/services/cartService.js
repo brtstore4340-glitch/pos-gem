@@ -39,7 +39,8 @@ const normalizeItem = (item) => {
 /**
  * Generates the Thai Promotion Badge Text based on rules
  */
-const getPromotionBadge = (item) => {
+const getPromotionBadge = (rawItem) => {
+  const item = normalizeItem(rawItem);
   const { method, dealQty, dealPrice, unitPrice } = item;
 
   if (method === '0' || !method) return null;
@@ -48,8 +49,8 @@ const getPromotionBadge = (item) => {
   if (method === '8') {
     if (dealQty <= 1) return null;
     if (dealQty === 2) return "ซื้อ 1 แถม 1";
-    if (dealQty === 3) return "ซื้อ 3 แถม 1";
-    return `ซื้อ ${dealQty} แถม 1`; 
+    if (dealQty === 3) return "ซื้อ 2 แถม 1";
+    return `ซื้อ ${dealQty} แถม 1`;
   }
 
   // METHOD 9: Bundle Price
@@ -83,7 +84,6 @@ if (__thamMapped) {
 const __n = String(__thamMapped.name ?? '').trim();
 if ((!item.name || String(item.name).trim() === '') && __n) item.name = __n;
 
-`
 const __u = Number.isFinite(+__thamMapped.unitPrice) ? +__thamMapped.unitPrice : 0;
 if ((!Number.isFinite(+item.unitPrice) || +item.unitPrice <= 0) && __u > 0) item.unitPrice = __u;
 
@@ -97,12 +97,7 @@ if (__curDq <= 0 && Number.isFinite(__dq) && __dq > 0) item.dealQty = __dq;
 const __baseMethod = String(item.method ?? '0').trim();
 const __mappedMethod = String(__thamMapped.method ?? 0).trim();
 if ((__baseMethod === '' || __baseMethod === '0') && __mappedMethod !== '' && __mappedMethod !== '0') item.method = __mappedMethod;
-`
-
 }
-
-const __thamMethodNum = parseInt(String(item.method ?? '0').trim(), 10);
-item.method = Number.isFinite(__thamMethodNum) ? String(__thamMethodNum) : '0';
 // END:   THAM:APPLY_FIELD_MAP_TO_LINE_V2
 // BEGIN: THAM:APPLY_FIELD_MAP_TO_LINE_V1
 const mapped = thamMapFields(rawItem || {});
@@ -136,46 +131,37 @@ item.dealPrice = Number.isFinite(+item.dealPrice) ? +item.dealPrice : 0;
   const { qty, unitPrice, method, dealQty, dealPrice } = item;
 
   let total = 0;
-  let discountAmount = 0; // Should be <= 0
+  let promoDesc = null;
 
   // Default: Normal Price
   total = qty * unitPrice;
 
-  // --- LOGIC IMPLEMENTATION ---
-  
   if (method === '8' && dealQty > 0) {
-    // Rule: Pick <dealQty>, Pay for (<dealQty> - 1)
     const freeCount = Math.floor(qty / dealQty);
     const paidQty = qty - freeCount;
-    const calculatedTotal = paidQty * unitPrice;
-    
-    discountAmount = calculatedTotal - (qty * unitPrice);
+    const pricePerPaid = dealPrice > 0 ? dealPrice : unitPrice;
+    const calculatedTotal = paidQty * pricePerPaid;
     total = calculatedTotal;
-
   } else if (method === '9' && dealQty > 0 && dealPrice > 0) {
-    // Rule: Buy dealQty items for dealPrice
     const groups = Math.floor(qty / dealQty);
     const remainder = qty % dealQty;
     const calculatedTotal = (groups * dealPrice) + (remainder * unitPrice);
-    
-    discountAmount = calculatedTotal - (qty * unitPrice);
     total = calculatedTotal;
-
   } else if (method === '1' && dealPrice > 0) {
-    // Rule: Immediate price change
     const calculatedTotal = qty * dealPrice;
-    
-    discountAmount = calculatedTotal - (qty * unitPrice);
     total = calculatedTotal;
   }
 
-  // Safety
-  total = Math.max(0, total);
+  if (total < 0) total = 0;
+
+  const discountAmount = total - (qty * unitPrice);
+  promoDesc = getPromotionBadge(rawItem);
 
   return {
     finalTotal: total,
     discountAmount: discountAmount,
-    badgeText: getPromotionBadge(item),
+    badgeText: promoDesc,
+    promoTag: promoDesc,
     normalizedItem: item
   };
 };
@@ -186,9 +172,11 @@ exports.calculateCartSummary = (items, billDiscountPercent = 0, coupons = [], al
   let sumPromoDiscount = 0;
   let sumManualItemDiscount = 0;
 
-  const processedItems = items.map(rawItem => {
+  const safeItems = Array.isArray(items) ? items : [];
+
+  const processedItems = safeItems.map(rawItem => {
     // 1. Promotion Calculation
-    const { finalTotal: promoPrice, discountAmount: promoDisc, badgeText, normalizedItem } = calculateLine(rawItem);
+    const { finalTotal: promoPrice, discountAmount: promoDisc, badgeText, promoTag, normalizedItem } = calculateLine(rawItem);
 
     // 2. Manual Item Discount
     const manualPercent = normalizedItem.manualDiscountPercent || 0;
@@ -204,6 +192,7 @@ exports.calculateCartSummary = (items, billDiscountPercent = 0, coupons = [], al
       ...rawItem, // Keep original fields
       calculatedTotal: Number(finalLineTotal.toFixed(2)),
       badgeText,
+      promoTag,
       promoDiscount: Number(promoDisc.toFixed(2)),
       manualDiscountAmount: Number((-manualDiscAmount).toFixed(2))
     };
@@ -284,9 +273,9 @@ const payableQty = Math.max(0, q - freeItems);
 return { freeItems, payableQty };
 }
 
-exports.**THAM** = exports.**THAM** || {};
-exports.**THAM**.calcMethod8_A = tham_calcMethod8_A;
-exports.**THAM**.calcMethod8_B = tham_calcMethod8_B;
+exports.THAM = exports.THAM || {};
+exports.THAM.calcMethod8_A = tham_calcMethod8_A;
+exports.THAM.calcMethod8_B = tham_calcMethod8_B;
 // END:   THAM:METHOD8_HELPERS_V1
 
 /* BEGIN: THAM:WRAP_CARTSUMMARY_NETTOTAL_V1 */

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { posService } from '../services/posService';
+import { calculateCartSummary as calculateClientSummary } from '../services/promotionEngine';
 
 export const useCart = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -136,20 +137,39 @@ export const useCart = () => {
     setTopup(parseFloat(amount) || 0);
   };
 
-  const displaySummary = serverSummary || {
-    subtotal: 0,
-    totalItems: cartItems.reduce((a, b) => a + (b.qty || 0), 0),
-    discount: 0,
-    netTotal: 0,
-    vatTotal: 0,
-    grandTotal: 0,
-    promoDiscount: 0,
-    manualItemDiscount: 0,
-    billDiscountAmount: 0,
-    couponTotal: 0,
-    allowance: 0,
-    topup: 0,
-  };
+  // Use client-side promotion calculation
+  const clientCalculation = calculateClientSummary(
+    cartItems,
+    billDiscount.percent,
+    coupons,
+    allowance,
+    topup
+  );
+
+  // Update cart items with calculated totals and badges from client calculation
+  useEffect(() => {
+    if (clientCalculation && clientCalculation.items) {
+      setCartItems(prev => {
+        return prev.map(item => {
+          const calculated = clientCalculation.items.find(c =>
+            (c.sku || c.id) === (item.sku || item.id)
+          );
+          if (calculated) {
+            return {
+              ...item,
+              calculatedTotal: calculated.calculatedTotal,
+              badgeText: calculated.badgeText,
+              normalPrice: calculated.normalPrice
+            };
+          }
+          return item;
+        });
+      });
+    }
+  }, [clientCalculation.summary.netTotal, billDiscount.percent, coupons.length, allowance, topup]);
+
+  // Use server summary if available, otherwise use client calculation
+  const displaySummary = serverSummary || clientCalculation.summary;
 
   return {
     cartItems,
