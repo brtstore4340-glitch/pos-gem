@@ -14,7 +14,7 @@ const firebaseConfig = {
 
 // ตรวจสอบว่ามีค่า Config หรือไม่
 if (!firebaseConfig.apiKey) {
-  console.warn('⚠️ Firebase Config is missing. Please check .env.local');
+  console.warn('?? Firebase Config is missing. Please check .env.local');
 }
 
 const app = initializeApp(firebaseConfig);

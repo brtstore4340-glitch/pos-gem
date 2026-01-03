@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { posService } from '../services/posService';
 import { calculateCartSummary as calculateClientSummary } from '../services/promotionEngine';
+import { useAuth } from '../context/AuthContext';
 
 export const useCart = () => {
+  const { session } = useAuth();
   const [cartItems, setCartItems] = useState([]);
 
   const [billDiscount, setBillDiscount] = useState({ percent: 0, amount: 0 });
@@ -22,6 +24,10 @@ export const useCart = () => {
       setServerSummary(null);
       return;
     }
+    if (!session?.idCode) {
+      setServerSummary(null);
+      return;
+    }
 
     if (calculateTimeout.current) clearTimeout(calculateTimeout.current);
 
@@ -33,6 +39,7 @@ export const useCart = () => {
           coupons,
           allowance,
           topup,
+          actorIdCode: session?.idCode
         };
 
         const result = await posService.calculateOrder(payload);
@@ -49,7 +56,7 @@ export const useCart = () => {
         console.error('Calculation Error:', err);
       }
     }, 500);
-  }, [cartItems, billDiscount, coupons, allowance, topup]);
+  }, [cartItems, billDiscount, coupons, allowance, topup, session?.idCode]);
 
   useEffect(() => {
     triggerCalculation();
@@ -148,6 +155,7 @@ export const useCart = () => {
 
   // Update cart items with calculated totals and badges from client calculation
   useEffect(() => {
+    if (serverSummary) return;
     if (clientCalculation && clientCalculation.items) {
       setCartItems(prev => {
         return prev.map(item => {
@@ -166,7 +174,7 @@ export const useCart = () => {
         });
       });
     }
-  }, [clientCalculation.summary.netTotal, billDiscount.percent, coupons.length, allowance, topup]);
+  }, [clientCalculation.summary.netTotal, billDiscount.percent, coupons.length, allowance, topup, serverSummary]);
 
   // Use server summary if available, otherwise use client calculation
   const displaySummary = serverSummary || clientCalculation.summary;
@@ -193,4 +201,3 @@ export const useCart = () => {
     topup,
   };
 };
-

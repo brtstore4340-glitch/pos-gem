@@ -1,6 +1,7 @@
 ﻿/* functions/index.js */
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const crypto = require("crypto");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -8,9 +9,30 @@ const { calculateCartSummary } = require("./src/services/cartService");
 
 const REGION = "asia-southeast1";
 const UPLOAD_DOC = db.collection("system_metadata").doc("upload_status");
+const ACCOUNTS = db.collection("accounts");
+const ID_INDEX = db.collection("idIndex");
+const AUDIT_LOGS = db.collection("auditLogs");
+
+const PIN_ITERATIONS = 120000;
+const PIN_KEYLEN = 32;
+const PIN_MAX_ATTEMPTS = 5;
+const PIN_LOCK_MINUTES = 15;
+const ROLES = ["admin", "SM-SGM", "user"];
+const DEFAULT_ALLOWED_MENUS = Object.freeze({
+  admin: ["dashboard", "pos", "report", "inventory", "orders", "settings", "Upload", "management"],
+  "SM-SGM": ["dashboard", "pos", "report", "inventory", "orders", "settings", "Upload", "management"],
+  user: ["pos", "dashboard"]
+});
 
 function requireAuth(context) {
   if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required");
+}
+
+function getAuthEmail(context) {
+  requireAuth(context);
+  const email = String(context.auth.token?.email || "").trim().toLowerCase();
+  if (!email) throw new functions.https.HttpsError("failed-precondition", "Email required");
+  return email;
 }
 function requireAppCheck(context) {
   if (!context.app) throw new functions.https.HttpsError("failed-precondition", "App Check required");
@@ -22,6 +44,78 @@ async function isAdmin(uid) {
 }
 
 function nowTs() { return admin.firestore.FieldValue.serverTimestamp(); }
+
+function hashPin(pin, salt) {
+  const cleanPin = String(pin || "").trim();
+  if (!cleanPin) throw new functions.https.HttpsError("invalid-argument", "PIN required");
+  const pinSalt = salt || crypto.randomBytes(16).toString("base64");
+  const hash = crypto.pbkdf2Sync(cleanPin, pinSalt, PIN_ITERATIONS, PIN_KEYLEN, "sha256").toString("base64");
+  return { pinHash: hash, pinSalt, pinAlgo: `pbkdf2-sha256-${PIN_ITERATIONS}` };
+}
+
+function verifyPin(pin, record) {
+  if (!record?.pinHash || !record?.pinSalt) return false;
+  const expected = String(record.pinHash || "");
+  const pinSalt = String(record.pinSalt || "");
+  const hash = crypto.pbkdf2Sync(String(pin || ""), pinSalt, PIN_ITERATIONS, PIN_KEYLEN, "sha256").toString("base64");
+  return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(expected));
+}
+
+function sanitizePermissions(input, role) {
+  const allowedMenus = Array.isArray(input?.allowedMenus) ? input.allowedMenus : (DEFAULT_ALLOWED_MENUS[role] || []);
+  const clean = Array.from(new Set(allowedMenus.map((m) => String(m || "").trim()).filter(Boolean)));
+  return { allowedMenus: clean };
+}
+
+async function getIdDocByCode(idCode) {
+  const cleanId = String(idCode || "").trim();
+  if (!cleanId) throw new functions.https.HttpsError("invalid-argument", "idCode required");
+  const indexSnap = await ID_INDEX.doc(cleanId).get();
+  if (!indexSnap.exists) throw new functions.https.HttpsError("not-found", "ID not found");
+  const email = String(indexSnap.data()?.email || "").trim().toLowerCase();
+  if (!email) throw new functions.https.HttpsError("failed-precondition", "ID email missing");
+  const idRef = ACCOUNTS.doc(email).collection("ids").doc(cleanId);
+  const idSnap = await idRef.get();
+  if (!idSnap.exists) throw new functions.https.HttpsError("not-found", "ID not found");
+  return { email, idRef, idSnap };
+}
+
+async function getActor(context, actorIdCode) {
+  const email = getAuthEmail(context);
+  const { email: targetEmail, idSnap } = await getIdDocByCode(actorIdCode);
+  if (targetEmail !== email) throw new functions.https.HttpsError("permission-denied", "Actor email mismatch");
+  const data = idSnap.data() || {};
+  if (data.status !== "active") throw new functions.https.HttpsError("permission-denied", "Actor disabled");
+  return {
+    email,
+    idCode: String(actorIdCode || "").trim(),
+    role: String(data.role || ""),
+    permissions: data.permissions || {}
+  };
+}
+
+function assertManageScope(actor, targetEmail, targetRole, desiredRole) {
+  if (actor.role === "admin") return;
+  if (actor.role !== "SM-SGM") throw new functions.https.HttpsError("permission-denied", "Not allowed");
+  if (actor.email !== targetEmail) throw new functions.https.HttpsError("permission-denied", "Email scope violation");
+  if (targetRole === "admin" || desiredRole === "admin") {
+    throw new functions.https.HttpsError("permission-denied", "Cannot assign admin role");
+  }
+}
+
+function assertMenuAccess(actor, menu) {
+  const permissions = sanitizePermissions(actor.permissions, actor.role);
+  if (!permissions.allowedMenus.includes(menu)) {
+    throw new functions.https.HttpsError("permission-denied", "Menu access denied");
+  }
+}
+
+async function writeAuditLog(payload) {
+  await AUDIT_LOGS.add({
+    ...payload,
+    createdAt: nowTs()
+  });
+}
 
 function normalizeType(type) {
   // ✅ NEW: pricing = ItemMasterPrintOnDeph (must be first)
@@ -156,8 +250,332 @@ function mapMaintenanceRow(row) {
   return { itemCode, upd };
 }
 
-exports.calculateOrder = functions.region(REGION).https.onCall((data, context) => {
+exports.bootstrapAdmin = functions.region(REGION).https.onCall(async (data, context) => {
+  const email = getAuthEmail(context);
+  const idCode = safeStr(data?.idCode);
+  const pin = safeStr(data?.pin);
+  if (!idCode || !pin) throw new functions.https.HttpsError("invalid-argument", "idCode and pin required");
+
+  const existingAdmin = await db.collectionGroup("ids").where("role", "==", "admin").limit(1).get();
+  if (!existingAdmin.empty) throw new functions.https.HttpsError("failed-precondition", "Admin already exists");
+
+  await db.runTransaction(async (tx) => {
+    const indexRef = ID_INDEX.doc(idCode);
+    if ((await tx.get(indexRef)).exists) throw new functions.https.HttpsError("already-exists", "ID already exists");
+
+    const accountRef = ACCOUNTS.doc(email);
+    const idRef = accountRef.collection("ids").doc(idCode);
+    const { pinHash, pinSalt, pinAlgo } = hashPin(pin);
+    const permissions = sanitizePermissions(data?.permissions, "admin");
+
+    tx.set(accountRef, { email, createdAt: nowTs(), updatedAt: nowTs() }, { merge: true });
+    tx.set(idRef, {
+      idCode,
+      email,
+      role: "admin",
+      permissions,
+      status: "active",
+      pinHash,
+      pinSalt,
+      pinAlgo,
+      pinAttempts: 0,
+      pinResetRequired: false,
+      createdAt: nowTs(),
+      updatedAt: nowTs(),
+      createdBy: "bootstrap",
+      createdByUid: context.auth.uid
+    });
+    tx.set(indexRef, { idCode, email, createdAt: nowTs() });
+  });
+
+  await writeAuditLog({
+    action: "bootstrap_admin",
+    actorUid: context.auth.uid,
+    actorEmail: email,
+    actorIdCode: idCode,
+    targetEmail: email,
+    targetIdCode: idCode
+  });
+
+  return { ok: true };
+});
+
+exports.listMyIds = functions.region(REGION).https.onCall(async (data, context) => {
+  const email = getAuthEmail(context);
+  const snap = await ACCOUNTS.doc(email).collection("ids").get();
+  const ids = snap.docs.map((doc) => {
+    const { pinHash, pinSalt, pinAlgo, ...rest } = doc.data() || {};
+    return rest;
+  });
+  return { ids };
+});
+
+exports.verifyIdPin = functions.region(REGION).https.onCall(async (data, context) => {
+  const email = getAuthEmail(context);
+  const idCode = safeStr(data?.idCode);
+  const pin = safeStr(data?.pin);
+  if (!idCode || !pin) throw new functions.https.HttpsError("invalid-argument", "idCode and pin required");
+
+  const { email: targetEmail, idRef, idSnap } = await getIdDocByCode(idCode);
+  if (targetEmail !== email) throw new functions.https.HttpsError("permission-denied", "Email mismatch");
+  const idData = idSnap.data() || {};
+  if (idData.status !== "active") throw new functions.https.HttpsError("failed-precondition", "ID disabled");
+
+  const lockedUntil = idData.pinLockedUntil?.toMillis ? idData.pinLockedUntil.toMillis() : 0;
+  if (lockedUntil && lockedUntil > Date.now()) {
+    throw new functions.https.HttpsError("failed-precondition", "PIN locked");
+  }
+
+  const ok = verifyPin(pin, idData);
+  if (!ok) {
+    const attempts = Number(idData.pinAttempts || 0) + 1;
+    const updates = { pinAttempts: attempts, updatedAt: nowTs() };
+    if (attempts >= PIN_MAX_ATTEMPTS) {
+      const lockUntil = admin.firestore.Timestamp.fromMillis(Date.now() + PIN_LOCK_MINUTES * 60 * 1000);
+      updates.pinLockedUntil = lockUntil;
+    }
+    await idRef.update(updates);
+    throw new functions.https.HttpsError("permission-denied", "Invalid PIN");
+  }
+
+  await idRef.update({
+    pinAttempts: 0,
+    pinLockedUntil: admin.firestore.FieldValue.delete(),
+    lastLoginAt: nowTs(),
+    updatedAt: nowTs()
+  });
+
+  const permissions = idData.permissions || sanitizePermissions(null, idData.role);
+
+  return {
+    session: {
+      email,
+      idCode,
+      role: idData.role,
+      permissions,
+      status: idData.status,
+      pinResetRequired: !!idData.pinResetRequired
+    }
+  };
+});
+
+exports.createId = functions.region(REGION).https.onCall(async (data, context) => {
+  const actor = await getActor(context, data?.actorIdCode);
+  if (!["admin", "SM-SGM"].includes(actor.role)) throw new functions.https.HttpsError("permission-denied", "Not allowed");
+
+  const targetEmail = safeStr(data?.email || actor.email).toLowerCase();
+  const idCode = safeStr(data?.idCode);
+  const role = safeStr(data?.role);
+  const pin = safeStr(data?.pin);
+  if (!idCode || !pin) throw new functions.https.HttpsError("invalid-argument", "idCode and pin required");
+  if (!ROLES.includes(role)) throw new functions.https.HttpsError("invalid-argument", "Invalid role");
+  assertManageScope(actor, targetEmail, null, role);
+
+  await db.runTransaction(async (tx) => {
+    const indexRef = ID_INDEX.doc(idCode);
+    if ((await tx.get(indexRef)).exists) throw new functions.https.HttpsError("already-exists", "ID already exists");
+
+    const accountRef = ACCOUNTS.doc(targetEmail);
+    const idRef = accountRef.collection("ids").doc(idCode);
+    const { pinHash, pinSalt, pinAlgo } = hashPin(pin);
+    const permissions = sanitizePermissions(data?.permissions, role);
+
+    tx.set(accountRef, { email: targetEmail, createdAt: nowTs(), updatedAt: nowTs() }, { merge: true });
+    tx.set(idRef, {
+      idCode,
+      email: targetEmail,
+      role,
+      permissions,
+      status: "active",
+      pinHash,
+      pinSalt,
+      pinAlgo,
+      pinAttempts: 0,
+      pinResetRequired: false,
+      createdAt: nowTs(),
+      updatedAt: nowTs(),
+      createdBy: actor.idCode,
+      createdByUid: context.auth.uid
+    });
+    tx.set(indexRef, { idCode, email: targetEmail, createdAt: nowTs() });
+  });
+
+  await writeAuditLog({
+    action: "create_id",
+    actorUid: context.auth.uid,
+    actorEmail: actor.email,
+    actorIdCode: actor.idCode,
+    targetEmail: targetEmail,
+    targetIdCode: idCode,
+    role
+  });
+
+  return { ok: true };
+});
+
+exports.updateId = functions.region(REGION).https.onCall(async (data, context) => {
+  const actor = await getActor(context, data?.actorIdCode);
+  if (!["admin", "SM-SGM"].includes(actor.role)) throw new functions.https.HttpsError("permission-denied", "Not allowed");
+
+  const idCode = safeStr(data?.idCode);
+  if (!idCode) throw new functions.https.HttpsError("invalid-argument", "idCode required");
+
+  const { email: targetEmail, idRef, idSnap } = await getIdDocByCode(idCode);
+  const targetData = idSnap.data() || {};
+  const desiredRole = data?.role ? safeStr(data?.role) : null;
+  if (desiredRole && !ROLES.includes(desiredRole)) throw new functions.https.HttpsError("invalid-argument", "Invalid role");
+  assertManageScope(actor, targetEmail, targetData.role, desiredRole);
+
+  const updates = { updatedAt: nowTs(), updatedBy: actor.idCode, updatedByUid: context.auth.uid };
+  if (desiredRole) updates.role = desiredRole;
+  if (data?.permissions) updates.permissions = sanitizePermissions(data?.permissions, desiredRole || targetData.role);
+  if (data?.status) updates.status = safeStr(data?.status);
+
+  await idRef.update(updates);
+
+  await writeAuditLog({
+    action: "update_id",
+    actorUid: context.auth.uid,
+    actorEmail: actor.email,
+    actorIdCode: actor.idCode,
+    targetEmail,
+    targetIdCode: idCode,
+    role: desiredRole || targetData.role,
+    status: updates.status
+  });
+
+  return { ok: true };
+});
+
+exports.resetPin = functions.region(REGION).https.onCall(async (data, context) => {
+  const actor = await getActor(context, data?.actorIdCode);
+  if (!["admin", "SM-SGM"].includes(actor.role)) throw new functions.https.HttpsError("permission-denied", "Not allowed");
+
+  const idCode = safeStr(data?.idCode);
+  if (!idCode) throw new functions.https.HttpsError("invalid-argument", "idCode required");
+
+  const { email: targetEmail, idRef, idSnap } = await getIdDocByCode(idCode);
+  const targetData = idSnap.data() || {};
+  assertManageScope(actor, targetEmail, targetData.role, null);
+
+  const tempPin = String(Math.floor(100000 + Math.random() * 900000));
+  const { pinHash, pinSalt, pinAlgo } = hashPin(tempPin);
+
+  await idRef.update({
+    pinHash,
+    pinSalt,
+    pinAlgo,
+    pinAttempts: 0,
+    pinLockedUntil: admin.firestore.FieldValue.delete(),
+    pinResetRequired: true,
+    updatedAt: nowTs(),
+    updatedBy: actor.idCode,
+    updatedByUid: context.auth.uid
+  });
+
+  await writeAuditLog({
+    action: "reset_pin",
+    actorUid: context.auth.uid,
+    actorEmail: actor.email,
+    actorIdCode: actor.idCode,
+    targetEmail,
+    targetIdCode: idCode
+  });
+
+  return { ok: true, tempPin };
+});
+
+exports.setPin = functions.region(REGION).https.onCall(async (data, context) => {
+  const email = getAuthEmail(context);
+  const idCode = safeStr(data?.idCode);
+  const currentPin = safeStr(data?.currentPin);
+  const newPin = safeStr(data?.newPin);
+  if (!idCode || !currentPin || !newPin) throw new functions.https.HttpsError("invalid-argument", "Missing pin fields");
+
+  const { email: targetEmail, idRef, idSnap } = await getIdDocByCode(idCode);
+  if (targetEmail !== email) throw new functions.https.HttpsError("permission-denied", "Email mismatch");
+  const idData = idSnap.data() || {};
+
+  if (!verifyPin(currentPin, idData)) {
+    throw new functions.https.HttpsError("permission-denied", "Invalid PIN");
+  }
+
+  const { pinHash, pinSalt, pinAlgo } = hashPin(newPin);
+  await idRef.update({
+    pinHash,
+    pinSalt,
+    pinAlgo,
+    pinAttempts: 0,
+    pinLockedUntil: admin.firestore.FieldValue.delete(),
+    pinResetRequired: false,
+    updatedAt: nowTs(),
+    updatedBy: idCode,
+    updatedByUid: context.auth.uid
+  });
+
+  await writeAuditLog({
+    action: "set_pin",
+    actorUid: context.auth.uid,
+    actorEmail: email,
+    actorIdCode: idCode,
+    targetEmail,
+    targetIdCode: idCode
+  });
+
+  return { ok: true };
+});
+
+exports.searchIds = functions.region(REGION).https.onCall(async (data, context) => {
+  const actor = await getActor(context, data?.actorIdCode);
+  if (!["admin", "SM-SGM"].includes(actor.role)) throw new functions.https.HttpsError("permission-denied", "Not allowed");
+
+  const idCode = safeStr(data?.idCode);
+  const email = safeStr(data?.email).toLowerCase();
+
+  if (idCode) {
+    const { email: targetEmail, idSnap } = await getIdDocByCode(idCode);
+    assertManageScope(actor, targetEmail, idSnap.data()?.role, null);
+    const { pinHash, pinSalt, pinAlgo, ...rest } = idSnap.data() || {};
+    return { ids: [rest] };
+  }
+
+  if (!email) throw new functions.https.HttpsError("invalid-argument", "email or idCode required");
+  assertManageScope(actor, email, null, null);
+
+  const snap = await ACCOUNTS.doc(email).collection("ids").get();
+  const ids = snap.docs.map((doc) => {
+    const { pinHash, pinSalt, pinAlgo, ...rest } = doc.data() || {};
+    return rest;
+  });
+  return { ids };
+});
+
+exports.getAuditLogs = functions.region(REGION).https.onCall(async (data, context) => {
+  const actor = await getActor(context, data?.actorIdCode);
+  if (!["admin", "SM-SGM"].includes(actor.role)) throw new functions.https.HttpsError("permission-denied", "Not allowed");
+
+  const targetEmail = safeStr(data?.email || "").toLowerCase();
+  const limit = Math.min(Math.max(parseInt(data?.limit || 50, 10), 1), 200);
+
+  if (actor.role === "SM-SGM" && targetEmail && targetEmail !== actor.email) {
+    throw new functions.https.HttpsError("permission-denied", "Email scope violation");
+  }
+
+  let query = AUDIT_LOGS.orderBy("createdAt", "desc").limit(limit);
+  if (targetEmail) query = query.where("targetEmail", "==", targetEmail);
+  if (actor.role === "SM-SGM" && !targetEmail) query = query.where("targetEmail", "==", actor.email);
+
+  const snap = await query.get();
+  const logs = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return { logs };
+});
+
+exports.calculateOrder = functions.region(REGION).https.onCall(async (data, context) => {
   requireAuth(context);
+  const actorIdCode = safeStr(data?.actorIdCode);
+  if (!actorIdCode) throw new functions.https.HttpsError("invalid-argument", "actorIdCode required");
+  const actor = await getActor(context, actorIdCode);
+  assertMenuAccess(actor, "pos");
   const { items, billDiscountPercent, coupons, allowance, topup } = data || {};
   return calculateCartSummary(items, billDiscountPercent, coupons, allowance, topup);
 });

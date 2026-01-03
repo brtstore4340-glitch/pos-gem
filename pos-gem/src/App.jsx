@@ -15,7 +15,7 @@ function App() {
         <AdminSettings onBack={() => setView('pos')} />
       )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -13,9 +13,19 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// 🔍 DEBUG: Log Firebase configuration
+console.log('🔥 Firebase Config Debug:', {
+  hasApiKey: !!firebaseConfig.apiKey,
+  hasAuthDomain: !!firebaseConfig.authDomain,
+  hasProjectId: !!firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId,
+});
+
 // ตรวจสอบว่ามีค่า Config หรือไม่
 if (!firebaseConfig.apiKey) {
-  console.warn('⚠️ Firebase Config is missing. Please check .env.local');
+  console.error('❌ Firebase Config is missing. Please check .env.local');
+  console.error('Available env vars:', Object.keys(import.meta.env));
 }
 
 // ป้องกันการ initialize ซ้ำระหว่าง HMR (Vite)

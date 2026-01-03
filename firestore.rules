@@ -6,6 +6,10 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
+
+    function isAccountOwner(email) {
+      return isSignedIn() && request.auth.token.email == email;
+    }
     
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
@@ -66,6 +70,25 @@ service cloud.firestore {
     match /stockLedger/{ledgerId} {
       allow read: if isSignedIn();
       allow write: if false; // Force all writes through Cloud Functions
+    }
+
+    // Accounts / IDs (RBAC) - read only for account owner, writes via Cloud Functions
+    match /accounts/{email} {
+      allow read: if isAccountOwner(email);
+      allow write: if false;
+      match /ids/{idCode} {
+        allow read: if isAccountOwner(email);
+        allow write: if false;
+      }
+    }
+
+    // ID Index & Audit Logs - Cloud Functions only
+    match /idIndex/{idCode} {
+      allow read, write: if false;
+    }
+
+    match /auditLogs/{logId} {
+      allow read, write: if false;
     }
     
     // Default: Deny all access to any other collections

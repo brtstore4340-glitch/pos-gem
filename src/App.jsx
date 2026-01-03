@@ -1,4 +1,4 @@
-﻿import React, { useState, Suspense, lazy } from "react";
+﻿import React, { useEffect, useMemo, useState, Suspense, lazy } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -8,19 +8,23 @@ import {
   Package,
   ShoppingCart,
   Database,
-  UploadCloud
+  UploadCloud,
+  ShieldCheck
 } from "lucide-react";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
 import { useTheme } from "./context/ThemeContext";
+import { AuthProvider, useAuth } from './context/AuthContext';
 import ThemeToggle from "./components/ThemeToggle";
 import TabSkeleton from "./components/skeletons/TabSkeleton";
 import { APP_VERSION, APP_UPDATED } from "./constants/appMeta";
 import ClockWidget from "./components/ClockWidget";
 import logoLight from "./image/logo.png";
 import logoDark from "./image/logodark.png";
+import AuthGate from './components/auth/AuthGate';
+import AccessDenied from './components/auth/AccessDenied';
 
 // Lazy load tab components for code splitting
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
@@ -30,23 +34,62 @@ const InventoryPage = lazy(() => import("./pages/InventoryPage"));
 const OrdersPage = lazy(() => import("./pages/OrdersPage"));
 const AdminSettings = lazy(() => import("./components/AdminSettings"));
 const FileUploadPage = lazy(() => import("./pages/FileUploadPage"));
+const ManagementConsole = lazy(() => import("./pages/ManagementConsole"));
+
+const DEFAULT_ALLOWED_MENUS = {
+  admin: ["dashboard", "pos", "report", "inventory", "orders", "settings", "Upload", "management"],
+  "SM-SGM": ["dashboard", "pos", "report", "inventory", "orders", "settings", "Upload", "management"],
+  user: ["pos", "dashboard"]
+};
 
 function AppShell() {
   const { isDark } = useTheme();
+  const { session } = useAuth();
   const [activeTab, setActiveTab] = useState("pos");
   const logoSrc = isDark ? logoDark : logoLight;
   const iconColor = isDark ? "#ffffff" : "#000000";
-  const tabs = [
+  const isManager = session?.role === "admin" || session?.role === "SM-SGM";
+  const allowedMenus = useMemo(() => {
+    if (!session) return [];
+    const explicit = session.permissions?.allowedMenus;
+    const base = Array.isArray(explicit) && explicit.length ? explicit : (DEFAULT_ALLOWED_MENUS[session.role] || []);
+    const normalized = base.map((menu) => String(menu || "").trim()).filter(Boolean);
+    const unique = Array.from(new Set(normalized));
+    return isManager ? unique : unique.filter((menu) => menu !== "management");
+  }, [session, isManager]);
+  const allowedSet = useMemo(() => new Set(allowedMenus), [allowedMenus]);
+  const tabs = useMemo(() => ([
     { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
     { id: "pos", label: "POS", Icon: Monitor },
     { id: "report", label: "Report", Icon: FileText },
     { id: "inventory", label: "Inventory", Icon: Package },
     { id: "orders", label: "Order", Icon: ShoppingCart },
     { id: "settings", label: "Setting", Icon: SettingsIcon },
-    { id: "Upload", label: "Upload", Icon: UploadCloud }
-  ];
+    { id: "Upload", label: "Upload", Icon: UploadCloud },
+    { id: "management", label: "Management", Icon: ShieldCheck }
+  ]), []);
+  const visibleTabs = useMemo(() => tabs.filter((tab) => allowedSet.has(tab.id)), [tabs, allowedSet]);
+  const defaultTab = useMemo(() => {
+    if (isManager && allowedSet.has("management")) return "management";
+    if (allowedSet.has("pos")) return "pos";
+    return allowedMenus[0] || "pos";
+  }, [isManager, allowedSet, allowedMenus]);
+
+  useEffect(() => {
+    if (!session) return;
+    setActiveTab(defaultTab);
+  }, [session?.idCode, defaultTab, session]);
+
+  useEffect(() => {
+    if (!allowedSet.has(activeTab)) {
+      setActiveTab(defaultTab);
+    }
+  }, [activeTab, allowedSet, defaultTab]);
 
   const renderActiveTab = () => {
+    if (!allowedSet.has(activeTab)) {
+      return <AccessDenied message="You do not have access to this menu." />;
+    }
     switch (activeTab) {
       case "dashboard":
         return <DashboardPage />;
@@ -62,6 +105,8 @@ function AppShell() {
         return <AdminSettings onBack={() => setActiveTab("pos")} />;
       case "Upload":
         return <FileUploadPage />;
+      case "management":
+        return <ManagementConsole />;
       }
   };
 
@@ -83,7 +128,7 @@ function AppShell() {
 
               {/* Tabs */}
               <div className="flex items-center gap-1">
-                {tabs.map((tab) => {
+                {visibleTabs.map((tab) => {
                   const Icon = tab.Icon;
                   const isActive = activeTab === tab.id;
                   return (
@@ -143,12 +188,22 @@ function AppShell() {
 function App() {
   return (
     <ThemeProvider>
-      <CartProvider>
-        <AppShell />
-      </CartProvider>
+      <AuthProvider>
+        <AuthGate>
+          <CartProvider>
+            <AppShell />
+          </CartProvider>
+        </AuthGate>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
 
 export default App;
+
+
+
+
+
+
 
