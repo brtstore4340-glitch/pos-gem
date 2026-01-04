@@ -1,55 +1,12 @@
-<!doctype html>
-<html lang="th">
+﻿<!DOCTYPE html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Boots POS System - Point of Sale Application" />
-    <title>Boots 4340 System</title>
-    
-    <!-- Preload critical resources for faster loading -->
-    <link rel="modulepreload" href="/src/main.jsx" />
-    
-    <!-- Tailwind CSS CDN for loading screen styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Inline critical loading styles -->
-    <style>
-      /* Loading animation */
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-      
-      .animate-spin {
-        animation: spin 1s linear infinite;
-      }
-      
-      body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-      }
-    </style>
+    <title>Boots 4340 Project</title>
   </head>
   <body>
-    <!-- Main Application Container -->
-    <div id="root" class="min-h-screen">
-        <!-- Loading Screen - Will be replaced by React -->
-        <div class="flex items-center justify-center min-h-screen">
-            <div class="text-center p-8">
-                <svg class="animate-spin h-10 w-10 text-green-600 mx-auto" xmlns="http://www.w3.org/2000/svg"
-                    fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                    </path>
-                </svg>
-                <h1 class="text-xl noto sans Thai text-gray-700 mt-4">กำลังโหลดแอปพลิเคชัน...</h1>
-                <p class="text-gray-500">กรุณารอสักครู่</p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Async load main application -->
+    <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -2,6 +2,7 @@
 import { getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 
 // ดึงค่า Config จาก Environment Variables (.env.local)
 const firebaseConfig = {
@@ -13,8 +14,8 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// 🔍 DEBUG: Log Firebase configuration
-console.log('🔥 Firebase Config Debug:', {
+// ?? DEBUG: Log Firebase configuration
+console.log('?? Firebase Config Debug:', {
   hasApiKey: !!firebaseConfig.apiKey,
   hasAuthDomain: !!firebaseConfig.authDomain,
   hasProjectId: !!firebaseConfig.projectId,
@@ -24,7 +25,7 @@ console.log('🔥 Firebase Config Debug:', {
 
 // ตรวจสอบว่ามีค่า Config หรือไม่
 if (!firebaseConfig.apiKey) {
-  console.error('❌ Firebase Config is missing. Please check .env.local');
+  console.error('? Firebase Config is missing. Please check .env.local');
   console.error('Available env vars:', Object.keys(import.meta.env));
 }
 
@@ -40,5 +41,16 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-export { app, db, functions, auth, googleProvider };
+// App Check (reCAPTCHA Enterprise)
+const appCheckSiteKey = import.meta.env.VITE_APPCHECK_SITE_KEY;
+let appCheck = null;
+if (appCheckSiteKey) {
+  appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider(appCheckSiteKey),
+    isTokenAutoRefreshEnabled: true
+  });
+} else {
+  console.warn('⚠️ App Check site key missing (VITE_APPCHECK_SITE_KEY). App Check not initialized.');
+}
 
+export { app, db, functions, auth, googleProvider, appCheck };

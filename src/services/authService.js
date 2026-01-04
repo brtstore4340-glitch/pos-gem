@@ -1,105 +1,101 @@
-import { auth, googleProvider } from '../lib/firebase';
 import {
   signInWithEmailAndPassword,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
+  createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged,
-  setPersistence,
-  browserLocalPersistence
-} from 'firebase/auth';
+} from "firebase/auth";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
+import { auth, db, functions } from "../firebase";
 
-setPersistence(auth, browserLocalPersistence).catch((error) => {
-  console.warn('Auth persistence error:', error?.code || error?.message || error);
-});
-
-/**
- * Sign in with Google
- */
-export async function signInWithGoogle() {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return { success: true, data: result.user, error: null };
-  } catch (error) {
-    if (error.code === 'auth/popup-blocked' || error.code === 'auth/operation-not-supported-in-this-environment') {
-      await signInWithRedirect(auth, googleProvider);
-      return { success: true, data: null, error: null };
-    }
-
-    let userMessage = error.message;
-    if (error.code === 'auth/unauthorized-domain') {
-      userMessage = 'This domain is not authorized in Firebase Console.';
-    } else if (error.code === 'auth/operation-not-allowed') {
-      userMessage = 'Google Sign-In is not enabled in Firebase Console.';
-    } else if (error.code === 'auth/invalid-api-key') {
-      userMessage = 'Invalid API key. Check your Firebase configuration.';
-    }
-
-    return { success: false, data: null, error: `${error.code}: ${userMessage}` };
-  }
+function normLower(v) {
+  return String(v || "").trim().toLowerCase();
 }
 
-/**
- * Handle redirect result after Google Sign-In
- * Call this on app initialization
- */
-export async function handleRedirectResult() {
-  try {
-    const result = await getRedirectResult(auth);
-    
-    if (result) {
-      console.log('✅ Google Sign-In successful!', {
-        uid: result.user.uid,
-        email: result.user.email,
-        displayName: result.user.displayName
-      });
-      return { success: true, data: result.user, error: null };
+export async function resolveUsernameToEmail(username) {
+  const u = normLower(username);
+  if (!u) return null;
+  const snap = await getDoc(doc(db, "usernames", u));
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return data && data.email ? String(data.email) : null;
+}
+
+export async function loginWithUsernameOrEmail(usernameOrEmail, password) {
+  const id = String(usernameOrEmail || "").trim();
+  const pass = String(password || "");
+  if (!id || !pass) {
+    throw new Error("Please enter username/email and password");
+  }
+
+  let email = id;
+  if (!id.includes("@")) {
+    const resolved = await resolveUsernameToEmail(id);
+    if (!resolved) {
+      throw new Error("Username not found");
     }
-    
-    // No redirect result (normal page load)
-    return { success: true, data: null, error: null };
-  } catch (error) {
-    console.error('Redirect Result Error:', error);
-    return { success: false, data: null, error: error.message };
+    email = resolved;
   }
+
+  return signInWithEmailAndPassword(auth, normLower(email), pass);
 }
 
-/**
- * Sign in with email and password
- */
-export async function login(email, password) {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return { success: true, data: userCredential.user, error: null };
-  } catch (error) {
-    return { success: false, data: null, error: error.message };
-  }
-}
-
-/**
- * Sign out
- */
 export async function logout() {
-  try {
-    await signOut(auth);
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
+  return signOut(auth);
 }
 
-/**
- * Get current user
- */
-export function getCurrentUser() {
-  return auth.currentUser;
+export async function getUserProfile(uid) {
+  if (!uid) return null;
+  const snap = await getDoc(doc(db, "users", uid));
+  if (!snap.exists()) return null;
+  return snap.data();
 }
 
-/**
- * Listen to auth state changes
- */
-export function onAuthChange(callback) {
-  return onAuthStateChanged(auth, callback);
+// Optional: self-registration (kept minimal). Role defaults to "user".
+export async function registerSelf({ username, email, password }) {
+  const u = normLower(username);
+  const e = normLower(email);
+  const p = String(password || "").trim();
+  if (!u || u.length < 3) throw new Error("Username must be at least 3 characters");
+  if (!e || !e.includes("@")) throw new Error("Invalid email");
+  if (!p || p.length < 6) throw new Error("Password must be at least 6 characters");
+
+  // Create auth user (will switch session to the new user)
+  const cred = await createUserWithEmailAndPassword(auth, e, p);
+  const uid = cred.user.uid;
+
+  // Create minimal profile + username mapping (will be enforced by rules; may fail if reserved)
+  await setDoc(doc(db, "users", uid), {
+    uid,
+    email: e,
+    username: u,
+    role: "user",
+    allowedMenus: [],
+    createdByUid: null,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  await setDoc(doc(db, "usernames", u), {
+    uid,
+    email: e,
+    createdAt: serverTimestamp(),
+  });
+
+  return cred;
 }
 
+export async function createManagedUser(payload) {
+  const fn = httpsCallable(functions, "createManagedUser");
+  const res = await fn(payload);
+  return res && res.data ? res.data : null;
+}
+
+export async function updateManagedUser(payload) {
+  const fn = httpsCallable(functions, "updateManagedUser");
+  const res = await fn(payload);
+  return res && res.data ? res.data : null;
+}

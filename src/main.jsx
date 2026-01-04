@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import App from './AppAuth';
 import './index.css';
 
 // Safe initialization with error handling
