@@ -6,9 +6,10 @@ export function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(() => {
     // Check localStorage first
     const saved = localStorage.getItem('theme-mode');
-    if (saved) return saved === 'dark';
-    // Fallback to system preference
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (saved === 'dark') return true;
+    if (saved === 'light') return false;
+    // Default to light mode
+    return false;
   });
 
   useEffect(() => {

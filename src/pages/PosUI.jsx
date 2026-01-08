@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Search, ScanBarcode, Trash2, Loader2, UploadCloud, User, FileText, LayoutGrid, Settings, Box, Monitor, Package, Percent, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShoppingCart, Search, ScanBarcode, Trash2, Loader2, UploadCloud, User, FileText, LayoutGrid, Settings, Box, Monitor, Package, Percent, CheckCircle, AlertCircle, Power } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useCart } from '../hooks/useCart';
 import { useScanListener } from '../hooks/useScanListener';
@@ -50,9 +50,9 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
   const [showCouponInput, setShowCouponInput] = useState(false);
 
   const navItemStyle = (isActive) => cn(
-    "flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold transition-all duration-200 cursor-pointer select-none shrink-0",
+    "flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold transition-all duration-200 cursor-pointer select-none shrink-0 btn-press shadow-orange-500/20",
     isActive 
-      ? "bg-[#0B2A97] text-white shadow-md shadow-blue-900/20" 
+      ? "bg-[#0B2A97] text-white" 
       : (isDarkMode ? "text-slate-400 hover:bg-slate-800 hover:text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900")
   );
 
@@ -228,7 +228,7 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
           <button
             onClick={() => setShowUploadModal(true)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold border transition-all active:scale-95",
+              "flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold border transition-all btn-press shadow-orange-500/20",
               isDarkMode
                 ? "border-slate-700 hover:bg-slate-800 text-slate-300"
                 : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"

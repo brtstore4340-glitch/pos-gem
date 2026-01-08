@@ -1,0 +1,28 @@
+﻿/*
+   Recommended guard + CORS wrapper (add to bootstrapAdmin)
+  - Handles OPTIONS
+  - Enforces POST
+  - Validates JSON body
+  - Returns readable 400/405 instead of 500
+*/
+const cors = require("cors")({ origin: true });
+
+exports.bootstrapAdmin = functions.region("asia-southeast1").https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      if (req.method === "OPTIONS") return res.status(204).send("");
+      if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+
+      const { email, password, username } = req.body || {};
+      if (!email || !password || !username) {
+        return res.status(400).json({ error: "Missing fields", need: ["email","password","username"] });
+      }
+
+      // ... your existing logic here ...
+
+    } catch (e) {
+      console.error("bootstrapAdmin error:", e);
+      return res.status(500).json({ error: e?.message || String(e) });
+    }
+  });
+});

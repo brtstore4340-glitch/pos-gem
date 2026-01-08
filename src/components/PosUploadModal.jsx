@@ -1,7 +1,11 @@
-﻿import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { UploadCloud, Loader2, CheckCircle, AlertCircle, X } from "lucide-react";
 import { cn } from "../utils/cn";
 import { runUploadFlow, abortUploadFlow } from "../services/uploadService";
+import { useAuth } from "../context/AuthContext";
+import { db } from "../lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+
 
 function Card({ title, subtitle, disabled, children, isDarkMode }) {
   return (
@@ -27,8 +31,10 @@ export default function PosUploadModal({ open, onClose, isDarkMode = false, mast
   const [progress, setProgress] = useState({ phase: "idle", percent: 0, meta: null });
   const [result, setResult] = useState(null);
   const [err, setErr] = useState("");
+  const [uploadMeta, setUploadMeta] = useState({});
+  const { role, lastIdCode, session } = useAuth();
 
-  const canSecondary = masterReady && (typeof pricingReady === "boolean" ? pricingReady : true);
+  const canSecondary = !!uploadMeta?.ItemMasterPrintOnDeph?.lastUploadAt;
 
   const statusBadge = useMemo(() => {
     if (busy) return { icon: <Loader2 className="animate-spin" size={16} />, text: `${progress.phase} ${progress.percent}%` };
@@ -38,13 +44,46 @@ export default function PosUploadModal({ open, onClose, isDarkMode = false, mast
   }, [busy, progress, err, result]);
 
   if (!open) return null;
+  const lastLabel = (key) =>
+    uploadMeta?.[key]?.lastUploadAt ? `Last update: ${uploadMeta[key].lastUploadAt}` : "Last update: -";
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+
+    (async () => {
+      const keys = ["ItemMasterPrintOnDeph", "ProductAllDept", "ItemMaintananceEvent"];
+      const res = {};
+      await Promise.all(
+        keys.map(async (k) => {
+          const snap = await getDoc(doc(db, "upload_meta", k));
+          if (snap.exists()) res[k] = snap.data();
+        })
+      );
+      if (!cancelled) setUploadMeta(res);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, result]);
+
 
   const onPick = async (type, file) => {
     if (!file) return;
+    const actorIdCode = session?.idCode || lastIdCode || "";
+    if (role !== "admin") {
+      setErr("Admin only");
+      return;
+    }
+    if (!actorIdCode) {
+      setErr("เลือก ID ก่อนอัปโหลด");
+      return;
+    }
     setBusy(true); setErr(""); setResult(null);
     setProgress({ phase: "starting", percent: 1, meta: null });
     try {
-      const summary = await runUploadFlow({ type, file, onProgress: setProgress });
+      const summary = await runUploadFlow({ actorIdCode, type, file, onProgress: setProgress });
       setResult({ type, summary });
     } catch (e) {
       setErr(e?.message || String(e));
@@ -54,7 +93,8 @@ export default function PosUploadModal({ open, onClose, isDarkMode = false, mast
   };
 
   const abortNow = async () => {
-    try { await abortUploadFlow(); } catch {}
+    const actorIdCode = session?.idCode || lastIdCode || "";
+    try { await abortUploadFlow(actorIdCode); } catch {}
     setBusy(false);
     setErr("Aborted");
   };

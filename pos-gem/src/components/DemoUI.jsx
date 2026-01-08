@@ -8,7 +8,7 @@ import ProductLookupModal from './ProductLookupModal';
 import DailyReportModal from './DailyReportModal';
 import { posService } from '../services/posService';
 
-export default function PosUI({ onAdminSettings }) {
+export default function PosUI({ onAdminSettings, onSearch }) {
   const { 
     cartItems, addToCart: originalAddToCart, decreaseItem, removeFromCart, clearCart, 
     summary, lastScanned, isLoading, error,
@@ -424,10 +424,15 @@ export default function PosUI({ onAdminSettings }) {
            ) : (
              <div className="flex-1 flex flex-col items-center justify-center text-slate-300"><ScanBarcode size={64} className="mb-4 opacity-50" /><p className="text-lg font-medium">พร้อมใช้งาน</p></div>
            )}
-           <div className="mt-auto pt-6 border-t border-slate-100 flex gap-2">
-              <button onClick={() => setShowProductLookup(true)} className={cn("flex-1 py-3 bg-slate-50 hover:bg-boots-light text-slate-600 hover:text-boots-base rounded-xl font-bold flex items-center justify-center gap-2", btnEffect)}><Search size={20} /> ค้นหาสินค้า</button>
-           </div>
-        </div>
+          <div className="mt-auto pt-6 border-t border-slate-100 flex gap-2">
+              <button
+                onClick={() => (typeof onSearch === 'function' ? onSearch() : setShowProductLookup(true))}
+                className={cn("flex-1 py-3 bg-slate-50 hover:bg-boots-light text-slate-600 hover:text-boots-base rounded-xl font-bold flex items-center justify-center gap-2", btnEffect)}
+              >
+                <Search size={20} /> ค้นหาสินค้า
+              </button>
+          </div>
+       </div>
       </div>
 
       {/* RIGHT SIDE */}

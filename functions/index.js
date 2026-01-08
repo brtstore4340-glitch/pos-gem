@@ -2,6 +2,18 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
+const ALLOWED_ORIGINS = (process.env.ALLOWED_CORS_ORIGINS || "http://localhost:5173,http://localhost:3000")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+const cors = require("cors")({
+  origin: (origin, callback) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"), false);
+  }
+});
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -9,6 +21,7 @@ const { calculateCartSummary } = require("./src/services/cartService");
 
 const REGION = "asia-southeast1";
 const UPLOAD_DOC = db.collection("system_metadata").doc("upload_status");
+const BOOTSTRAP_ADMIN_DOC = db.collection("system_metadata").doc("bootstrap_admin_state");
 const ACCOUNTS = db.collection("accounts");
 const ID_INDEX = db.collection("idIndex");
 const AUDIT_LOGS = db.collection("auditLogs");
@@ -19,9 +32,9 @@ const PIN_MAX_ATTEMPTS = 5;
 const PIN_LOCK_MINUTES = 15;
 const ROLES = ["admin", "SM-SGM", "user"];
 const DEFAULT_ALLOWED_MENUS = Object.freeze({
-  admin: ["dashboard", "pos", "report", "inventory", "orders", "settings", "Upload", "management"],
-  "SM-SGM": ["dashboard", "pos", "report", "inventory", "orders", "settings", "Upload", "management"],
-  user: ["pos", "dashboard"]
+  admin: ["dashboard", "pos", "search", "report", "inventory", "orders", "settings", "Upload", "management"],
+  "SM-SGM": ["dashboard", "pos", "search", "report", "inventory", "orders", "settings", "Upload", "management"],
+  user: ["pos", "search", "dashboard"]
 });
 
 function requireAuth(context) {
@@ -59,6 +72,19 @@ function verifyPin(pin, record) {
   const pinSalt = String(record.pinSalt || "");
   const hash = crypto.pbkdf2Sync(String(pin || ""), pinSalt, PIN_ITERATIONS, PIN_KEYLEN, "sha256").toString("base64");
   return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(expected));
+}
+
+function validateJsonBody(req, res) {
+  const contentType = req.get("content-type") || "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    res.status(415).json({ error: "Unsupported Media Type. Use application/json." });
+    return false;
+  }
+  if (!req.body || typeof req.body !== "object") {
+    res.status(400).json({ error: "Invalid JSON body" });
+    return false;
+  }
+  return true;
 }
 
 function sanitizePermissions(input, role) {
@@ -125,7 +151,7 @@ function normalizeType(type) {
   return type;
 }
 
-async function acquireLock(uid, type, fileMeta) {
+async function acquireLock(lockOwner, type, fileMeta) {
   await db.runTransaction(async (tx) => {
     const s = await tx.get(UPLOAD_DOC);
     const data = s.exists ? s.data() : {};
@@ -142,7 +168,7 @@ async function acquireLock(uid, type, fileMeta) {
     }
 
     tx.set(UPLOAD_DOC, {
-      lock: { inProgress: true, by: uid, type, startedAt: nowTs() },
+      lock: { inProgress: true, by: lockOwner, type, startedAt: nowTs() },
       lastError: admin.firestore.FieldValue.delete()
     }, { merge: true });
 
@@ -256,10 +282,24 @@ exports.bootstrapAdmin = functions.region(REGION).https.onCall(async (data, cont
   const pin = safeStr(data?.pin);
   if (!idCode || !pin) throw new functions.https.HttpsError("invalid-argument", "idCode and pin required");
 
-  const existingAdmin = await db.collectionGroup("ids").where("role", "==", "admin").limit(1).get();
-  if (!existingAdmin.empty) throw new functions.https.HttpsError("failed-precondition", "Admin already exists");
+  // Prefer collection group lookup; if unsupported, fall back to marker doc.
+  let adminExists = false;
+  try {
+    const existingAdmin = await db.collectionGroup("ids").where("role", "==", "admin").limit(1).get();
+    adminExists = !existingAdmin.empty;
+  } catch (err) {
+    console.error("bootstrapAdmin admin lookup failed, falling back to marker doc:", err?.message || err);
+    const markerSnap = await BOOTSTRAP_ADMIN_DOC.get();
+    adminExists = !!(markerSnap.exists && markerSnap.data()?.exists);
+  }
+  if (adminExists) throw new functions.https.HttpsError("failed-precondition", "Admin already exists");
 
   await db.runTransaction(async (tx) => {
+    const bootstrapMarker = await tx.get(BOOTSTRAP_ADMIN_DOC);
+    if (bootstrapMarker.exists && bootstrapMarker.data()?.exists) {
+      throw new functions.https.HttpsError("failed-precondition", "Admin already exists");
+    }
+
     const indexRef = ID_INDEX.doc(idCode);
     if ((await tx.get(indexRef)).exists) throw new functions.https.HttpsError("already-exists", "ID already exists");
 
@@ -280,13 +320,20 @@ exports.bootstrapAdmin = functions.region(REGION).https.onCall(async (data, cont
       pinAlgo,
       pinAttempts: 0,
       pinResetRequired: false,
-      createdAt: nowTs(),
-      updatedAt: nowTs(),
-      createdBy: "bootstrap",
-      createdByUid: context.auth.uid
+        createdAt: nowTs(),
+        updatedAt: nowTs(),
+        createdBy: "bootstrap",
+        createdByUid: context.auth.uid
+      });
+      tx.set(indexRef, { idCode, email, createdAt: nowTs() });
+      tx.set(BOOTSTRAP_ADMIN_DOC, {
+        exists: true,
+        email,
+        idCode,
+        createdAt: nowTs(),
+        createdByUid: context.auth?.uid || null
+      }, { merge: true });
     });
-    tx.set(indexRef, { idCode, email, createdAt: nowTs() });
-  });
 
   await writeAuditLog({
     action: "bootstrap_admin",
@@ -298,6 +345,32 @@ exports.bootstrapAdmin = functions.region(REGION).https.onCall(async (data, cont
   });
 
   return { ok: true };
+});
+
+// HTTPS REST fallback with CORS + body validation (for clients not using httpsCallable)
+exports.bootstrapAdminHttp = functions.region(REGION).https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      if (req.method === "OPTIONS") return res.status(204).send("");
+      if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+      if (!validateJsonBody(req, res)) return;
+
+      const { idCode, pin } = req.body || {};
+      if (!idCode || !pin) return res.status(400).json({ error: "idCode and pin required" });
+
+      // Require Firebase Auth token (should be injected by proxy/emulator middleware)
+      try { requireAuth({ auth: req.auth || req.user }); } catch (e) { return res.status(401).json({ error: e.message }); }
+
+      // Reuse callable logic by invoking directly
+      const callable = exports.bootstrapAdmin;
+      const result = await callable.run({ data: { idCode, pin }, context: { auth: req.auth || req.user } });
+      return res.status(200).json(result);
+    } catch (e) {
+      console.error("bootstrapAdminHttp error:", e);
+      const code = e?.code === "failed-precondition" ? 412 : 500;
+      return res.status(code).json({ error: e?.message || "Internal error" });
+    }
+  });
 });
 
 exports.listMyIds = functions.region(REGION).https.onCall(async (data, context) => {
@@ -584,12 +657,12 @@ exports.beginUpload = functions.region(REGION).https.onCall(async (data, context
   requireAuth(context);
   requireAppCheck(context);
 
-  const uid = context.auth.uid;
-  if (!(await isAdmin(uid))) throw new functions.https.HttpsError("permission-denied", "Admin only");
+  const actor = await getActor(context, data?.actorIdCode);
+  if (actor.role !== "admin") throw new functions.https.HttpsError("permission-denied", "Admin only");
 
   const type = normalizeType(data?.type);
   const fileMeta = data?.fileMeta || {};
-  await acquireLock(uid, type, fileMeta);
+  await acquireLock(actor.idCode, type, fileMeta);
   return { ok: true };
 });
 
@@ -597,8 +670,8 @@ exports.uploadChunk = functions.region(REGION).https.onCall(async (data, context
   requireAuth(context);
   requireAppCheck(context);
 
-  const uid = context.auth.uid;
-  if (!(await isAdmin(uid))) throw new functions.https.HttpsError("permission-denied", "Admin only");
+  const actor = await getActor(context, data?.actorIdCode);
+  if (actor.role !== "admin") throw new functions.https.HttpsError("permission-denied", "Admin only");
 
   const type = normalizeType(data?.type);
   const rows = Array.isArray(data?.rows) ? data.rows : [];
@@ -606,7 +679,7 @@ exports.uploadChunk = functions.region(REGION).https.onCall(async (data, context
 
   const st = await UPLOAD_DOC.get();
   const lock = st.exists ? (st.data().lock || {}) : {};
-  if (!lock.inProgress || lock.by !== uid || lock.type !== type) {
+  if (!lock.inProgress || lock.by !== actor.idCode || lock.type !== type) {
     throw new functions.https.HttpsError("failed-precondition", "No active lock for this upload");
   }
 
@@ -681,8 +754,8 @@ exports.finalizeUpload = functions.region(REGION).https.onCall(async (data, cont
   requireAuth(context);
   requireAppCheck(context);
 
-  const uid = context.auth.uid;
-  if (!(await isAdmin(uid))) throw new functions.https.HttpsError("permission-denied", "Admin only");
+  const actor = await getActor(context, data?.actorIdCode);
+  if (actor.role !== "admin") throw new functions.https.HttpsError("permission-denied", "Admin only");
 
   const type = normalizeType(data?.type);
   const summary = data?.summary || {};
@@ -727,8 +800,8 @@ exports.abortUpload = functions.region(REGION).https.onCall(async (data, context
   requireAuth(context);
   requireAppCheck(context);
 
-  const uid = context.auth.uid;
-  if (!(await isAdmin(uid))) throw new functions.https.HttpsError("permission-denied", "Admin only");
+  const actor = await getActor(context, data?.actorIdCode);
+  if (actor.role !== "admin") throw new functions.https.HttpsError("permission-denied", "Admin only");
 
   await UPLOAD_DOC.set({
     lock: { inProgress: false, by: null, type: null, startedAt: null },

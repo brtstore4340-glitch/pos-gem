@@ -3,7 +3,8 @@ import * as XLSX from "xlsx";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "./firebase";
 
-const functions = getFunctions(app, "asia-southeast1");
+const firebaseRegion = import.meta.env.VITE_FIREBASE_REGION || "asia-southeast1";
+const functions = getFunctions(app, firebaseRegion);
 const beginUpload = httpsCallable(functions, "beginUpload");
 const uploadChunk = httpsCallable(functions, "uploadChunk");
 const finalizeUpload = httpsCallable(functions, "finalizeUpload");
@@ -38,7 +39,7 @@ export async function parseXls(file) {
   return { rows, checksum };
 }
 
-export async function runUploadFlow({ type, file, onProgress }) {
+export async function runUploadFlow({ actorIdCode, type, file, onProgress }) {
   onProgress?.({ phase: "parsing", percent: 5 });
 
   const isCsv = file.name.toLowerCase().endsWith(".csv");
@@ -48,7 +49,7 @@ export async function runUploadFlow({ type, file, onProgress }) {
 
   onProgress?.({ phase: "parsing", percent: 15, meta: { rowCount: rows.length } });
 
-  await beginUpload({ type, fileMeta: { fileName: file.name, checksum, rowCount: rows.length } });
+  await beginUpload({ actorIdCode, type, fileMeta: { fileName: file.name, checksum, rowCount: rows.length } });
   onProgress?.({ phase: "uploading", percent: 20 });
 
   const CHUNK_ROWS = type === "master" ? 200 : 400;
@@ -56,7 +57,7 @@ export async function runUploadFlow({ type, file, onProgress }) {
 
   let agg = { processed: 0, matched: 0, skipped: 0, invalid: 0 };
   for (let i = 0; i < chunks.length; i++) {
-    const resp = await uploadChunk({ type, rows: chunks[i] });
+    const resp = await uploadChunk({ actorIdCode, type, rows: chunks[i] });
     const r = resp?.data || {};
     agg.processed += r.processed || 0;
     agg.matched += r.matched || 0;
@@ -69,12 +70,12 @@ export async function runUploadFlow({ type, file, onProgress }) {
   }
 
   onProgress?.({ phase: "finalizing", percent: 97, meta: agg });
-  await finalizeUpload({ type, summary: { ...agg, rowCount: rows.length, checksum } });
+  await finalizeUpload({ actorIdCode, type, summary: { ...agg, rowCount: rows.length, checksum } });
 
   onProgress?.({ phase: "done", percent: 100, meta: agg });
   return agg;
 }
 
-export async function abortUploadFlow() {
-  await abortUpload({});
+export async function abortUploadFlow(actorIdCode) {
+  await abortUpload({ actorIdCode });
 }

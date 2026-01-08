@@ -11,12 +11,14 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
+const firebaseRegion = import.meta.env.VITE_FIREBASE_REGION || "asia-southeast1";
+
 if (!firebaseConfig.apiKey) {
   console.warn('⚠️ Firebase Config is missing. Please check .env.local');
 }
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const functions = getFunctions(app, 'asia-southeast1');
+const functions = getFunctions(app, firebaseRegion);
 
 export { db, functions };

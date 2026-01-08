@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Noto Sans Thai', 'sans-serif'],
+        sans: ['Inter', 'Noto Sans Thai', 'sans-serif'],
       },
       colors: {
         boots: {
