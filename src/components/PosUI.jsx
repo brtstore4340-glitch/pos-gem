@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Search, ScanBarcode, Trash2, Loader2, Tag, Package, Percent, Ticket, Gift, CheckCircle, Power, User } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShoppingCart, Search, ScanBarcode, Trash2, Loader2, Tag, Package, Percent, Ticket, Gift, CheckCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useCart } from '../hooks/useCart';
 import { useScanListener } from '../hooks/useScanListener';
@@ -47,7 +47,9 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
       next[key] = (next[key] || 0) + 1;
       setSearchHits(next);
       localStorage.setItem("pos_search_hits", JSON.stringify(next));
-    } catch {}
+    } catch (err) {
+      console.debug("persist search hit failed", err);
+    }
   };
 
   const [showProductLookup, setShowProductLookup] = useState(false);
@@ -63,14 +65,6 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
   // Coupon Input State
   const [couponInput, setCouponInput] = useState({ type: '', value: '', code: '' });
   const [showCouponInput, setShowCouponInput] = useState(false); 
-
-  const iconButtonStyle = cn(
-  "btn btn-primary btn-sm btn-square rounded-xl shadow-sm border-0",
-  "transition-all transform-gpu",
-  "hover:-translate-y-0.5 hover:shadow-md",
-  "active:translate-y-0 active:scale-[0.98]"
-  );
-
 
   const lastItemDetail = lastScanned ? cartItems.find(i => (i.sku === lastScanned || i.id === lastScanned)) : null;
   const totalDiscountDisplay = Math.abs((summary?.discount || 0) + (summary?.billDiscountAmount || 0) + (summary?.couponTotal || 0) + (summary?.allowance || 0));

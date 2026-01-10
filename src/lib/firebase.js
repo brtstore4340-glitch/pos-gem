@@ -70,3 +70,8 @@ if (__ENABLE_APPCHECK__) {
 }
 
 export { app, db, functions, auth, storage, googleProvider, appCheck };
+// dev-only diagnostics
+if (import.meta?.env?.DEV) {
+  window.__APP_DIAG__ = window.__APP_DIAG__ || {};
+  window.__APP_DIAG__.firebaseProjectId = firebaseConfig?.projectId;
+}

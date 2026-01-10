@@ -1,4 +1,4 @@
-﻿/*
+/*
   posService.uploadAddon.js
   ✅ Copy functions below into your existing src/services/posService.js
 
@@ -51,7 +51,7 @@ export async function scanItemFast(skuOrBarcode) {
       price: Number(p.dealPrice || p.price || p.regPrice || 0),
       badgeText: p.dealPrice ? "DEAL" : ""
     };
-  } catch (_) {}
+  } catch {}
 
   // 2) Resolve barcode
   const itemCode = await resolveBarcodeToItemCode(code);

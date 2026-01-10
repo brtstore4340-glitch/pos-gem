@@ -1,6 +1,6 @@
 import { db } from '../lib/firebase';
 import { functions } from '../lib/firebase';
-import { collection, doc, getDoc, getDocs, setDoc, writeBatch, getCountFromServer, serverTimestamp, query, limit, where, orderBy, startAt, endAt } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc, writeBatch, getCountFromServer, serverTimestamp, query, limit, where/* , orderBy, startAt, endAt */ } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import * as XLSX from 'xlsx';
 
@@ -65,7 +65,7 @@ export const posService = {
       const coll = collection(db, 'products');
       const snapshot = await getCountFromServer(coll);
       return snapshot.data().count > 0;
-    } catch (e) {
+    } catch {
       return false;
     }
   },
@@ -264,7 +264,7 @@ export const posService = {
       const snapshot = await getCountFromServer(coll);
       const uploads = await posService.getUploadMeta();
       return { count: snapshot.data().count, lastUpdated: new Date(), uploads };
-    } catch (e) { return { count: 0, lastUpdated: null, uploads: {} }; }
+    } catch { return { count: 0, lastUpdated: null, uploads: {} }; }
   },
 
   getUploadMeta: async () => {
@@ -274,7 +274,7 @@ export const posService = {
       try {
         const snap = await getDoc(doc(db, 'upload_meta', key));
         if (snap.exists()) result[key] = snap.data();
-      } catch (e) {
+      } catch {
         console.warn('getUploadMeta read failed for', key, e);
       }
     }));

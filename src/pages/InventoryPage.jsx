@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, Plus, Search, Filter, MoreHorizontal } from 'lucide-react';
+import { Package, Plus, Search, Filter } from 'lucide-react';
 
 export default function InventoryPage() {
   return (

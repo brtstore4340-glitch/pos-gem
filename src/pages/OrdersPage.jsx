@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingCart, Filter, Search, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Filter, Calendar, FileText } from 'lucide-react';
 
 export default function OrdersPage() {
   return (

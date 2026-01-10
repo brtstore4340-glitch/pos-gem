@@ -13,7 +13,6 @@ export default class ErrorBoundary extends React.Component {
   componentDidCatch(error, info) {
     this.setState({ info });
     // Also log to console
-    // eslint-disable-next-line no-console
     console.error("ErrorBoundary caught:", error, info);
   }
 

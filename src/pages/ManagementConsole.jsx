@@ -1,8 +1,8 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { createId, getAuditLogs, resetPin, searchIds, updateId } from '../services/rbacService';
 import AccessDenied from '../components/auth/AccessDenied';
-import { Shield, Search, UserPlus, Edit, Key, History, Save, RefreshCw, CheckCircle, AlertCircle, Trash2, Users, LayoutDashboard, ShoppingCart, FileText, Package, Settings, HardDrive, Lock } from 'lucide-react';
+import { Shield, Search, UserPlus, Edit, Key, History, Save, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 function __requireIdCodePin__(payload) {
@@ -18,17 +18,6 @@ const MENU_OPTIONS = ["dashboard", "pos", "report", "inventory", "orders", "sett
 const ROLE_OPTIONS = ["admin", "SM-SGM", "user"];
 
 // Additional Icon mapping for nice UI
-const MENU_ICONS = {
-    dashboard: LayoutDashboard,
-    pos: ShoppingCart,
-    report: FileText,
-    inventory: Package,
-    orders: ShoppingCart,
-    settings: Settings,
-    Upload: HardDrive,
-    management: Users
-};
-
 export default function ManagementConsole() {
   // BEGIN: FUNCTION ZONE (DO NOT TOUCH)
   const { session } = useAuth();

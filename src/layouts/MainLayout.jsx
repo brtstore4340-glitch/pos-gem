@@ -10,8 +10,7 @@ import {
   PowerOff,
   User,
   Moon,
-  Sun,
-  LogOut
+  Sun
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 

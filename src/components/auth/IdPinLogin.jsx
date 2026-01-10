@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ShieldCheck, LogOut, KeySquare, User, CheckCircle2, Moon, Sun, Loader2 } from 'lucide-react';
+import { ShieldCheck, LogOut, KeySquare, User, Moon, Sun, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { bootstrapAdmin } from '../../services/rbacService';
 

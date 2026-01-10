@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Loader2, ShieldCheck, Sun, Moon, CheckCircle2 } from 'lucide-react';
+import { Loader2, Sun, Moon, CheckCircle2 } from 'lucide-react';
 
 export default function GoogleSignIn() {
   // BEGIN: FUNCTION ZONE (DO NOT TOUCH)

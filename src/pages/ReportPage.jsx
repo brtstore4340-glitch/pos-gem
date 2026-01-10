@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, BarChart3, Calendar, Download } from 'lucide-react';
+import { FileText, BarChart3 } from 'lucide-react';
 
 export default function ReportPage() {
   return (
@@ -34,3 +34,4 @@ export default function ReportPage() {
     </div>
   );
 }
+

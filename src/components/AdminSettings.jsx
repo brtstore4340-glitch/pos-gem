@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
-import { Upload, Database, FileText, CheckCircle, AlertCircle, RefreshCw, ArrowLeft, Trash2, Lock, Search, HelpCircle, Power } from 'lucide-react';
+import { Upload, Database, FileText, CheckCircle, AlertCircle, RefreshCw, ArrowLeft, Trash2, Lock, Search, HelpCircle } from 'lucide-react';
 import { posService } from '../services/posService';
 import { cn } from '../utils/cn';
 

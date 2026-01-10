@@ -1,4 +1,4 @@
-﻿import { httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
 import { functions } from '../lib/firebase';
 
 function __requireIdCodePin__(payload) {

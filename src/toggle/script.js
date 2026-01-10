@@ -1,3 +1,4 @@
+/* global $ */
 var darkmodeactive = localStorage.getItem("darkmode");
 console.log("Dark mode is: " + darkmodeactive);
 function labelDark() {
@@ -85,17 +86,14 @@ $(window).resize(function() {
   }, 0);
 });
 function refreshFavicon() {
+  var link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+  link.type = 'image/x-icon';
+  link.rel = 'icon';
+  
   if (matchMedia('(prefers-color-scheme: dark)').matches) {
-    var link = document.querySelector("link[rel*='icon']") || document.createElement('link');
-    link.type = 'image/x-icon';
-    link.rel = 'icon';
     link.href = 'favicon-dark.svg';
-    document.getElementsByTagName('head')[0].appendChild(link);
   } else {
-    var link = document.querySelector("link[rel*='icon']") || document.createElement('link');
-    link.type = 'image/x-icon';
-    link.rel = 'icon';
     link.href = 'favicon.svg';
-    document.getElementsByTagName('head')[0].appendChild(link);
   }
+  document.getElementsByTagName('head')[0].appendChild(link);
 }

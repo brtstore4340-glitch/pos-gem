@@ -11,8 +11,7 @@ import {
   ShieldCheck,
   Search,
   LogOut,
-  Lock,
-  Menu
+  Lock
 } from "lucide-react";
 
 import ErrorBoundary from "./components/ErrorBoundary";

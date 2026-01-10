@@ -26,7 +26,7 @@ function Card({ title, subtitle, disabled, children, isDarkMode }) {
   );
 }
 
-export default function PosUploadModal({ open, onClose, isDarkMode = false, masterReady = true, pricingReady }) {
+export default function PosUploadModal({ open, onClose, isDarkMode = false }) {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState({ phase: "idle", percent: 0, meta: null });
   const [result, setResult] = useState(null);
@@ -42,10 +42,6 @@ export default function PosUploadModal({ open, onClose, isDarkMode = false, mast
     if (result) return { icon: <CheckCircle size={16} />, text: "Upload completed" };
     return { icon: <UploadCloud size={16} />, text: "Ready" };
   }, [busy, progress, err, result]);
-
-  if (!open) return null;
-  const lastLabel = (key) =>
-    uploadMeta?.[key]?.lastUploadAt ? `Last update: ${uploadMeta[key].lastUploadAt}` : "Last update: -";
 
   useEffect(() => {
     if (!open) return;
@@ -67,6 +63,8 @@ export default function PosUploadModal({ open, onClose, isDarkMode = false, mast
       cancelled = true;
     };
   }, [open, result]);
+
+  if (!open) return null;
 
 
   const onPick = async (type, file) => {
@@ -94,7 +92,11 @@ export default function PosUploadModal({ open, onClose, isDarkMode = false, mast
 
   const abortNow = async () => {
     const actorIdCode = session?.idCode || lastIdCode || "";
-    try { await abortUploadFlow(actorIdCode); } catch {}
+    try {
+      await abortUploadFlow(actorIdCode);
+    } catch (e) {
+      console.warn("abort upload failed", e);
+    }
     setBusy(false);
     setErr("Aborted");
   };

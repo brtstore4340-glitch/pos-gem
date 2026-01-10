@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Search, Box, Package, ArrowRight, Tag, Barcode, Layers, Archive, Info } from "lucide-react";
+import { Search, Package, Tag, Barcode, Layers, Archive, Info } from "lucide-react";
 import { posService } from "../services/posService";
 import { cn } from "../utils/cn";
 

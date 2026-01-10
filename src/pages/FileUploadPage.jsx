@@ -1,6 +1,5 @@
 ﻿import React, { useState } from "react";
-import { UploadCloud, File, X, CheckSquare, HardDrive } from "lucide-react";
-import { cn } from "../utils/cn";
+import { UploadCloud, File, X, HardDrive } from "lucide-react";
 
 export default function FileUploadPage() {
   // BEGIN: FUNCTION ZONE

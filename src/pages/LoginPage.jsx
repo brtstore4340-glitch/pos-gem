@@ -3,6 +3,8 @@ import { Toaster, toast } from "react-hot-toast";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { APP_VERSION, APP_UPDATED } from "../constants/appMeta";
+import { User, Lock, Eye, EyeOff, LogIn, ShieldCheck, Activity, Server, Info } from "lucide-react";
+import { cn } from "../utils/cn";
 
 export default function LoginPage({ onLogin }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -77,159 +79,164 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-[#050914] text-slate-50 overflow-hidden relative">
+    <div className="min-h-screen w-full flex font-sans bg-slate-50 dark:bg-[#1a1b1e] text-slate-900 dark:text-white overflow-hidden">
       <Toaster position="top-center" />
 
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-[#050914] to-[#040811]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(59,130,246,0.18),transparent_45%)]" />
-      </div>
+      {/* LEFT PANEL - BRANDING */}
+      <div className="hidden lg:flex w-1/2 relative bg-boots-base overflow-hidden flex-col justify-between p-12 text-white">
+        {/* Background Patterns */}
+        <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] rounded-full bg-white/5 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 pointer-events-none mix-blend-overlay"></div>
 
-      <div className="relative mx-auto max-w-[1400px] px-4 py-10">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* LEFT PANEL */}
-          <div className="flex-1 min-h-[420px] rounded-3xl border border-blue-900/40 bg-white/5 shadow-2xl backdrop-blur-xl relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-transparent to-blue-900/10 pointer-events-none" />
-            <div className="relative flex flex-col h-full gap-6">
-              <div className="flex flex-col gap-4 rounded-2xl border border-blue-800/40 bg-[#0b1220]/70 px-6 py-5 shadow-inner">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-semibold text-blue-100">Boots 4340 Web App</div>
-                    <div className="text-xs text-slate-400 mt-1">Enterprise Access Portal</div>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-blue-100">
-                    <span className="inline-flex items-center gap-2 rounded-full border border-blue-700/60 px-3 py-1 bg-blue-500/10">
-                      <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                      {heartbeat}
-                    </span>
-                  </div>
+        <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-white rounded-xl text-boots-base flex items-center justify-center font-bold text-2xl shadow-lg">B</div>
+                <div>
+                    <h1 className="text-2xl font-bold leading-none">Boots POS</h1>
+                    <p className="text-blue-200 text-sm font-medium">Enterprise System</p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                  <InfoRow label="Version" value={versionDisplay} />
-                  <InfoRow label="Date Update" value={updatedDisplay} />
-                  <InfoRow label="Promotion" value={promoText} />
-                  <InfoRow label="Last Upload (Maintenance)" value={maintenanceText} />
-                </div>
-              </div>
-
-              <div className="flex-1 min-h-[300px] rounded-2xl border border-blue-800/40 bg-[#0b1220]/80 shadow-inner relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(59,130,246,0.12),transparent_50%)]" />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0b1220]/40 to-[#050914]" />
-                <div className="relative h-full flex flex-col items-start justify-center px-8 py-6 gap-2">
-                  <div className="text-sm uppercase tracking-[0.2em] text-blue-200/80">Welcome</div>
-                  <div className="text-4xl md:text-5xl font-bold text-white leading-tight">{storeName}</div>
-                  <div className="text-sm text-slate-400">TERMINAL_ID: {terminalId}</div>
-                  <div className="mt-6 grid grid-cols-2 gap-4 text-sm w-full max-w-xl">
-                    <StatBlock label="Security" value="App Check enabled" />
-                    <StatBlock label="Sync" value="All queues clear" />
-                  </div>
-                  <div className="absolute bottom-4 right-6 text-blue-200/15 text-4xl font-black tracking-wide select-none">
-                    Boots 4340
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
+            
+            <div className="mt-12 space-y-6">
+                 <div>
+                    <h2 className="text-4xl font-bold mb-2">Welcome Back</h2>
+                    <p className="text-blue-100 text-lg opacity-90 max-w-md">Access your store dashboard, inventory, and sales reports in one secure place.</p>
+                 </div>
 
-          {/* RIGHT PANEL */}
-          <div className="w-full md:w-[420px]">
-            <div className="bg-white/10 border border-blue-900/40 rounded-3xl shadow-2xl p-8 relative overflow-hidden backdrop-blur-xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-900/25 via-transparent to-blue-800/20 pointer-events-none" />
-              <div className="relative">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-100 text-xs font-semibold border border-blue-700/50">
-                    Staff Access
-                  </div>
-                  <div className="text-3xl font-bold text-white mt-3">Secure Login</div>
-                  <div className="text-sm text-slate-400 mt-1">Sign in with your ID / email and password</div>
-                </div>
-
-                <form onSubmit={handleLogin} className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-slate-300 uppercase ml-1">User ID / Email</label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-4 top-3.5 text-slate-500">person</span>
-                      <input
-                        type="text"
-                        autoComplete="username"
-                        value={loginId}
-                        onChange={(e) => setLoginId(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3.5 bg-[#0b1220]/80 border border-blue-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/60 transition-all text-sm"
-                        placeholder="ID or email"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-slate-300 uppercase ml-1">Password</label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-4 top-3.5 text-slate-500">lock</span>
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        autoComplete="current-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-12 pr-12 py-3.5 bg-[#0b1220]/80 border border-blue-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/60 transition-all text-sm"
-                        placeholder="Enter password"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((s) => !s)}
-                        className="absolute right-4 top-3.5 text-slate-500 hover:text-white transition-colors"
-                        aria-label="Toggle password visibility"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">
-                          {showPassword ? "visibility_off" : "visibility"}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={!canSubmit}
-                    className={[
-                      "w-full mt-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-3.5 rounded-lg shadow-lg",
-                      "transform transition-all active:scale-[0.98] flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:ring-offset-2 focus:ring-offset-[#111827]",
-                      (!canSubmit ? "opacity-60 cursor-not-allowed" : "")
-                    ].join(" ")}
-                  >
-                    {isLoading ? (
-                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      "Secure Login"
-                    )}
-                  </button>
-
-                  <div className="text-[11px] text-gray-500 text-center pt-2">
-                    By continuing you agree to internal security policy.
-                  </div>
-                </form>
-              </div>
+                 <div className="grid grid-cols-2 gap-4 max-w-lg mt-8">
+                     <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                         <div className="flex items-center gap-2 text-blue-200 mb-2">
+                             <Activity size={18} />
+                             <span className="text-xs font-bold uppercase tracking-wider">Status</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                             <span className="font-semibold">{heartbeat}</span>
+                         </div>
+                     </div>
+                     <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                         <div className="flex items-center gap-2 text-blue-200 mb-2">
+                             <Server size={18} />
+                             <span className="text-xs font-bold uppercase tracking-wider">Terminal</span>
+                         </div>
+                         <div className="font-semibold">{terminalId}</div>
+                     </div>
+                 </div>
             </div>
-          </div>
+        </div>
+
+        <div className="relative z-10 text-sm text-blue-200/60 flex flex-col gap-1">
+             <div className="flex items-center justify-between border-t border-white/10 pt-6">
+                <div>
+                     <p>version {versionDisplay}</p>
+                     <p>updated {updatedDisplay}</p>
+                </div>
+                <div className="text-right">
+                    <p>{storeName}</p>
+                    <p className="opacity-70">Authorized Personnel Only</p>
+                </div>
+             </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-function InfoRow({ label, value }) {
-  return (
-    <div className="flex flex-col gap-1 rounded-xl border border-blue-800/40 bg-[#0c1426]/60 px-4 py-3">
-      <div className="text-[11px] uppercase tracking-wide text-slate-400">{label}</div>
-      <div className="text-sm font-semibold text-white truncate">{value || "—"}</div>
-    </div>
-  );
-}
+      {/* RIGHT PANEL - LOGIN FORM */}
+      <div className="w-full lg:w-1/2 bg-slate-50 dark:bg-[#1a1b1e] flex items-center justify-center p-6 relative">
+          
+         {/* Mobile Header (Visible only on small screens) */}
+         <div className="lg:hidden absolute top-0 left-0 right-0 p-6 flex justify-between items-center text-boots-base">
+            <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-boots-base text-white rounded-lg flex items-center justify-center font-bold">B</div>
+                <span className="font-bold text-lg">Boots POS</span>
+            </div>
+         </div>
 
-function StatBlock({ label, value }) {
-  return (
-    <div className="rounded-xl border border-blue-800/40 bg-[#0c1426]/60 px-4 py-3">
-      <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="text-sm font-semibold text-white mt-1">{value}</div>
+         <div className="w-full max-w-[420px]">
+            <div className="text-center mb-10">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/20 text-boots-base dark:text-blue-400 mb-4 ring-8 ring-blue-50/50 dark:ring-blue-900/10">
+                    <LogIn size={32} />
+                </div>
+                <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Sign in</h2>
+                <p className="text-slate-500 dark:text-slate-400">Enter your Employee ID and Password</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-6">
+                <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">User ID / Email</label>
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-boots-base transition-colors">
+                            <User size={20} />
+                        </div>
+                        <input
+                            type="text"
+                            value={loginId}
+                            onChange={(e) => setLoginId(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-[#25262b] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-boots-base/20 focus:border-boots-base transition-all font-medium"
+                            placeholder="e.g. 6705067"
+                            required
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                         <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Password</label>
+                    </div>
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-boots-base transition-colors">
+                            <Lock size={20} />
+                        </div>
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full pl-12 pr-12 py-3.5 bg-white dark:bg-[#25262b] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-boots-base/20 focus:border-boots-base transition-all font-medium"
+                            placeholder="••••••••"
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                        >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                    </div>
+                </div>
+
+                <button
+                    type="submit"
+                    disabled={!canSubmit}
+                    className={cn(
+                        "w-full py-4 rounded-xl font-bold bg-boots-base text-white shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30 hover:bg-boots-hover transition-all active:scale-[0.98] flex items-center justify-center gap-2",
+                        !canSubmit && "opacity-70 cursor-not-allowed grayscale"
+                    )}
+                >
+                    {isLoading ? (
+                         <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                        <>
+                        <span>Secure Login</span>
+                        <ShieldCheck size={20} className="opacity-80" />
+                        </>
+                    )}
+                </button>
+            </form>
+            
+            <div className="mt-10 pt-6 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-start gap-3">
+                    <div className="mt-1 min-w-[16px] text-blue-600 dark:text-blue-400">
+                         <Info size={16} />
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        <p className="mb-1"><span className="font-semibold text-slate-700 dark:text-slate-300">Daily Promotion:</span> {promoText}</p>
+                        <p><span className="font-semibold text-slate-700 dark:text-slate-300">Maintenance:</span> Last sync at {maintenanceText}</p>
+                    </div>
+                </div>
+            </div>
+
+         </div>
+      </div>
     </div>
   );
 }

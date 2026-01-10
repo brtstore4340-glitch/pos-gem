@@ -1,5 +1,5 @@
 ﻿import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { app } from "./firebase-config.js"; // Ensure this points to your config
+import { app } from "./lib/firebase";
 
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
@@ -13,16 +13,24 @@ export async function signInWithGoogle() {
   console.log(" GoogleSignIn: Initiating...");
   
   try {
-    const result = await if (typeof window !== "undefined") console.log(" Before Google sign-in. origin=", window.location.origin, "href=", window.location.href);
-signInWithPopup(auth, provider);
+    if (typeof window !== "undefined") {
+      console.log(
+        " Before Google sign-in. origin=",
+        window.location.origin,
+        "href=",
+        window.location.href
+      );
+    }
+
+    const result = await signInWithPopup(auth, provider);
     const user = result.user;
     
     console.log(" GoogleSignIn: Success", user.displayName);
     return { success: true, data: user, error: null };
     
   } catch (error) {
-  console.error("Google sign-in raw errorrror:", error);
-  console.error("code:", error?.code, "message:", error?.message, "customData:", error?.customData);
+    console.error("Google sign-in raw errorrror:", error);
+    console.error("code:", error?.code, "message:", error?.message, "customData:", error?.customData);
     console.error(" GoogleSignIn: Error Details", {
         code: error.code,
         message: error.message,
