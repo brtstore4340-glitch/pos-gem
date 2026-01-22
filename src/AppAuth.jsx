@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/LoginPage";
-import UserManagementPage from "./pages/UserManagementPage";`nimport ErrorBoundary from "./components/ErrorBoundary";
+import UserManagementPage from "./pages/UserManagementPage";
+import ErrorBoundary from "./components/ErrorBoundary";
 import ExistingApp from "./App";
 
 export default function AppAuth() {
@@ -13,7 +14,7 @@ export default function AppAuth() {
 }
 
 function Gate() {
-  const { loading, isAuthed, role, signOut, profile } = useAuth();
+  const { loading, isAuthed, role, signOut, profile, firebaseUser } = useAuth();
   const [view, setView] = useState("app"); // "app" | "users"
 
   const canManage = useMemo(() => role === "admin" || role === "SM-SGM", [role]);
