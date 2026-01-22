@@ -4,21 +4,12 @@ import { getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { initializeAppCheck, ReCaptchaV3Provider, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
+import { firebaseConfig, firebaseRegion } from '../config/firebaseConfig';
 
-const __ENABLE_APPCHECK__ = import.meta.env.VITE_ENABLE_APPCHECK === 'true';
-
-// ดึงค่า Config จาก Environment Variables (.env.local / .env.production)
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-};
-
-const firebaseRegion = import.meta.env.VITE_FIREBASE_REGION || 'asia-southeast1';
+// Force App Check on (ignore env override unless explicitly disabled in code).
+const __ENABLE_APPCHECK__ =
+  String(import.meta.env.VITE_ENABLE_APPCHECK ?? 'false').toLowerCase() === 'true';
 
 // DEBUG: Log Firebase configuration
 console.log('🔥 Firebase Config Debug:', {
@@ -49,6 +40,7 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 // App Check (reCAPTCHA v3) — gated by VITE_ENABLE_APPCHECK
 const appCheckSiteKey = import.meta.env.VITE_APPCHECK_SITE_KEY;
+const appCheckProviderKind = (import.meta.env.VITE_APPCHECK_PROVIDER || 'enterprise').toLowerCase();
 let appCheck = null;
 
 if (__ENABLE_APPCHECK__) {
@@ -58,8 +50,13 @@ if (__ENABLE_APPCHECK__) {
   }
 
   if (appCheckSiteKey) {
+    const provider =
+      appCheckProviderKind === 'enterprise'
+        ? new ReCaptchaEnterpriseProvider(appCheckSiteKey)
+        : new ReCaptchaV3Provider(appCheckSiteKey);
+
     appCheck = initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(appCheckSiteKey),
+      provider,
       isTokenAutoRefreshEnabled: true,
     });
   } else {

@@ -274,8 +274,8 @@ export const posService = {
       try {
         const snap = await getDoc(doc(db, 'upload_meta', key));
         if (snap.exists()) result[key] = snap.data();
-      } catch {
-        console.warn('getUploadMeta read failed for', key, e);
+      } catch (e) {
+        console.warn('getUploadMeta read failed for', key, e?.message || e);
       }
     }));
     return result;

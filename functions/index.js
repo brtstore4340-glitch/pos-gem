@@ -1,4 +1,4 @@
-﻿/* functions/index.js */
+/* functions/index.js */
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
@@ -464,7 +464,7 @@ exports.createId = functions.region(REGION).https.onCall(async (data, context) =
       pinSalt,
       pinAlgo,
       pinAttempts: 0,
-      pinResetRequired: false,
+      pinResetRequired: true,
       createdAt: nowTs(),
       updatedAt: nowTs(),
       createdBy: actor.idCode,
@@ -484,6 +484,55 @@ exports.createId = functions.region(REGION).https.onCall(async (data, context) =
   });
 
   return { ok: true };
+});
+
+exports.adminResetAllPins = functions.region(REGION).https.onCall(async (data, context) => {
+  const actor = await getActor(context, data?.actorIdCode);
+  if (actor.role !== "admin") throw new functions.https.HttpsError("permission-denied", "Not allowed");
+
+  const newPin = "1234";
+  const { pinHash, pinSalt, pinAlgo } = hashPin(newPin);
+
+  const batchSize = 400;
+  const snapshot = await db.collectionGroup("ids").get();
+  const batches = [];
+  let batch = db.batch();
+  let count = 0;
+
+  snapshot.docs.forEach((doc) => {
+    batch.update(doc.ref, {
+      pinHash,
+      pinSalt,
+      pinAlgo,
+      pinAttempts: 0,
+      pinLockedUntil: admin.firestore.FieldValue.delete(),
+      pinResetRequired: true,
+      updatedAt: nowTs(),
+      updatedBy: actor.idCode,
+      updatedByUid: context.auth.uid
+    });
+    count++;
+    if (count % batchSize === 0) {
+      batches.push(batch);
+      batch = db.batch();
+    }
+  });
+
+  if (count % batchSize !== 0) {
+    batches.push(batch);
+  }
+
+  await Promise.all(batches.map(b => b.commit()));
+
+  await writeAuditLog({
+    action: "admin_reset_all_pins",
+    actorUid: context.auth.uid,
+    actorEmail: actor.email,
+    actorIdCode: actor.idCode,
+    count
+  });
+
+  return { ok: true, count };
 });
 
 exports.updateId = functions.region(REGION).https.onCall(async (data, context) => {
