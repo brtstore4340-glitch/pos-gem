@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { collection, getDocs, limit, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { createManagedUser, updateManagedUser } from "../services/authService";
@@ -24,12 +24,12 @@ export default function UserManagementPage() {
   const scopeQuery = useMemo(() => {
     const base = collection(db, "users");
     if (role === "SM-SGM" && firebaseUser && firebaseUser.uid) {
-      return query(base, where("createdByUid", "==", firebaseUser.uid));
+      return query(base, where("createdByUid", "==", firebaseUser.uid), limit(200));
     }
-    return base;
+    return query(base, limit(200));
   }, [role, firebaseUser]);
 
-  async function load() {
+  const load = useCallback(async () => {
     setError("");
     setLoading(true);
     try {
@@ -43,13 +43,12 @@ export default function UserManagementPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [scopeQuery]);
 
   useEffect(() => {
     if (!canManage) return;
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canManage, role, firebaseUser && firebaseUser.uid]);
+  }, [canManage, load]);
 
   async function onCreate(e) {
     e.preventDefault();

@@ -1,7 +1,7 @@
 ﻿import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { app } from "./firebase";
+import { app } from "../firebase";
 
 const firebaseRegion = import.meta.env.VITE_FIREBASE_REGION || "asia-southeast1";
 const functions = getFunctions(app, firebaseRegion);
