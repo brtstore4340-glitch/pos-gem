@@ -88,7 +88,7 @@ function AppShell() {
   useEffect(() => {
     if (!session) return;
     setActiveTab(defaultTab);
-  }, [session?.idCode, defaultTab, session]);
+  }, [session?.idCode, defaultTab]);
 
   useEffect(() => {
     if (!allowedSet.has(activeTab)) {

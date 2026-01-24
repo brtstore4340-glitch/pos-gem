@@ -10,7 +10,7 @@ import {
   serverTimestamp,
   deleteDoc
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db } from '../firebase';
 
 export const createUserProfile = async (uid, profileData) => {
   const userRef = doc(db, 'users', uid);
