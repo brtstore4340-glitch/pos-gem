@@ -7,7 +7,7 @@
   - Lightweight searchProducts(): keywordsText range query (practical)
 */
 
-import { db } from "./firebase";
+import { db } from "../firebase";
 import { doc, getDoc, query, collection, limit, where, getDocs } from "firebase/firestore";
 
 const memCache = new Map();

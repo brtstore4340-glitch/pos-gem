@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useCart } from '../context/CartContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const CheckoutPage = () => {
   const { state, dispatch } = useCart();
@@ -21,7 +22,13 @@ const CheckoutPage = () => {
     dispatch({ type: 'REMOVE_ITEM', payload: itemId });
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <LoadingSpinner label="Loading checkout..." />
+      </div>
+    );
+  }
   if (error) return <div>Error: {error}</div>;
   if (items.length === 0) return <div>Your cart is empty.</div>;
 

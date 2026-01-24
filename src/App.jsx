@@ -47,7 +47,7 @@ const DEFAULT_ALLOWED_MENUS = {
 function AppShell() {
   const { isDark } = useTheme();
   const { session, signOut, lockTerminal } = useAuth();
-  const [activeTab, setActiveTab] = useState("pos");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const logoSrc = isDark ? logoDark : logoLight;
   const isManager = session?.role === "admin" || session?.role === "SM-SGM";
 
@@ -80,15 +80,16 @@ function AppShell() {
   const visibleTabs = useMemo(() => tabs.filter((tab) => allowedSet.has(tab.id)), [tabs, allowedSet]);
   
   const defaultTab = useMemo(() => {
+    if (allowedSet.has("dashboard")) return "dashboard";
     if (isManager && allowedSet.has("management")) return "management";
     if (allowedSet.has("pos")) return "pos";
-    return allowedMenus[0] || "pos";
+    return allowedMenus[0] || "dashboard";
   }, [isManager, allowedSet, allowedMenus]);
 
   useEffect(() => {
     if (!session) return;
     setActiveTab(defaultTab);
-  }, [session?.idCode, defaultTab, session]);
+  }, [session?.idCode, defaultTab]);
 
   useEffect(() => {
     if (!allowedSet.has(activeTab)) {

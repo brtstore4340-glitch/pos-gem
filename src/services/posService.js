@@ -25,6 +25,8 @@ const generateKeywords = (text) => {
 const calculateOrderFn = httpsCallable(functions, 'calculateOrder');
 let __PRODUCT_ID_CACHE__ = null;
 let __PRODUCT_ID_CACHE_AT__ = 0;
+let __PRODUCT_DATE_CACHE__ = null;
+let __PRODUCT_DATE_CACHE_AT__ = 0;
 const PRODUCT_ID_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 async function getProductIdSetCached() {
@@ -38,6 +40,19 @@ async function getProductIdSetCached() {
   __PRODUCT_ID_CACHE__ = ids;
   __PRODUCT_ID_CACHE_AT__ = now;
   return ids;
+}
+
+async function getProductDateMapCached() {
+  const now = Date.now();
+  if (__PRODUCT_DATE_CACHE__ && (now - __PRODUCT_DATE_CACHE_AT__) < PRODUCT_ID_CACHE_TTL_MS) {
+    return __PRODUCT_DATE_CACHE__;
+  }
+  const dates = new Map();
+  const qs = await getDocs(collection(db, 'products'));
+  qs.forEach((d) => dates.set(d.id, d.data().DateLastAmended));
+  __PRODUCT_DATE_CACHE__ = dates;
+  __PRODUCT_DATE_CACHE_AT__ = now;
+  return dates;
 }
 
 async function writeUploadMeta(uploadKey, lastUploadAtISO, count) {
@@ -73,9 +88,7 @@ export const posService = {
   // 2. Upload ProductAllDept (CSV - Master)
   uploadProductAllDept: async (products, onProgress) => {
     console.log('🔄 Uploading Master Data...');
-    const existingMap = new Map();
-    const querySnapshot = await getDocs(collection(db, 'products'));
-    querySnapshot.forEach((doc) => existingMap.set(doc.id, doc.data().DateLastAmended));
+    const existingMap = await getProductDateMapCached();
 
     // Filter Logic:
     // 1. Must be ProductStatus = "0 - Normal Product" (Check startsWith "0")
@@ -140,6 +153,8 @@ export const posService = {
       await new Promise(r => setTimeout(r, 50));
     }
     await writeUploadMeta('master', new Date().toISOString(), processed);
+    __PRODUCT_ID_CACHE__ = null;
+    __PRODUCT_DATE_CACHE__ = null;
     return processed;
   },
 
@@ -157,9 +172,7 @@ export const posService = {
     const lastUpdateISO = new Date().toISOString();
 
     // 3.2 Load Existing IDs to ensure we only update existing products
-    const existingIds = new Set();
-    const querySnapshot = await getDocs(collection(db, 'products'));
-    querySnapshot.forEach((doc) => existingIds.add(doc.id));
+    const existingIds = await getProductIdSetCached();
     
     console.log('✅ Loaded ' + existingIds.size + ' master items for matching.');
 
@@ -205,6 +218,8 @@ export const posService = {
     if (uploadKey) {
       await writeUploadMeta(uploadKey, lastUpdateISO, processed);
     }
+    __PRODUCT_ID_CACHE__ = null;
+    __PRODUCT_DATE_CACHE__ = null;
 
     return processed;
   },
@@ -282,7 +297,26 @@ export const posService = {
   },
   
   clearDatabase: async (onProgress) => { /* Code เดิม */ 
-    const BATCH_SIZE = 400; let totalDeleted = 0; while (true) { const q = query(collection(db, 'products'), limit(BATCH_SIZE)); const snapshot = await getDocs(q); if (snapshot.empty) break; const batch = writeBatch(db); snapshot.forEach((doc) => batch.delete(doc.ref)); await batch.commit(); totalDeleted += snapshot.size; if (onProgress) onProgress(totalDeleted); await new Promise(r => setTimeout(r, 50)); } return totalDeleted;
+    const BATCH_SIZE = 400;
+    const MAX_BATCHES = 500;
+    let totalDeleted = 0;
+    let batches = 0;
+    while (true) {
+      const q = query(collection(db, 'products'), limit(BATCH_SIZE));
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) break;
+      const batch = writeBatch(db);
+      snapshot.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+      totalDeleted += snapshot.size;
+      batches += 1;
+      if (onProgress) onProgress(totalDeleted);
+      if (batches >= MAX_BATCHES) {
+        throw new Error('clearDatabase aborted: exceeded max batch limit.');
+      }
+      await new Promise(r => setTimeout(r, 50));
+    }
+    return totalDeleted;
   },
 
   // Search & Scan (Code เดิม)
@@ -326,7 +360,6 @@ export const posService = {
     }
   },
   scanItem: async (keyword) => {
-    await new Promise(resolve => setTimeout(resolve, 300));
     const cleanKey = keyword.trim();
     if (!cleanKey) throw new Error('กรุณาระบุคำค้นหา');
     try {
