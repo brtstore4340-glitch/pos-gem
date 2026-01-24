@@ -1,7 +1,3 @@
-param(
-  [string]$RepoPath = ""
-)
-
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
@@ -25,26 +21,19 @@ function Backup-File([string]$FilePath, [string]$BackupDir) {
   Copy-Item -LiteralPath $FilePath -Destination (Join-Path $BackupDir $leaf) -Force
 }
 
-function Get-RepoRoot([string]$StartDir) {
-  $d = Resolve-Path -LiteralPath $StartDir
-  while ($true) {
-    if (Test-Path -LiteralPath (Join-Path $d "package.json")) { return $d.Path }
-    $p = Split-Path -Parent $d.Path
-    if ($p -eq $d.Path) { throw "Cannot find repo root (no package.json). StartDir=$StartDir" }
-    $d = $p
-  }
-}
+param(
+  [string]$RepoPath = ""
+)
 
 if ([string]::IsNullOrWhiteSpace($RepoPath)) {
   $RepoPath = (Get-Location).Path
 }
+
 if (-not (Test-Path -LiteralPath $RepoPath)) {
   throw "RepoPath not found: $RepoPath"
 }
 
-$root = Get-RepoRoot -StartDir $RepoPath
-
-$toolsDir = Join-Path $root "tools"
+$toolsDir = Join-Path $RepoPath "tools"
 $logsDir  = Join-Path $toolsDir "logs"
 New-DirSafe $toolsDir
 New-DirSafe $logsDir
@@ -56,20 +45,21 @@ New-DirSafe $backupDir
 
 Write-Utf8NoBom -Path (Join-Path $toolsDir "LAST_BACKUP_DIR.txt") -Content ($backupDir + "`n")
 
-Add-Content -LiteralPath $logPath -Value "[INFO] RepoRoot: $root"
+Add-Content -LiteralPath $logPath -Value "[INFO] RepoPath: $RepoPath"
 Add-Content -LiteralPath $logPath -Value "[INFO] BackupDir: $backupDir"
 
 # backup env files
-Get-ChildItem -LiteralPath $root -Force -File -Filter ".env*" -ErrorAction SilentlyContinue | ForEach-Object {
+Get-ChildItem -LiteralPath $RepoPath -Force -File -Filter ".env*" -ErrorAction SilentlyContinue | ForEach-Object {
   Backup-File -FilePath $_.FullName -BackupDir $backupDir
   Add-Content -LiteralPath $logPath -Value "[INFO] Backed up: $($_.Name)"
 }
 
 $pattern = "VITE_ENABLE_APPCHECK|App Check is disabled"
+
 Add-Content -LiteralPath $logPath -Value "[INFO] Pattern: $pattern"
 Add-Content -LiteralPath $logPath -Value "[INFO] Searching (Select-String)..."
 
-$files = Get-ChildItem -LiteralPath $root -Recurse -File -Force |
+$files = Get-ChildItem -LiteralPath $RepoPath -Recurse -File -Force |
   Where-Object {
     $_.FullName -notmatch "\\node_modules\\" -and
     $_.FullName -notmatch "\\\.git\\" -and
