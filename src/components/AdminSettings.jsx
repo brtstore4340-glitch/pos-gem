@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { Upload, Database, FileText, CheckCircle, AlertCircle, RefreshCw, ArrowLeft, Trash2, Lock, Search, HelpCircle } from 'lucide-react';
 import { posService } from '../services/posService';

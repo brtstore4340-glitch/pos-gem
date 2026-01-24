@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { X, Calendar, Printer, Search, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { posService } from '../services/posService';
 import { cn } from '../utils/cn';
@@ -21,7 +21,7 @@ export default function DailyReportModal({ onClose }) {
   const [startTime, setStartTime] = useState('00:00');
   const [endTime, setEndTime] = useState('23:59');
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [loadData]);
 
   // Generate barcodes (optimized with cleanup)
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function DailyReportModal({ onClose }) {
     return () => clearTimeout(timer);
   }, [orders]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setExpandedRow(null);
     try {
@@ -134,10 +134,10 @@ export default function DailyReportModal({ onClose }) {
       alert(`เกิดข้อผิดพลาด: ${err.message}`);
       setOrders([]);
       setSummary({ totalSales: 0, totalVoid: 0, count: 0, totalItems: 0, totalDiscount: 0 });
-    } finally { 
-      setLoading(false); 
+    } finally {
+        setLoading(false);
     }
-  };
+  }, [selectedDate, startTime, endTime]);
 
   const handleVoid = async (orderId) => {
     if (!window.confirm('ยืนยันการยกเลิกบิลนี้?')) return;

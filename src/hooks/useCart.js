@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { posService } from '../services/posService';
 import { calculateCartSummary as calculateClientSummary } from '../services/promotionEngine';
 import { useAuth } from '../context/AuthContext';
@@ -145,12 +145,16 @@ export const useCart = () => {
   };
 
   // Use client-side promotion calculation
-  const clientCalculation = calculateClientSummary(
-    cartItems,
-    billDiscount.percent,
-    coupons,
-    allowance,
-    topup
+  const clientCalculation = useMemo(
+    () =>
+      calculateClientSummary(
+        cartItems,
+        billDiscount.percent,
+        coupons,
+        allowance,
+        topup
+      ),
+    [cartItems, billDiscount.percent, coupons, allowance, topup]
   );
 
   // Update cart items with calculated totals and badges from client calculation
@@ -174,7 +178,7 @@ export const useCart = () => {
         });
       });
     }
-  }, [clientCalculation.summary.netTotal, billDiscount.percent, coupons.length, allowance, topup, serverSummary]);
+  }, [clientCalculation, serverSummary]);
 
   // Use server summary if available, otherwise use client calculation
   const displaySummary = serverSummary || clientCalculation.summary;

@@ -1,0 +1,24 @@
+﻿/*
+   Replace fetch(https://...cloudfunctions.net/bootstrapAdmin) with httpsCallable (modular v9)
+
+  Requirements:
+  - You already initialize Firebase app somewhere (firebase.js / firebase.ts).
+  - Import getFunctions + httpsCallable from "firebase/functions".
+
+  Example:
+
+  import { getFunctions, httpsCallable } from "firebase/functions";
+  // import { app } from "./firebase"; // if you export app
+  // const functions = getFunctions(app); // or getFunctions() if default app
+  const functions = getFunctions();
+
+  export async function bootstrapAdmin({ email, password, username }) {
+    const fn = httpsCallable(functions, "bootstrapAdmin");
+    const res = await fn({ email, password, username });
+    return res.data;
+  }
+
+  NOTE:
+  - Callable automatically handles auth context when user is signed in.
+  - If you see app="MISSING" and enforceAppCheck is TRUE in function, you must disable enforceAppCheck or add App Check on client.
+*/

@@ -1,23 +1,103 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply font-sans text-boots-text bg-slate-50 antialiased;
+    @apply font-sans text-slate-800 bg-slate-50 antialiased selection:bg-blue-500/30 selection:text-blue-900;
+    font-family: 'Inter', 'Noto Sans Thai', sans-serif;
+  }
+  .dark body {
+    @apply bg-[#0f1014] text-[#e2e8f0];
+    @apply selection:bg-blue-400/30 selection:text-white;
   }
 }
+
 @layer components {
+  /* --- Unity Theme: Glassmorphism --- */
   .glass-panel {
-    @apply bg-white/80 backdrop-blur-md border border-white/40 shadow-sm;
+    @apply bg-white/70 dark:bg-[#1a1c23]/60 backdrop-blur-xl border border-white/40 dark:border-white/5 shadow-xl rounded-2xl;
   }
+  
+  .glass-card {
+    @apply bg-white/40 dark:bg-black/20 backdrop-blur-md border border-white/30 dark:border-white/5 shadow-lg rounded-xl;
+  }
+
+  /* --- Unity Theme: Inputs --- */
+  .glass-input {
+    @apply w-full px-4 py-3 rounded-xl border border-slate-200/60 dark:border-white/10 bg-white/50 dark:bg-black/20 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200;
+  }
+
+  /* --- Unity Theme: Buttons --- */
   .btn-primary {
-    @apply bg-boots-base text-white px-4 py-2 rounded-lg hover:bg-boots-hover transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 font-medium;
+    @apply bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 active:scale-[0.98] font-semibold flex items-center justify-center gap-2;
   }
-  .btn-ghost {
-    @apply bg-transparent text-boots-base hover:bg-boots-light px-4 py-2 rounded-lg transition-all duration-200;
+
+  .btn-secondary {
+    @apply bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/10 px-6 py-3 rounded-xl transition-all duration-200 shadow-sm active:scale-[0.98] font-semibold flex items-center justify-center gap-2;
   }
+
+/* Base button press style */
+.btn-press {
+  @apply shadow-md transition-transform duration-150 ease-out active:scale-[0.95];
+}
+
+  
+  /* --- Unity Theme: Interactive "Sunken" Buttons --- */
+  .btn-inset {
+    @apply relative overflow-hidden transition-all duration-150 ease-out 
+           bg-slate-100 dark:bg-[#252830] 
+           text-slate-600 dark:text-slate-300
+           border border-slate-200/80 dark:border-white/5
+           shadow-sm hover:brightness-105
+           active:shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.1)] 
+           active:border-transparent
+           active:translate-y-[1px] active:scale-[0.99]
+           rounded-xl flex flex-col items-center justify-center;
+  }
+  
+  .btn-inset-active {
+     @apply bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-[inset_0_1px_2px_0_rgba(0,0,0,0.05)];
+  }
+
+  /* Animations */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+    .text-shadow-sm {
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400 dark:bg-slate-600;
 }
 
 @media print {

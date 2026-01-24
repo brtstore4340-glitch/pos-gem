@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Search, Menu, ScanBarcode, User, Trash2, Loader2, AlertCircle, X, Tag, Package, Box, MinusCircle, FileText, Settings, Hash, Percent, Ticket, Gift, CheckCircle } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { ShoppingCart, Search, ScanBarcode, User, Trash2, Loader2, AlertCircle, X, Tag, Package, Box, MinusCircle, FileText, Settings, Hash, Percent, Ticket, Gift, CheckCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useCart } from '../hooks/useCart';
 import { useScanListener } from '../hooks/useScanListener';
@@ -17,11 +17,7 @@ export default function PosUI({ onAdminSettings }) {
     updateAllowance, allowance
   } = useCart();
 
-  
-/* AUTO-FIX: SUBTOTAL (COMP) */
-const cart = useCart();
-const subtotal = (cart?.subtotal ?? cart?.summary?.subtotal ?? 0);
-const [lastOrder, setLastOrder] = useState(null);
+  const [lastOrder, setLastOrder] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isVoidMode, setIsVoidMode] = useState(false);
   const [nextQty, setNextQty] = useState(1);
@@ -259,7 +255,7 @@ const [lastOrder, setLastOrder] = useState(null);
                     {/* --- TAB: COUPON --- */}
                     {activeTab === 'coupon' && (
                         <div>
-                            <h3 className="text-2xl font-bold mb-6 text-slate-800">เน€เธฅเธทเธญเธเธเธฃเธฐเน€เธ เธ—เธเธนเธเธญเธ</h3>
+                            <h3 className="text-2xl font-bold mb-6 text-slate-800">เน€เธฅเธทเธญเธเธเธฃเธฐเน€เธ เธ—เธเธนเธเธญเธ</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <button onClick={() => openCouponInput('store')} className={cn("h-40 rounded-2xl flex flex-col items-center justify-center gap-4 text-white text-xl font-bold bg-sky-400 hover:bg-sky-500 shadow-lg", btnEffect)}>
                                     <Ticket size={40} /> Store Coupon

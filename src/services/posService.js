@@ -1,6 +1,6 @@
-﻿import { db } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { functions } from '../lib/firebase';
-import { collection, doc, getDoc, getDocs, writeBatch, getCountFromServer, serverTimestamp, query, limit, where, orderBy, startAt, endAt } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc, writeBatch, getCountFromServer, serverTimestamp, query, limit, where/* , orderBy, startAt, endAt */ } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import * as XLSX from 'xlsx';
 
@@ -23,6 +23,31 @@ const generateKeywords = (text) => {
 };
 
 const calculateOrderFn = httpsCallable(functions, 'calculateOrder');
+let __PRODUCT_ID_CACHE__ = null;
+let __PRODUCT_ID_CACHE_AT__ = 0;
+const PRODUCT_ID_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+async function getProductIdSetCached() {
+  const now = Date.now();
+  if (__PRODUCT_ID_CACHE__ && (now - __PRODUCT_ID_CACHE_AT__) < PRODUCT_ID_CACHE_TTL_MS) {
+    return __PRODUCT_ID_CACHE__;
+  }
+  const ids = new Set();
+  const qs = await getDocs(collection(db, 'products'));
+  qs.forEach((d) => ids.add(d.id));
+  __PRODUCT_ID_CACHE__ = ids;
+  __PRODUCT_ID_CACHE_AT__ = now;
+  return ids;
+}
+
+async function writeUploadMeta(uploadKey, lastUploadAtISO, count) {
+  await setDoc(doc(db, 'upload_meta', uploadKey), {
+    lastUploadAt: lastUploadAtISO,
+    count: Number(count || 0),
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+}
+
 
 // Helper: แปลง Column Letter เป็น Index (A=0, B=1, ...)
 // แต่ใน XLSX แบบ Array of Arrays เรานับ Index ได้เลย
@@ -40,7 +65,7 @@ export const posService = {
       const coll = collection(db, 'products');
       const snapshot = await getCountFromServer(coll);
       return snapshot.data().count > 0;
-    } catch (e) {
+    } catch {
       return false;
     }
   },
@@ -114,11 +139,12 @@ export const posService = {
       if (onProgress) onProgress(processed, total);
       await new Promise(r => setTimeout(r, 50));
     }
+    await writeUploadMeta('master', new Date().toISOString(), processed);
     return processed;
   },
 
   // 3. Upload Excel Helper (Generic)
-  uploadExcelUpdate: async (file, mappingLogic, onProgress) => {
+  uploadExcelUpdate: async (file, mappingLogic, onProgress, uploadKey) => {
     // 3.1 Read File
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer);
@@ -127,6 +153,8 @@ export const posService = {
     
     // Convert to Array of Arrays (Row 0 = Header)
     const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+    const lastUpdateISO = new Date().toISOString();
 
     // 3.2 Load Existing IDs to ensure we only update existing products
     const existingIds = new Set();
@@ -165,13 +193,17 @@ export const posService = {
       
       chunk.forEach(item => {
         const docRef = doc(db, 'products', item.id);
-        batch.set(docRef, { ...item.data, updatedAt: serverTimestamp() }, { merge: true });
+        batch.set(docRef, { ...item.data, lastUpdate: lastUpdateISO, updatedAt: serverTimestamp() }, { merge: true });
       });
 
       await batch.commit();
       processed += chunk.length;
       if (onProgress) onProgress(processed, total);
       await new Promise(r => setTimeout(r, 50));
+    }
+
+    if (uploadKey) {
+      await writeUploadMeta(uploadKey, lastUpdateISO, processed);
     }
 
     return processed;
@@ -199,7 +231,7 @@ export const posService = {
         brand_print: row[53],
         _source_enriched: 'ItemMasterPrintOnDeph'
       };
-    }, onProgress);
+    }, onProgress, 'print');
   },
 
   // 5. Wrapper: ItemMaintananceEvent
@@ -222,7 +254,7 @@ export const posService = {
         mpGroup_maint: row[45],
         _source_maintenance: 'ItemMaintananceEvent'
       };
-    }, onProgress);
+    }, onProgress, 'maint');
   },
 
   // --- Common ---
@@ -230,8 +262,23 @@ export const posService = {
     try {
       const coll = collection(db, 'products');
       const snapshot = await getCountFromServer(coll);
-      return { count: snapshot.data().count, lastUpdated: new Date() };
-    } catch (e) { return { count: 0, lastUpdated: null }; }
+      const uploads = await posService.getUploadMeta();
+      return { count: snapshot.data().count, lastUpdated: new Date(), uploads };
+    } catch { return { count: 0, lastUpdated: null, uploads: {} }; }
+  },
+
+  getUploadMeta: async () => {
+    const keys = ['master', 'print', 'maint'];
+    const result = {};
+    await Promise.all(keys.map(async (key) => {
+      try {
+        const snap = await getDoc(doc(db, 'upload_meta', key));
+        if (snap.exists()) result[key] = snap.data();
+      } catch (e) {
+        console.warn('getUploadMeta read failed for', key, e?.message || e);
+      }
+    }));
+    return result;
   },
   
   clearDatabase: async (onProgress) => { /* Code เดิม */ 
@@ -241,14 +288,42 @@ export const posService = {
   // Search & Scan (Code เดิม)
   searchProducts: async (keyword) => {
     if (!keyword || keyword.length < 2) return [];
-    try {
-      const searchKey = keyword.toUpperCase().trim();
-      const q = query(collection(db, 'products'), where('keywords', 'array-contains', searchKey), where('ProductStatus', '>=', '0'), limit(15));
-      const querySnapshot = await getDocs(q);
+    const searchKey = keyword.toUpperCase().trim();
+    const buildResults = (snapshot) => {
       const results = [];
-      querySnapshot.forEach(doc => { const d = doc.data(); if (d.ProductStatus?.startsWith('0')) results.push({ sku: d.GridProductCode || d.ProductCode || doc.id, name: d.ProductDesc, price: Number(d.SellPrice), ...d }); });
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        if (d.ProductStatus?.startsWith('0')) {
+          results.push({ sku: d.GridProductCode || d.ProductCode || doc.id, name: d.ProductDesc, price: Number(d.SellPrice), ...d });
+        }
+      });
       return results;
-    } catch (err) { return []; }
+    };
+
+    try {
+      const primaryQuery = query(
+        collection(db, 'products'),
+        where('keywords', 'array-contains', searchKey),
+        where('ProductStatus', '>=', '0'),
+        limit(15)
+      );
+      const primarySnap = await getDocs(primaryQuery);
+      return buildResults(primarySnap);
+    } catch (err) {
+      console.warn('searchProducts primary query failed, falling back without status filter:', err?.message || err);
+      try {
+        const fallbackQuery = query(
+          collection(db, 'products'),
+          where('keywords', 'array-contains', searchKey),
+          limit(20)
+        );
+        const fallbackSnap = await getDocs(fallbackQuery);
+        return buildResults(fallbackSnap);
+      } catch (error) {
+        console.error('searchProducts failed:', error);
+        return [];
+      }
+    }
   },
   scanItem: async (keyword) => {
     await new Promise(resolve => setTimeout(resolve, 300));

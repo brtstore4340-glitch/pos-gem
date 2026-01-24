@@ -1,1 +1,20 @@
-It seems that the suggested edit is identical to the original code you provided. Therefore, there are no changes to apply. The code already includes the `fetchData` function that retrieves documents from a specified Firestore collection and returns the data along with a success status and any error encountered. The comment at the end suggests adding more data access functions as needed. If you have any specific changes or improvements in mind, please let me know!
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase';
+
+/**
+ * Fetch documents from a Firestore collection.
+ * @param {string} path - Collection path (e.g., 'products')
+ * @returns {{ success: boolean, data: any[], error?: string }}
+ */
+export async function fetchData(path) {
+  try {
+    const snap = await getDocs(collection(db, path));
+    const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return { success: true, data };
+  } catch (error) {
+    console.error('fetchData error:', error);
+    return { success: false, data: [], error: error?.message || 'Unknown error' };
+  }
+}
+
+// Add more data access helpers as needed.

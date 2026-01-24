@@ -176,6 +176,10 @@ export function AuthProvider({ children }) {
     return () => unsub();
   }, [loadIds]);
 
+  const lockTerminal = useCallback(() => {
+    setSession(null);
+  }, []);
+
   const value = useMemo(
     () => ({
       firebaseUser,
@@ -193,6 +197,7 @@ export function AuthProvider({ children }) {
       setPin,
       signOut,
       logout: signOut,
+      lockTerminal, // Add here
       signInWithGoogle,
       loginEmail,
       signupEmail,
@@ -211,6 +216,7 @@ export function AuthProvider({ children }) {
       verifyPin,
       setPin,
       signOut,
+      lockTerminal, // Add here
       signInWithGoogle,
       loginEmail,
       signupEmail,

@@ -73,6 +73,8 @@ dist/
 build/
 .env
 .env.*
+.env.local
+.env.local.*
 *.log
 .DS_Store
 .firebase/

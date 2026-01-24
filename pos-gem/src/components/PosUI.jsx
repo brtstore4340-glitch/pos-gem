@@ -12,7 +12,7 @@ import { posService } from '../services/posService';
 const APP_VERSION = "1.2.0";
 const APP_UPDATED = "2025-12-26";
 
-export default function PosUI({ onAdminSettings }) {
+export default function PosUI({ onAdminSettings, onSearch }) {
   const sidePanelW = "w-[clamp(320px,34vw,520px)]";
 
   const { 
@@ -510,18 +510,18 @@ const onInputChangeWrapper = (e) => {
                <Box size={16} /> {isVoidMode ? 'Void Monitor' : 'Last Scanned'}
              </h2>
 
-             <button
-               onClick={() => setShowProductLookup(true)}
-               className={cn(
-                 "text-xs font-bold px-3 py-1.5 rounded-lg border flex items-center gap-2",
-                 btnEffect,
-                 "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
-               )}
-               title="คนหารายละเอยดสนคา"
-             >
-               <Search size={14} /> คนหารายละเอยดสนคา
-             </button>
-           </div>
+               <button
+                 onClick={() => (typeof onSearch === 'function' ? onSearch() : setShowProductLookup(true))}
+                 className={cn(
+                   "text-xs font-bold px-3 py-1.5 rounded-lg border flex items-center gap-2 shadow-sm",
+                   btnEffect,
+                   "bg-blue-600 text-white border-blue-500 hover:bg-blue-500 hover:border-blue-400"
+                 )}
+                 title="ค้นหารายละเอียดสินค้า"
+               >
+                 <Search size={14} /> ค้นหารายละเอียดสินค้า
+               </button>
+             </div>
            
            {lastItemDetail ? (
              <div className="mt-4 animate-in slide-in-from-right-4 duration-300 text-center relative z-10">

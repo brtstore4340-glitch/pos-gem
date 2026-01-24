@@ -33,7 +33,7 @@ export default function ProductLookupModal({ onClose }) {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [keyword]);
+  }, [keyword, selectedItem]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">

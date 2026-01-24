@@ -1,7 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/LoginPage";
+<<<<<<< HEAD
+=======
 import UserManagementPage from "./pages/UserManagementPage";
+>>>>>>> 96693dde7be30919d23ad1d88d01fd56886a787c
 import ErrorBoundary from "./components/ErrorBoundary";
 import ExistingApp from "./App";
 
@@ -14,14 +17,29 @@ export default function AppAuth() {
 }
 
 function Gate() {
+<<<<<<< HEAD
+  const { loading, isAuthed, loginEmail } = useAuth();
+=======
   const { loading, isAuthed, role, signOut, profile, firebaseUser } = useAuth();
   const [view, setView] = useState("app"); // "app" | "users"
 
   const canManage = useMemo(() => role === "admin" || role === "SM-SGM", [role]);
+>>>>>>> 96693dde7be30919d23ad1d88d01fd56886a787c
 
   if (loading) return null;
-  if (!isAuthed) return <LoginPage />;
+  if (!isAuthed) {
+    const handleLogin = async (email, password) => {
+      const res = await loginEmail(email, password);
+      if (!res?.success) {
+        throw new Error(res?.error || "Login failed");
+      }
+    };
+    return <LoginPage onLogin={handleLogin} />;
+  }
 
+<<<<<<< HEAD
+  return <ErrorBoundary><ExistingApp /></ErrorBoundary>;
+=======
   return (
     <div>
       <div style={{ padding: 12, borderBottom: "1px solid #ddd", display: "flex", gap: 12, alignItems: "center" }}>
@@ -52,4 +70,5 @@ function Gate() {
       {view === "users" && canManage ? <ErrorBoundary><UserManagementPage /></ErrorBoundary> : <ErrorBoundary><ExistingApp /></ErrorBoundary>}
     </div>
   );
+>>>>>>> 96693dde7be30919d23ad1d88d01fd56886a787c
 }

@@ -3,12 +3,13 @@ import { X, Search, Package, Database, FileText, Layers, Box } from 'lucide-reac
 import { posService } from '../services/posService';
 import { cn } from '../utils/cn';
 
-export default function ProductLookupModal({ onClose }) {
+export default function ProductLookupModal({ onClose, variant = 'modal' }) {
   const [keyword, setKeyword] = useState('');
   const [results, setResults] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
+  const isPage = variant === 'page';
 
   useEffect(() => {
     if (inputRef.current) inputRef.current.focus();
@@ -36,10 +37,22 @@ export default function ProductLookupModal({ onClose }) {
   }, [keyword]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      
-      <div className="bg-white w-[95vw] h-[90vh] max-w-7xl rounded-2xl shadow-2xl overflow-hidden flex flex-row relative ring-1 ring-white/20">
-        
+    <div
+      className={cn(
+        "animate-in fade-in duration-200",
+        isPage
+          ? "min-h-screen bg-slate-50 flex items-center justify-center p-4"
+          : "fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      )}
+    >
+
+      <div
+        className={cn(
+          "bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-row relative ring-1 ring-white/20",
+          isPage ? "w-full h-[90vh] max-w-7xl" : "w-[95vw] h-[90vh] max-w-7xl"
+        )}
+      >
+
         {/* --- LEFT PANEL --- */}
         <div className="w-[350px] flex flex-col border-r border-slate-200 bg-white shrink-0">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
@@ -100,8 +113,15 @@ export default function ProductLookupModal({ onClose }) {
 
         {/* --- RIGHT PANEL (DETAILS) --- */}
         <div className="flex-1 flex flex-col bg-slate-50/30 overflow-hidden relative">
-          
-          <button onClick={onClose} className="absolute top-4 right-4 z-20 p-2 bg-white hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full shadow-sm border border-slate-100 transition-all hover:rotate-90"><X size={24} /></button>
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 z-20 p-2 bg-white hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full shadow-sm border border-slate-100 transition-all hover:rotate-90"
+            >
+              <X size={24} />
+            </button>
+          )}
 
           {selectedItem ? (
             <div className="flex-1 overflow-y-auto p-6 lg:p-8">
