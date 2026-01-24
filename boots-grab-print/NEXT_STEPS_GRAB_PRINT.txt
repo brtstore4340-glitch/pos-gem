@@ -1,0 +1,14 @@
+NEXT STEPS (do this in Chrome)
+1) Open Chrome Extensions page: chrome://extensions
+2) Enable Developer mode (top-right)
+3) Click 'Load unpacked' and choose this folder:
+   D:\01 Main Work\Boots\Boots-POS Gemini\boots-grab-print\extension
+4) Pin extension:
+   - Click puzzle icon (Extensions)
+   - Pin: 'GRAB PRINT (Boots MVP)'
+5) Open Grab Merchant Orders page
+6) Click GRAB PRINT icon -> Scan Orders
+
+If you cannot see the icon:
+- Confirm you pinned it
+- Confirm extension loaded without errors (chrome://extensions -> Errors)

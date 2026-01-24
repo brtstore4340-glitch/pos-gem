@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "GRAB PRINT (Boots MVP)",
+  "version": "0.1.0",
+  "description": "ดึง–เลือก–พิมพ์ ใบปะหน้าสำหรับ Grab Merchant Orders (Hybrid MVP)",
+  "permissions": ["tabs", "storage", "scripting"],
+  "host_permissions": [
+    "*://merchant.grab.com/*",
+    "*://*.grab.com/*",
+    "http://localhost:*/*",
+    "https://*.web.app/*",
+    "https://*.firebaseapp.com/*"
+  ],
+  "action": {
+    "default_title": "GRAB PRINT",
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://merchant.grab.com/*", "*://*.grab.com/*"],
+      "js": ["src/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
