@@ -3,6 +3,7 @@ import Papa from 'papaparse';
 import { Upload, Database, FileText, CheckCircle, AlertCircle, RefreshCw, ArrowLeft, Trash2, Lock, HelpCircle, Server, Settings, Save, HardDrive } from 'lucide-react';
 import { posService } from '../services/posService';
 import { cn } from '../utils/cn';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function AdminSettingsPage({ onBack }) {
   // BEGIN: FUNCTION ZONE (DO NOT TOUCH)
@@ -20,6 +21,7 @@ export default function AdminSettingsPage({ onBack }) {
   const [stats, setStats] = useState({ count: 0, lastUpdated: null });
   const [hasMaster, setHasMaster] = useState(false);
   const [uploadMeta, setUploadMeta] = useState({});
+  const [statsLoading, setStatsLoading] = useState(true);
 
   // Upload States
   const [uploadStatus, setUploadStatus] = useState({
@@ -31,6 +33,7 @@ export default function AdminSettingsPage({ onBack }) {
   useEffect(() => { loadStats(); }, []);
 
   const loadStats = async () => {
+    setStatsLoading(true);
     try {
       const s = await posService.getProductStats();
       setStats(s || { count: 0, lastUpdated: null });
@@ -38,6 +41,8 @@ export default function AdminSettingsPage({ onBack }) {
       setUploadMeta(s?.uploads || {});
     } catch (e) {
       console.error("Failed to load stats", e);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -149,7 +154,7 @@ export default function AdminSettingsPage({ onBack }) {
 
   // Unity Theme UI
   return (
-    <div className="h-full p-6 md:p-8 animate-fade-in-up flex flex-col gap-6 max-w-7xl mx-auto">
+    <div className="h-full p-6 md:p-8 animate-fade-in-up flex flex-col gap-6 max-w-screen-2xl mx-auto w-full">
       
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -206,27 +211,33 @@ export default function AdminSettingsPage({ onBack }) {
                         <RefreshCw size={20} className="text-blue-500" /> Data Sync Activity
                     </h2>
                     <div className="space-y-3">
-                      {uploadEntries.map((entry) => {
-                        const meta = uploadMeta?.[entry.key];
-                        return (
-                          <div key={entry.key} className="p-3 rounded-xl border border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 flex flex-col gap-1">
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="min-w-0">
-                                <div className="text-sm font-bold text-slate-800 dark:text-white">{entry.title}</div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400">{entry.hint}</div>
+                      {statsLoading ? (
+                        <div className="py-10 flex justify-center">
+                          <LoadingSpinner label="Loading system status..." />
+                        </div>
+                      ) : (
+                        uploadEntries.map((entry) => {
+                          const meta = uploadMeta?.[entry.key];
+                          return (
+                            <div key={entry.key} className="p-3 rounded-xl border border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 flex flex-col gap-1">
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                  <div className="text-sm font-bold text-slate-800 dark:text-white">{entry.title}</div>
+                                  <div className="text-xs text-slate-500 dark:text-slate-400">{entry.hint}</div>
+                                </div>
+                                <span className="text-[11px] px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 font-semibold border border-blue-100 dark:border-blue-500/30">
+                                  {meta?.count ? `${meta.count.toLocaleString()} rows` : "Pending"}
+                                </span>
                               </div>
-                              <span className="text-[11px] px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 font-semibold border border-blue-100 dark:border-blue-500/30">
-                                {meta?.count ? `${meta.count.toLocaleString()} rows` : "Pending"}
-                              </span>
+                              <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500/80"></span>
+                                <span className="font-medium">Last upload:</span>
+                                <span className="font-mono">{formatDate(meta?.lastUploadAt)}</span>
+                              </div>
                             </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-green-500/80"></span>
-                              <span className="font-medium">Last upload:</span>
-                              <span className="font-mono">{formatDate(meta?.lastUploadAt)}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      )}
                     </div>
                  </div>
 
@@ -238,13 +249,21 @@ export default function AdminSettingsPage({ onBack }) {
                      
                      <div className="relative z-10">
                          <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Database Stats</div>
-                         <div className="flex items-baseline gap-2">
-                             <div className="text-4xl font-extrabold text-slate-800 dark:text-white">{stats.count.toLocaleString()}</div>
-                             <div className="text-slate-500 dark:text-slate-400 font-medium">products</div>
-                         </div>
-                         <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                            Last updated: <span className="font-mono">{formatDate(stats.lastUpdated)}</span>
-                         </div>
+                         {statsLoading ? (
+                           <div className="py-6">
+                             <LoadingSpinner label="Syncing database stats..." />
+                           </div>
+                         ) : (
+                           <>
+                             <div className="flex items-baseline gap-2">
+                               <div className="text-4xl font-extrabold text-slate-800 dark:text-white">{stats.count.toLocaleString()}</div>
+                               <div className="text-slate-500 dark:text-slate-400 font-medium">products</div>
+                             </div>
+                             <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                                Last updated: <span className="font-mono">{formatDate(stats.lastUpdated)}</span>
+                             </div>
+                           </>
+                         )}
                      </div>
                      
                      <div className="flex flex-wrap gap-2 mt-6 relative z-10">
@@ -265,7 +284,7 @@ export default function AdminSettingsPage({ onBack }) {
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                     <HardDrive size={20} className="text-blue-500" /> Data Imports
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     <UploadCard 
                         title="1. ProductAllDept" 
                         desc="Master CSV File - Required First" 

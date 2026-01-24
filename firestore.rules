@@ -9,6 +9,19 @@ service cloud.firestore {
                    && request.auth.token.role in ['admin', 'SM-SGM'];
     }
 
+    // Upload metadata for system settings imports.
+    match /upload_meta/{uploadId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.token.role in ['admin', 'SM-SGM'];
+    }
+
+    match /adminMeta/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.token.role in ['admin', 'SM-SGM'];
+    }
+
     // Fallback: deny everything else.
     match /{document=**} {
       allow read, write: if false;
