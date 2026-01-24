@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import GoogleSignIn from './GoogleSignIn';
 import IdPinLogin from './IdPinLogin';
 import PinReset from './PinReset';
+import LoadingSpinner from '../LoadingSpinner';
 
 export default function AuthGate({ children }) {
   const { firebaseUser, authLoading, session } = useAuth();
@@ -10,7 +11,7 @@ export default function AuthGate({ children }) {
   if (authLoading) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-slate-50">
-        <div className="text-slate-500">Loading...</div>
+        <LoadingSpinner label="Preparing secure session..." />
       </div>
     );
   }
