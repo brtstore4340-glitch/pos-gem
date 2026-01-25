@@ -7,6 +7,5 @@ export {
   Package,
   ShoppingCart,
   Database,
-  UploadCloud
+  UploadCloud,
 } from "lucide-react";
-

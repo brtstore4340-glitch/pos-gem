@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { posService } from '../services/posService';
-import { calculateCartSummary as calculateClientSummary } from '../services/promotionEngine';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { posService } from "../services/posService";
+import { calculateCartSummary as calculateClientSummary } from "../services/promotionEngine";
+import { useAuth } from "../context/AuthContext";
 
 export const useCart = () => {
   const { session } = useAuth();
@@ -39,21 +39,23 @@ export const useCart = () => {
           coupons,
           allowance,
           topup,
-          actorIdCode: session?.idCode
+          actorIdCode: session?.idCode,
         };
 
         const result = await posService.calculateOrder(payload);
 
         setCartItems((prev) =>
           result.items.map((serverItem) => {
-            const local = prev.find((p) => (p.sku || p.id) === (serverItem.sku || serverItem.id));
+            const local = prev.find(
+              (p) => (p.sku || p.id) === (serverItem.sku || serverItem.id),
+            );
             return { ...local, ...serverItem };
-          })
+          }),
         );
 
         setServerSummary(result.summary);
       } catch (err) {
-        console.error('Calculation Error:', err);
+        console.error("Calculation Error:", err);
       }
     }, 500);
   }, [cartItems, billDiscount, coupons, allowance, topup, session?.idCode]);
@@ -70,19 +72,27 @@ export const useCart = () => {
     setError(null);
     try {
       let product = skuOrItem;
-      if (typeof skuOrItem === 'string') {
+      if (typeof skuOrItem === "string") {
         product = await posService.scanItem(skuOrItem);
       }
 
-      if (!product || (!product.sku && !product.id)) throw new Error('Invalid Product');
+      if (!product || (!product.sku && !product.id))
+        throw new Error("Invalid Product");
 
       setCartItems((prev) => {
         const key = product.sku || product.id;
         const existing = prev.find((item) => (item.sku || item.id) === key);
         if (existing) {
-          return prev.map((item) => ((item.sku || item.id) === key ? { ...item, qty: item.qty + quantity } : item));
+          return prev.map((item) =>
+            (item.sku || item.id) === key
+              ? { ...item, qty: item.qty + quantity }
+              : item,
+          );
         }
-        return [...prev, { ...product, qty: quantity, manualDiscountPercent: 0 }];
+        return [
+          ...prev,
+          { ...product, qty: quantity, manualDiscountPercent: 0 },
+        ];
       });
       setLastScanned(product.sku || product.id);
     } catch (err) {
@@ -97,7 +107,11 @@ export const useCart = () => {
       const existing = prev.find((item) => item.sku === sku || item.id === sku);
       if (!existing) return prev;
       if (existing.qty > 1) {
-        return prev.map((item) => ((item.sku === sku || item.id === sku) ? { ...item, qty: item.qty - 1 } : item));
+        return prev.map((item) =>
+          item.sku === sku || item.id === sku
+            ? { ...item, qty: item.qty - 1 }
+            : item,
+        );
       }
       return prev.filter((item) => item.sku !== sku && item.id !== sku);
     });
@@ -120,7 +134,11 @@ export const useCart = () => {
 
   const setManualItemDiscount = (id, percent) => {
     setCartItems((prev) =>
-      prev.map((item) => ((item.id === id || item.sku === id) ? { ...item, manualDiscountPercent: parseFloat(percent) || 0 } : item))
+      prev.map((item) =>
+        item.id === id || item.sku === id
+          ? { ...item, manualDiscountPercent: parseFloat(percent) || 0 }
+          : item,
+      ),
     );
   };
 
@@ -152,26 +170,26 @@ export const useCart = () => {
         billDiscount.percent,
         coupons,
         allowance,
-        topup
+        topup,
       ),
-    [cartItems, billDiscount.percent, coupons, allowance, topup]
+    [cartItems, billDiscount.percent, coupons, allowance, topup],
   );
 
   // Update cart items with calculated totals and badges from client calculation
   useEffect(() => {
     if (serverSummary) return;
     if (clientCalculation && clientCalculation.items) {
-      setCartItems(prev => {
-        return prev.map(item => {
-          const calculated = clientCalculation.items.find(c =>
-            (c.sku || c.id) === (item.sku || item.id)
+      setCartItems((prev) => {
+        return prev.map((item) => {
+          const calculated = clientCalculation.items.find(
+            (c) => (c.sku || c.id) === (item.sku || item.id),
           );
           if (calculated) {
             return {
               ...item,
               calculatedTotal: calculated.calculatedTotal,
               badgeText: calculated.badgeText,
-              normalPrice: calculated.normalPrice
+              normalPrice: calculated.normalPrice,
             };
           }
           return item;

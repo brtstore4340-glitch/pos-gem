@@ -1,7 +1,12 @@
 const { z } = require("zod");
 const crypto = require("node:crypto");
 
-const PlacementMode = z.enum(["append_end", "before_ref", "after_ref", "at_index"]);
+const PlacementMode = z.enum([
+  "append_end",
+  "before_ref",
+  "after_ref",
+  "at_index",
+]);
 const PlacementGroup = z.enum(["primary", "secondary", "admin"]);
 
 const PlacementSchema = z.object({
@@ -17,7 +22,12 @@ const AccessSchema = z.object({
   allowedUsers: z.array(z.string()).default([]),
 });
 
-const PatchOp = z.enum(["CREATE_OR_REPLACE", "INSERT_BEFORE", "INSERT_AFTER", "DELETE_RANGE"]);
+const PatchOp = z.enum([
+  "CREATE_OR_REPLACE",
+  "INSERT_BEFORE",
+  "INSERT_AFTER",
+  "DELETE_RANGE",
+]);
 
 const PatchStepSchema = z.object({
   op: PatchOp,
@@ -99,7 +109,7 @@ const SchemaSnapshotSchema = z.object({
       name: z.string(),
       sampleDocCount: z.number().int(),
       fields: z.record(z.string()),
-    })
+    }),
   ),
 });
 

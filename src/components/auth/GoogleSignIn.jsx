@@ -1,51 +1,54 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { Loader2, Sun, Moon, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { Loader2, Sun, Moon, CheckCircle2 } from "lucide-react";
 
 export default function GoogleSignIn() {
   // BEGIN: FUNCTION ZONE (DO NOT TOUCH)
-  const { signInWithGoogle, loginEmail, signupEmail, loginAnonymous } = useAuth();
+  const { signInWithGoogle, loginEmail, signupEmail, loginAnonymous } =
+    useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [mode, setMode] = useState('signin'); // signin | signup
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [mode, setMode] = useState("signin"); // signin | signup
   const [isDark, setIsDark] = useState(false); // UI State for theme
 
   // Theme Sync Logic (Purely presentational, allowed in function zone to keep it clean)
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialDark = savedTheme === 'dark' || (!savedTheme && systemDark);
+    const savedTheme = localStorage.getItem("theme");
+    const systemDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+    const initialDark = savedTheme === "dark" || (!savedTheme && systemDark);
     setIsDark(initialDark);
-    if (initialDark) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
+    if (initialDark) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
   }, []);
 
   const toggleTheme = () => {
     const newDark = !isDark;
     setIsDark(newDark);
-    localStorage.setItem('theme', newDark ? 'dark' : 'light');
-    if (newDark) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
+    localStorage.setItem("theme", newDark ? "dark" : "light");
+    if (newDark) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
   };
 
   const handleSignIn = async () => {
-    console.log('🔍 GoogleSignIn: Button clicked');
+    console.log("🔍 GoogleSignIn: Button clicked");
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await signInWithGoogle();
-      console.log('🔍 GoogleSignIn: Result from signInWithGoogle:', result);
-      
+      console.log("🔍 GoogleSignIn: Result from signInWithGoogle:", result);
+
       if (!result.success) {
-        setError(result.error || 'Failed to sign in');
+        setError(result.error || "Failed to sign in");
       }
     } catch (err) {
-      console.error('🔍 GoogleSignIn: Caught error:', err);
-      setError(err.message || 'An unexpected error occurred');
+      console.error("🔍 GoogleSignIn: Caught error:", err);
+      setError(err.message || "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -57,15 +60,16 @@ export default function GoogleSignIn() {
     setError(null);
     try {
       if (!email || !password) {
-        setError('กรุณากรอกอีเมลและรหัสผ่าน');
+        setError("กรุณากรอกอีเมลและรหัสผ่าน");
         return;
       }
-      const res = mode === 'signup'
-        ? await signupEmail({ email, password, displayName })
-        : await loginEmail(email, password);
-      if (!res?.success) setError(res?.error || 'Login failed');
+      const res =
+        mode === "signup"
+          ? await signupEmail({ email, password, displayName })
+          : await loginEmail(email, password);
+      if (!res?.success) setError(res?.error || "Login failed");
     } catch (err) {
-      setError(err?.message || 'Login failed');
+      setError(err?.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
@@ -76,9 +80,9 @@ export default function GoogleSignIn() {
     setError(null);
     try {
       const res = await loginAnonymous();
-      if (!res?.success) setError(res?.error || 'Guest login failed');
+      if (!res?.success) setError(res?.error || "Guest login failed");
     } catch (err) {
-      setError(err?.message || 'Guest login failed');
+      setError(err?.message || "Guest login failed");
     } finally {
       setIsLoading(false);
     }
@@ -87,36 +91,42 @@ export default function GoogleSignIn() {
 
   return (
     <div className="min-h-dvh w-full relative overflow-hidden bg-[#f8fafc] dark:bg-[#0f1014] flex flex-col lg:flex-row font-sans transition-colors duration-300">
-      
       {/* Background Ambience */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-500/20 dark:bg-blue-600/10 rounded-full blur-[120px] animate-float opacity-70" />
-        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[60%] bg-cyan-400/20 dark:bg-cyan-600/10 rounded-full blur-[100px] animate-float opacity-60" style={{ animationDelay: '2s' }} />
+        <div
+          className="absolute top-[40%] -right-[10%] w-[40%] h-[60%] bg-cyan-400/20 dark:bg-cyan-600/10 rounded-full blur-[100px] animate-float opacity-60"
+          style={{ animationDelay: "2s" }}
+        />
       </div>
 
       {/* Theme Toggle */}
       <div className="absolute top-6 right-6 z-50">
-        <button 
+        <button
           onClick={toggleTheme}
           aria-label="Toggle theme"
           className="p-3 rounded-full bg-white/50 dark:bg-black/30 backdrop-blur-md border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 shadow-sm hover:scale-105 active:scale-95 transition-all"
         >
-          {isDark ? <Moon size={20} className="fill-current" /> : <Sun size={20} className="fill-current" />}
+          {isDark ? (
+            <Moon size={20} className="fill-current" />
+          ) : (
+            <Sun size={20} className="fill-current" />
+          )}
         </button>
       </div>
 
       {/* Left Panel: Branding & Features */}
       <div className="hidden lg:flex lg:w-[45%] flex-col relative z-10 p-12 justify-between">
         <div>
-           <div className="flex items-center gap-3">
-             {/* Logo Placeholder */}
-             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-600/30">
-               B
-             </div>
-             <div className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">
-               Boots <span className="text-blue-600 font-light">POS</span>
-             </div>
-           </div>
+          <div className="flex items-center gap-3">
+            {/* Logo Placeholder */}
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-600/30">
+              B
+            </div>
+            <div className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">
+              Boots <span className="text-blue-600 font-light">POS</span>
+            </div>
+          </div>
         </div>
 
         <div className="max-w-md">
@@ -128,20 +138,27 @@ export default function GoogleSignIn() {
             System Online v2.5
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white leading-tight mb-6">
-            Manage your store with <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Confidence.</span>
+            Manage your store with{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+              Confidence.
+            </span>
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-            Fast, secure, and reliable Point of Sale system designed for modern retail performance.
+            Fast, secure, and reliable Point of Sale system designed for modern
+            retail performance.
           </p>
-          
+
           <div className="space-y-4">
             {[
               "Real-time Inventory Sync",
               "Secure Staff Authentication",
               "Smart Sales Reporting",
-              "Daily Automated Backups"
+              "Daily Automated Backups",
             ].map((feature, idx) => (
-              <div key={idx} className="flex items-center gap-3 text-slate-700 dark:text-slate-300 font-medium">
+              <div
+                key={idx}
+                className="flex items-center gap-3 text-slate-700 dark:text-slate-300 font-medium"
+              >
                 <div className="p-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                   <CheckCircle2 size={16} />
                 </div>
@@ -158,27 +175,28 @@ export default function GoogleSignIn() {
 
       {/* Right Panel: Login Form */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10 w-full sm:max-w-md mx-auto lg:max-w-none">
-        
         {/* Mobile Logo (Visible only on small screens) */}
         <div className="lg:hidden mb-8 flex items-center gap-3">
-             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-600/30">
-               B
-             </div>
-             <div className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">
-               Boots POS
-             </div>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-600/30">
+            B
+          </div>
+          <div className="text-xl font-bold text-slate-800 dark:text-white tracking-tight">
+            Boots POS
+          </div>
         </div>
 
         <div className="glass-panel w-full max-w-[440px] p-8 md:p-10 relative overflow-hidden">
           {/* Decorative gradients inside card */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10" />
-          
+
           <div className="relative">
             <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
-              {mode === 'signup' ? 'Create Account' : 'Welcome Back'}
+              {mode === "signup" ? "Create Account" : "Welcome Back"}
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
-              {mode === 'signup' ? 'Register a new account to get started' : 'Sign in to access your terminal'}
+              {mode === "signup"
+                ? "Register a new account to get started"
+                : "Sign in to access your terminal"}
             </p>
 
             {/* Google Login */}
@@ -189,7 +207,11 @@ export default function GoogleSignIn() {
               className="w-full bg-white dark:bg-[#2c2e33] text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-[#32343a] active:bg-slate-100 dark:active:bg-[#25262b] relative h-[52px] rounded-xl font-semibold transition-all shadow-sm flex items-center justify-center gap-3 mb-6 group overflow-hidden"
             >
               {isLoading ? (
-                <span className="flex items-center gap-2" role="status" aria-live="polite">
+                <span
+                  className="flex items-center gap-2"
+                  role="status"
+                  aria-live="polite"
+                >
                   <Loader2 className="animate-spin text-blue-600" size={20} />
                   <span className="text-sm text-slate-500">Signing in…</span>
                 </span>
@@ -220,15 +242,22 @@ export default function GoogleSignIn() {
 
             <div className="relative flex py-4 items-center">
               <div className="flex-grow border-t border-slate-200 dark:border-white/10"></div>
-              <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase tracking-wider font-medium">Or continue with</span>
+              <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase tracking-wider font-medium">
+                Or continue with
+              </span>
               <div className="flex-grow border-t border-slate-200 dark:border-white/10"></div>
             </div>
 
             {/* Email Form */}
             <form onSubmit={handleEmailSubmit} className="space-y-4">
-              {mode === 'signup' && (
+              {mode === "signup" && (
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 uppercase ml-1" htmlFor="gs-display-name">Display Name</label>
+                  <label
+                    className="text-xs font-semibold text-slate-500 uppercase ml-1"
+                    htmlFor="gs-display-name"
+                  >
+                    Display Name
+                  </label>
                   <input
                     id="gs-display-name"
                     className="glass-input"
@@ -238,9 +267,14 @@ export default function GoogleSignIn() {
                   />
                 </div>
               )}
-              
+
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase ml-1" htmlFor="gs-email">Email Address</label>
+                <label
+                  className="text-xs font-semibold text-slate-500 uppercase ml-1"
+                  htmlFor="gs-email"
+                >
+                  Email Address
+                </label>
                 <input
                   id="gs-email"
                   className="glass-input"
@@ -250,9 +284,14 @@ export default function GoogleSignIn() {
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase ml-1" htmlFor="gs-password">Password</label>
+                <label
+                  className="text-xs font-semibold text-slate-500 uppercase ml-1"
+                  htmlFor="gs-password"
+                >
+                  Password
+                </label>
                 <input
                   id="gs-password"
                   className="glass-input"
@@ -278,46 +317,51 @@ export default function GoogleSignIn() {
               >
                 {isLoading ? (
                   <Loader2 className="animate-spin text-white" size={20} />
+                ) : mode === "signup" ? (
+                  "Create Account"
                 ) : (
-                  mode === 'signup' ? 'Create Account' : 'Sign In'
+                  "Sign In"
                 )}
               </button>
             </form>
 
             <div className="mt-6 flex flex-col gap-3">
-               <button
-                  type="button"
-                  onClick={handleGuest}
-                  disabled={isLoading}
-                  className="btn-ghost w-full text-sm"
-                >
-                  {isLoading ? 'Processing...' : 'Continue as Guest'}
-                </button>
+              <button
+                type="button"
+                onClick={handleGuest}
+                disabled={isLoading}
+                className="btn-ghost w-full text-sm"
+              >
+                {isLoading ? "Processing..." : "Continue as Guest"}
+              </button>
 
-                <div className="text-center text-sm">
-                  <span className="text-slate-500 dark:text-slate-400">
-                    {mode === 'signup' ? 'Already have an account?' : 'Don\'t have an account?'}
-                  </span>
-                  {' '}
-                  <button
-                    className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
-                    onClick={() => setMode(mode === 'signup' ? 'signin' : 'signup')}
-                    type="button"
-                  >
-                    {mode === 'signup' ? 'Sign in' : 'Sign up'}
-                  </button>
-                </div>
+              <div className="text-center text-sm">
+                <span className="text-slate-500 dark:text-slate-400">
+                  {mode === "signup"
+                    ? "Already have an account?"
+                    : "Don't have an account?"}
+                </span>{" "}
+                <button
+                  className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                  onClick={() =>
+                    setMode(mode === "signup" ? "signin" : "signup")
+                  }
+                  type="button"
+                >
+                  {mode === "signup" ? "Sign in" : "Sign up"}
+                </button>
+              </div>
             </div>
 
             {/* Trust Badges */}
             <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/5 flex items-center justify-center gap-4 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center w-full">Trusted Access</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center w-full">
+                Trusted Access
+              </div>
             </div>
-
           </div>
         </div>
       </div>
-
     </div>
   );
 }

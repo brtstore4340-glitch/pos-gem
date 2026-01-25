@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-
+﻿
 import { db, functions } from '../lib/firebase';
-=======
-import { db } from '../firebase';
-import { functions } from '../firebase';
->>>>>>> 17970006e0fe96e9a2264bd63cf279f85833397b
 import { collection, doc, getDoc, getDocs, setDoc, writeBatch, getCountFromServer, serverTimestamp, query, limit, where/* , orderBy, startAt, endAt */ } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import * as XLSX from 'xlsx';
@@ -69,8 +64,8 @@ async function writeUploadMeta(uploadKey, lastUploadAtISO, count) {
 }
 
 
-// Helper: แปลง Column Letter เป็น Index (A=0, B=1, ...)
-// แต่ใน XLSX แบบ Array of Arrays เรานับ Index ได้เลย
+// Helper: เนเธเธฅเธ Column Letter เน€เธเนเธ Index (A=0, B=1, ...)
+// เนเธ•เนเนเธ XLSX เนเธเธ Array of Arrays เน€เธฃเธฒเธเธฑเธ Index เนเธ”เนเน€เธฅเธข
 // B=1, F=5, L=11, N=13, R=17, U=20, V=21, Y=24, AB=27, AD=29, AF=31, AJ=35, AL=37, AO=40, AQ=42, AS=44, AT=45, AV=47, AY=50, BB=53
 
 export const posService = {
@@ -79,7 +74,7 @@ export const posService = {
     return result.data;
   },
   
-  // 1. เช็คว่ามี Master Data หรือยัง
+  // 1. เน€เธเนเธเธงเนเธฒเธกเธต Master Data เธซเธฃเธทเธญเธขเธฑเธ
   hasMasterData: async () => {
     try {
       const coll = collection(db, 'products');
@@ -92,7 +87,7 @@ export const posService = {
 
   // 2. Upload ProductAllDept (CSV - Master)
   uploadProductAllDept: async (products, onProgress) => {
-    console.log('🔄 Uploading Master Data...');
+    console.log('๐” Uploading Master Data...');
     const existingMap = await getProductDateMapCached();
 
     // Filter Logic:
@@ -179,7 +174,7 @@ export const posService = {
     // 3.2 Load Existing IDs to ensure we only update existing products
     const existingIds = await getProductIdSetCached();
     
-    console.log('✅ Loaded ' + existingIds.size + ' master items for matching.');
+    console.log('โ… Loaded ' + existingIds.size + ' master items for matching.');
 
     // 3.3 Process Rows
     const updates = [];
@@ -301,7 +296,7 @@ export const posService = {
     return result;
   },
   
-  clearDatabase: async (onProgress) => { /* Code เดิม */ 
+  clearDatabase: async (onProgress) => { /* Code เน€เธ”เธดเธก */ 
     const BATCH_SIZE = 400;
     const MAX_BATCHES = 500;
     let totalDeleted = 0;
@@ -324,7 +319,7 @@ export const posService = {
     return totalDeleted;
   },
 
-  // Search & Scan (Code เดิม)
+  // Search & Scan (Code เน€เธ”เธดเธก)
   searchProducts: async (keyword) => {
     if (!keyword || keyword.length < 2) return [];
     const searchKey = keyword.toUpperCase().trim();
@@ -366,7 +361,7 @@ export const posService = {
   },
   scanItem: async (keyword) => {
     const cleanKey = keyword.trim();
-    if (!cleanKey) throw new Error('กรุณาระบุคำค้นหา');
+    if (!cleanKey) throw new Error('เธเธฃเธธเธ“เธฒเธฃเธฐเธเธธเธเธณเธเนเธเธซเธฒ');
     try {
       const docRef = doc(db, 'products', cleanKey);
       const docSnap = await getDoc(docRef);
@@ -376,9 +371,10 @@ export const posService = {
       if (!barcodeSnap.empty) { const data = barcodeSnap.docs[0].data(); if (data.ProductStatus?.startsWith('0')) return { sku: data.barcode, name: data.ProductDesc, price: Number(data.SellPrice), ...data }; }
       const results = await posService.searchProducts(cleanKey);
       if (results.length > 0) return results[0];
-      throw new Error('ไม่พบสินค้า: ' + cleanKey);
-    } catch (error) { if (error.message.includes('ไม่พบสินค้า')) throw error; throw new Error('เกิดข้อผิดพลาดในการค้นหา'); }
+      throw new Error('เนเธกเนเธเธเธชเธดเธเธเนเธฒ: ' + cleanKey);
+    } catch (error) { if (error.message.includes('เนเธกเนเธเธเธชเธดเธเธเนเธฒ')) throw error; throw new Error('เน€เธเธดเธ”เธเนเธญเธเธดเธ”เธเธฅเธฒเธ”เนเธเธเธฒเธฃเธเนเธเธซเธฒ'); }
   },
   createOrder: async () => { /*...*/ }
 };
+
 

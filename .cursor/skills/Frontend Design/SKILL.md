@@ -13,6 +13,7 @@ This skill provides comprehensive frontend design patterns, focusing on creating
 ## When to Use This Skill
 
 Use this skill when implementing:
+
 - **Consistent UI/UX design** across components
 - **Design system implementation**
 - **Streamlit component styling** and theming
@@ -1156,6 +1157,7 @@ class RealEstateUIComponents(UIComponents):
 ## Usage Examples
 
 ### Basic Setup
+
 ```python
 # Initialize design system and components
 design_system = DesignSystem(ColorScheme.PROFESSIONAL)

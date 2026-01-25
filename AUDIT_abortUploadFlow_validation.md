@@ -3,12 +3,18 @@
 ## Changes Made
 
 ### 1. **Defensive Validation Added** to `abortUploadFlow`
+
 **File:** [src/services/uploadService.js](src/services/uploadService.js#L90)
 
 Added parameter validation before calling Firebase function:
+
 ```javascript
 export async function abortUploadFlow(actorIdCode) {
-  if (!actorIdCode || typeof actorIdCode !== "string" || actorIdCode.trim() === "") {
+  if (
+    !actorIdCode ||
+    typeof actorIdCode !== "string" ||
+    actorIdCode.trim() === ""
+  ) {
     throw new Error("actorIdCode is required");
   }
   await abortUpload({ actorIdCode });
@@ -16,6 +22,7 @@ export async function abortUploadFlow(actorIdCode) {
 ```
 
 **Validation checks:**
+
 - Ensures `actorIdCode` is provided (not null/undefined)
 - Verifies it's a string type
 - Checks it's not empty after trimming whitespace
@@ -24,9 +31,11 @@ export async function abortUploadFlow(actorIdCode) {
 ---
 
 ### 2. **Caller Updated** in `PosUploadModal.jsx`
+
 **File:** [src/components/PosUploadModal.jsx](src/components/PosUploadModal.jsx#L93)
 
 Enhanced `abortNow()` function:
+
 ```javascript
 const abortNow = async () => {
   const actorIdCode = session?.idCode || lastIdCode || "";
@@ -47,6 +56,7 @@ const abortNow = async () => {
 ```
 
 **Improvements:**
+
 - Validates `actorIdCode` exists and is non-empty **before** calling function (defensive programming)
 - Shows Thai error message if ID not selected: "เลือก ID ก่อนยกเลิกอัปโหลด"
 - Catches and properly handles validation errors from `abortUploadFlow`
@@ -57,9 +67,9 @@ const abortNow = async () => {
 
 ## Audit Results
 
-| File | Call Site | Validation | Error Handling | Status |
-|------|-----------|-----------|-----------------|--------|
-| `PosUploadModal.jsx:93` | `abortNow()` | ✅ Added | ✅ Enhanced | ✓ SAFE |
+| File                    | Call Site    | Validation | Error Handling | Status |
+| ----------------------- | ------------ | ---------- | -------------- | ------ |
+| `PosUploadModal.jsx:93` | `abortNow()` | ✅ Added   | ✅ Enhanced    | ✓ SAFE |
 
 **Total callers found:** 1  
 **All callers updated:** ✅ Yes  
@@ -88,6 +98,7 @@ abortNow() checks actorIdCode (non-empty string)
 ## Backward Compatibility
 
 ⚠️ **Breaking Change Alert:**
+
 - `abortUploadFlow()` now requires valid `actorIdCode` parameter
 - Invalid calls will throw an error instead of silently failing
 - **Mitigation:** All callers have been updated to validate input

@@ -18,14 +18,37 @@ export default class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      const msg = this.state.error && this.state.error.message ? this.state.error.message : String(this.state.error || "Unknown error");
-      const stack = this.state.error && this.state.error.stack ? this.state.error.stack : "";
-      const info = this.state.info && this.state.info.componentStack ? this.state.info.componentStack : "";
+      const msg =
+        this.state.error && this.state.error.message
+          ? this.state.error.message
+          : String(this.state.error || "Unknown error");
+      const stack =
+        this.state.error && this.state.error.stack
+          ? this.state.error.stack
+          : "";
+      const info =
+        this.state.info && this.state.info.componentStack
+          ? this.state.info.componentStack
+          : "";
 
       return (
-        <div style={{ padding: 16, fontFamily: "ui-sans-serif, system-ui", color: "#111" }}>
+        <div
+          style={{
+            padding: 16,
+            fontFamily: "ui-sans-serif, system-ui",
+            color: "#111",
+          }}
+        >
           <h2 style={{ margin: "0 0 10px" }}>App crashed after login</h2>
-          <div style={{ marginBottom: 10, color: "crimson", whiteSpace: "pre-wrap" }}>{msg}</div>
+          <div
+            style={{
+              marginBottom: 10,
+              color: "crimson",
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {msg}
+          </div>
           {stack ? (
             <details style={{ marginBottom: 10 }}>
               <summary>Stack</summary>

@@ -1,7 +1,7 @@
 // file: setup_project.js
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Fix for __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -11,22 +11,22 @@ console.log("🚀 Starting Project Restoration...");
 
 // 1. Define Helper to write files ensuring directories exist
 const writeFile = (filePath, content) => {
-    const absolutePath = path.join(__dirname, filePath);
-    const dir = path.dirname(absolutePath);
-    
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-        console.log(`Created directory: ${dir}`);
-    }
-    
-    fs.writeFileSync(absolutePath, content.trim(), 'utf8');
-    console.log(`✅ Created/Updated: ${filePath}`);
+  const absolutePath = path.join(__dirname, filePath);
+  const dir = path.dirname(absolutePath);
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`Created directory: ${dir}`);
+  }
+
+  fs.writeFileSync(absolutePath, content.trim(), "utf8");
+  console.log(`✅ Created/Updated: ${filePath}`);
 };
 
 // 2. Define File Contents
 const files = {
-    // --- Configs ---
-    'vite.config.js': `
+  // --- Configs ---
+  "vite.config.js": `
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -34,7 +34,7 @@ export default defineConfig({
   plugins: [react()],
 })
 `,
-    'tailwind.config.js': `
+  "tailwind.config.js": `
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -64,7 +64,7 @@ export default {
   plugins: [],
 }
 `,
-    'postcss.config.js': `
+  "postcss.config.js": `
 export default {
   plugins: {
     tailwindcss: {},
@@ -72,8 +72,8 @@ export default {
   },
 }
 `,
-    // --- Entry Points ---
-    'index.html': `
+  // --- Entry Points ---
+  "index.html": `
 <!doctype html>
 <html lang="en">
   <head>
@@ -87,7 +87,7 @@ export default {
   </body>
 </html>
 `,
-    'src/main.jsx': `
+  "src/main.jsx": `
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
@@ -99,7 +99,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>,
 )
 `,
-    'src/App.jsx': `
+  "src/App.jsx": `
 import React from 'react'
 import DemoUI from './components/DemoUI'
 
@@ -113,8 +113,8 @@ function App() {
 
 export default App
 `,
-    // --- Styles ---
-    'src/index.css': `
+  // --- Styles ---
+  "src/index.css": `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap');
 
 @tailwind base;
@@ -144,8 +144,8 @@ export default App
   }
 }
 `,
-    // --- Components & Utils ---
-    'src/utils/cn.js': `
+  // --- Components & Utils ---
+  "src/utils/cn.js": `
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -153,7 +153,7 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 `,
-    'src/components/DemoUI.jsx': `
+  "src/components/DemoUI.jsx": `
 import React from 'react';
 import { ShoppingCart, Search, Menu } from 'lucide-react';
 import { cn } from '../utils/cn';
@@ -204,16 +204,16 @@ export default function DemoUI() {
     </div>
   );
 }
-`
+`,
 };
 
 // 3. Execution Loop
 Object.entries(files).forEach(([name, content]) => {
-    try {
-        writeFile(name, content);
-    } catch (e) {
-        console.error(`❌ Error writing ${name}:`, e);
-    }
+  try {
+    writeFile(name, content);
+  } catch (e) {
+    console.error(`❌ Error writing ${name}:`, e);
+  }
 });
 
 console.log("\n✨ Restoration Complete! Now run: npm run dev");

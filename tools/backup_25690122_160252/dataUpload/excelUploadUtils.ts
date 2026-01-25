@@ -82,12 +82,17 @@ export function detectStatusField(sample: Record<string, any>): string | null {
   return null;
 }
 
-export async function readExcelFile(file: File): Promise<Record<string, any>[]> {
+export async function readExcelFile(
+  file: File,
+): Promise<Record<string, any>[]> {
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
   const sheetName = wb.SheetNames[0];
   const ws = wb.Sheets[sheetName];
-  const json = XLSX.utils.sheet_to_json(ws, { defval: "" }) as Record<string, any>[];
+  const json = XLSX.utils.sheet_to_json(ws, { defval: "" }) as Record<
+    string,
+    any
+  >[];
 
   return json.map((row) => {
     const out: Record<string, any> = {};
@@ -98,7 +103,10 @@ export async function readExcelFile(file: File): Promise<Record<string, any>[]> 
   });
 }
 
-export function buildKeySet(rows: Record<string, any>[], keyField: string): Set<string> {
+export function buildKeySet(
+  rows: Record<string, any>[],
+  keyField: string,
+): Set<string> {
   const set = new Set<string>();
   for (const r of rows) {
     const key = s(r[keyField]);
@@ -110,7 +118,7 @@ export function buildKeySet(rows: Record<string, any>[], keyField: string): Set<
 export function filterMasterStatus0(
   rows: Record<string, any>[],
   keyField: string,
-  statusField: string | null
+  statusField: string | null,
 ): { filtered: Record<string, any>[]; keySet: Set<string> } {
   const filtered: Record<string, any>[] = [];
   for (const r of rows) {
@@ -135,7 +143,7 @@ export function filterMasterStatus0(
 export function filterByKeySet(
   rows: Record<string, any>[],
   keyField: string,
-  allowedKeys: Set<string>
+  allowedKeys: Set<string>,
 ): Record<string, any>[] {
   return rows.filter((r) => {
     const key = s(r[keyField]);
@@ -189,7 +197,7 @@ export async function uploadRowsChunked(params: {
             ...r,
             updatedAt: serverTimestamp(),
           },
-          { merge: true }
+          { merge: true },
         );
       } else {
         b.set(ref, r, { merge: true });
@@ -199,7 +207,8 @@ export async function uploadRowsChunked(params: {
     await b.commit();
     uploaded += c.length;
 
-    const percent = total === 0 ? 100 : Math.min(99, Math.floor((uploaded / total) * 100));
+    const percent =
+      total === 0 ? 100 : Math.min(99, Math.floor((uploaded / total) * 100));
     onProgress?.({
       phase: "uploading",
       percent,
@@ -232,10 +241,22 @@ export async function uploadRowsChunked(params: {
     updatedAt: serverTimestamp(),
   };
 
-  onProgress?.({ phase: "saving_meta", percent: 99, message: "Saving upload status...", uploaded, total });
+  onProgress?.({
+    phase: "saving_meta",
+    percent: 99,
+    message: "Saving upload status...",
+    uploaded,
+    total,
+  });
   await setDoc(metaRef, next, { merge: true });
 
-  onProgress?.({ phase: "done", percent: 100, message: "Done!", uploaded, total });
+  onProgress?.({
+    phase: "done",
+    percent: 100,
+    message: "Done!",
+    uploaded,
+    total,
+  });
 }
 
 export async function getUploadStatus(): Promise<Record<string, any> | null> {

@@ -29,10 +29,13 @@ Output MUST match Plan schema exactly as JSON.
 `.trim();
 
 async function getVertexAccessToken() {
-  const auth = new GoogleAuth({ scopes: ["https://www.googleapis.com/auth/cloud-platform"] });
+  const auth = new GoogleAuth({
+    scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+  });
   const client = await auth.getClient();
   const token = await client.getAccessToken();
-  if (!token) throw new Error("Failed to obtain Google access token for Vertex.");
+  if (!token)
+    throw new Error("Failed to obtain Google access token for Vertex.");
   return token;
 }
 
@@ -44,8 +47,13 @@ function computeQuorum(results) {
   let winningHash = null;
   for (const [h, c] of counts.entries()) if (c >= 2) winningHash = h;
 
-  if (!winningHash) return { ok: false, winner: null, hashes: okOnes.map((r) => r.hash) };
-  return { ok: true, winner: okOnes.find((r) => r.hash === winningHash) || null, hashes: okOnes.map((r) => r.hash) };
+  if (!winningHash)
+    return { ok: false, winner: null, hashes: okOnes.map((r) => r.hash) };
+  return {
+    ok: true,
+    winner: okOnes.find((r) => r.hash === winningHash) || null,
+    hashes: okOnes.map((r) => r.hash),
+  };
 }
 
 async function runProvider(provider, cfg) {
@@ -100,13 +108,19 @@ async function runProvider(provider, cfg) {
 }
 
 const aiOrchestrator = onCall(
-  { region: "asia-southeast1", cors: true, timeoutSeconds: 120, memory: "512MiB" },
+  {
+    region: "asia-southeast1",
+    cors: true,
+    timeoutSeconds: 120,
+    memory: "512MiB",
+  },
   async (req) => {
     const uid = req.auth?.uid;
     const roles = req.auth?.token?.roles;
 
     if (!uid) throw new HttpsError("unauthenticated", "Auth required.");
-    if (!Array.isArray(roles) || !roles.includes("admin")) throw new HttpsError("permission-denied", "Admin only.");
+    if (!Array.isArray(roles) || !roles.includes("admin"))
+      throw new HttpsError("permission-denied", "Admin only.");
 
     const input = OrchestratorRequestSchema.parse(req.data || {});
     const db = getFirestore();
@@ -136,14 +150,15 @@ Return ONLY JSON matching Plan schema.
       vertexLocation: process.env.VERTEX_LOCATION || "asia-southeast1",
       vertexModel: process.env.VERTEX_MODEL || "gemini-1.5-pro",
       anthropicKey: process.env.ANTHROPIC_API_KEY || "",
-      anthropicModel: process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-20240620",
+      anthropicModel:
+        process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-20240620",
       anthropicMaxTokens: process.env.ANTHROPIC_MAX_TOKENS || "4096",
     };
 
     if (!cfg.openaiKey || !cfg.anthropicKey || !cfg.vertexProject) {
       throw new HttpsError(
         "failed-precondition",
-        "Missing server env: OPENAI_API_KEY, ANTHROPIC_API_KEY, VERTEX_PROJECT (and VERTEX_LOCATION)."
+        "Missing server env: OPENAI_API_KEY, ANTHROPIC_API_KEY, VERTEX_PROJECT (and VERTEX_LOCATION).",
       );
     }
 
@@ -158,27 +173,33 @@ Return ONLY JSON matching Plan schema.
 
     const q = computeQuorum(results);
 
-    await db.collection("ai_audit").doc(runId).set(
-      {
-        runId,
-        moduleId: input.moduleId,
-        createdBy: uid,
-        createdAt: FieldValue.serverTimestamp(),
-        intent: redactPII(input.intent).slice(0, 5000),
-        providers: results.map((r) => ({
-          provider: r.provider,
-          ok: r.ok,
-          hash: r.hash || null,
-          error: r.error || null,
-        })),
-        quorumOk: q.ok,
-        winningHash: q.winner?.hash || null,
-        latencyMs: Date.now() - startedAt,
-        raw: results.map((r) => ({ provider: r.provider, rawText: r.rawText })),
-        immutable: true,
-      },
-      { merge: false }
-    );
+    await db
+      .collection("ai_audit")
+      .doc(runId)
+      .set(
+        {
+          runId,
+          moduleId: input.moduleId,
+          createdBy: uid,
+          createdAt: FieldValue.serverTimestamp(),
+          intent: redactPII(input.intent).slice(0, 5000),
+          providers: results.map((r) => ({
+            provider: r.provider,
+            ok: r.ok,
+            hash: r.hash || null,
+            error: r.error || null,
+          })),
+          quorumOk: q.ok,
+          winningHash: q.winner?.hash || null,
+          latencyMs: Date.now() - startedAt,
+          raw: results.map((r) => ({
+            provider: r.provider,
+            rawText: r.rawText,
+          })),
+          immutable: true,
+        },
+        { merge: false },
+      );
 
     if (!q.ok || !q.winner?.plan) {
       throw new HttpsError("aborted", `Quorum failed (see ai_audit/${runId}).`);
@@ -188,7 +209,10 @@ Return ONLY JSON matching Plan schema.
     const readsCount = winningPlan.db.reads.length;
     const maxReads = winningPlan.constraints?.perf?.readsPerActionMax ?? 2;
     if (readsCount > maxReads) {
-      throw new HttpsError("failed-precondition", `Plan violates reads/action max: ${readsCount} > ${maxReads}.`);
+      throw new HttpsError(
+        "failed-precondition",
+        `Plan violates reads/action max: ${readsCount} > ${maxReads}.`,
+      );
     }
 
     await db.collection("modules").doc(input.moduleId).set(
@@ -200,11 +224,11 @@ Return ONLY JSON matching Plan schema.
         lastRunId: runId,
         plan: winningPlan,
       },
-      { merge: true }
+      { merge: true },
     );
 
     return { runId, moduleId: input.moduleId, plan: winningPlan };
-  }
+  },
 );
 
 module.exports = { aiOrchestrator };

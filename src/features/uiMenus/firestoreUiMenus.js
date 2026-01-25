@@ -1,4 +1,11 @@
-import { collection, getDocs, limit, orderBy, query, startAfter } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  startAfter,
+} from "firebase/firestore";
 
 /**
  * Paginated read: limit + startAfter (1 query/page)
@@ -18,7 +25,8 @@ export async function fetchUiMenusPage(db, opts = {}) {
 
   const snap = await getDocs(qy);
   const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  const nextCursor = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
+  const nextCursor =
+    snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
 
   return { items, nextCursor, hasMore: snap.docs.length === pageSize };
 }

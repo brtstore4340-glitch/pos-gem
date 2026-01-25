@@ -1,74 +1,74 @@
 {
-    "meta":  {
-                 "createdAt":  "2026-01-02T19:07:22.9167472+07:00",
-                 "root":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini",
-                 "functionsDir":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions",
-                 "cartService":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\services\\cartService.js",
-                 "posService":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\src\\services\\posService.js"
-             },
-    "patches":  [
-                    {
-                        "id":  "P001_CREATE_FIELD_MAPPER",
-                        "file":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\utils\\fieldMapper.js",
-                        "reason":  "Add server-side field normalization + mapping (single source of truth)",
-                        "insert_after":  "**CREATE_IF_MISSING**",
-                        "code":  "// BEGIN: THAM:FIELD_MAPPER_V1\r\nfunction normalizeKey(key) {\r\nreturn String(key)\r\n.trim()\r\n.toUpperCase()\r\n.replace(/[_\\s]+/g, \u0027 \u0027)\r\n.replace(/[()]/g, \u0027\u0027);\r\n}\r\n\r\nconst FIELD_MAP = Object.freeze({\r\n\u0027DESCRIPTION PRINT\u0027: \u0027name\u0027,\r\n\u0027REG PRICE\u0027: \u0027unitPrice\u0027,\r\n\u0027DEAL PRICE\u0027: \u0027dealPrice\u0027,\r\n\u0027DEAL QTY\u0027: \u0027dealQty\u0027,\r\n\u0027METHOD\u0027: \u0027method\u0027\r\n});\r\n\r\nfunction safeNumber(val) {\r\nconst n = parseFloat(String(val ?? \u0027\u0027).trim());\r\nreturn Number.isFinite(n) ? n : 0;\r\n}\r\n\r\nfunction safeInt(val) {\r\nconst n = parseInt(String(val ?? \u0027\u0027).trim(), 10);\r\nreturn Number.isFinite(n) ? n : 0;\r\n}\r\n\r\nfunction mapFields(input) {\r\nconst out = {};\r\nif (!input || typeof input !== \u0027object\u0027) return out;\r\n\r\nfor (const [k, v] of Object.entries(input)) {\r\nconst nk = normalizeKey(k);\r\nconst dest = FIELD_MAP[nk];\r\nif (!dest) continue;\r\n\r\nif (dest === \u0027unitPrice\u0027 || dest === \u0027dealPrice\u0027) out[dest] = safeNumber(v);\r\nelse if (dest === \u0027dealQty\u0027 || dest === \u0027method\u0027) out[dest] = safeInt(v);\r\nelse out[dest] = String(v ?? \u0027\u0027);\r\n\r\n}\r\nreturn out;\r\n}\r\n\r\nmodule.exports = {\r\nnormalizeKey,\r\nFIELD_MAP,\r\nsafeNumber,\r\nsafeInt,\r\nmapFields\r\n};\r\n// END:   THAM:FIELD_MAPPER_V1"
-                    },
-                    {
-                        "id":  "P002_CARTSERVICE_IMPORT_MAPPER",
-                        "file":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\services\\cartService.js",
-                        "reason":  "Server-side ONLY: import fieldMapper in cartService",
-                        "insert_before":  "const normalizeItem = (item) =\u003e {",
-                        "code":  "// BEGIN: THAM:IMPORT_FIELD_MAPPER_V1\r\nconst { mapFields: thamMapFields } = require(\u0027../utils/fieldMapper\u0027);\r\n// END:   THAM:IMPORT_FIELD_MAPPER_V1\r\n"
-                    },
-                    {
-                        "id":  "P003_CARTSERVICE_APPLY_MAPPER",
-                        "file":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\services\\cartService.js",
-                        "reason":  "Fix: items with METHOD present but missing mapped fields should still discount (apply field map fallback)",
-                        "insert_after":  "const item = normalizeItem(rawItem);",
-                        "code":  "// BEGIN: THAM:APPLY_FIELD_MAP_TO_LINE_V1\r\nconst mapped = thamMapFields(rawItem || {});\r\nif (mapped) {\r\nconst mappedName = String(mapped.name ?? \u0027\u0027).trim();\r\nif ((!item.name || String(item.name).trim() === \u0027\u0027) \u0026\u0026 mappedName) item.name = mappedName;\r\n\r\nconst mappedUnit = Number.isFinite(+mapped.unitPrice) ? +mapped.unitPrice : 0;\r\nif ((!Number.isFinite(+item.unitPrice) || +item.unitPrice \u003c= 0) \u0026\u0026 mappedUnit \u003e 0) item.unitPrice = mappedUnit;\r\n\r\nconst mappedDealPrice = Number.isFinite(+mapped.dealPrice) ? +mapped.dealPrice : 0;\r\nif ((!Number.isFinite(+item.dealPrice) || +item.dealPrice \u003c= 0) \u0026\u0026 mappedDealPrice \u003e 0) item.dealPrice = mappedDealPrice;\r\n\r\nconst mappedDealQty = parseInt(String(mapped.dealQty ?? 0).trim(), 10);\r\nif ((parseInt(String(item.dealQty ?? 0).trim(), 10) || 0) \u003c= 0 \u0026\u0026 Number.isFinite(mappedDealQty) \u0026\u0026 mappedDealQty \u003e 0) item.dealQty = mappedDealQty;\r\n\r\nconst baseMethod = String(item.method ?? \u00270\u0027).trim();\r\nconst mappedMethod = String(mapped.method ?? 0).trim();\r\nif ((baseMethod === \u0027\u0027 || baseMethod === \u00270\u0027) \u0026\u0026 mappedMethod !== \u0027\u0027 \u0026\u0026 mappedMethod !== \u00270\u0027) item.method = mappedMethod;\r\n\r\n}\r\n// END:   THAM:APPLY_FIELD_MAP_TO_LINE_V1\r\n"
-                    },
-                    {
-                        "id":  "P004_CARTSERVICE_CANON_METHOD",
-                        "file":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\services\\cartService.js",
-                        "reason":  "Fix: canonicalize numeric fields so discount logic triggers reliably",
-                        "insert_after":  "// END:   THAM:APPLY_FIELD_MAP_TO_LINE_V1",
-                        "code":  "// BEGIN: THAM:CANON_METHOD_V1\r\nconst __thamMethodNum = parseInt(String(item.method ?? \u00270\u0027).trim(), 10);\r\nitem.method = Number.isFinite(__thamMethodNum) ? String(__thamMethodNum) : \u00270\u0027;\r\nitem.qty = Math.max(0, parseInt(String(item.qty ?? 0).trim(), 10) || 0);\r\nitem.dealQty = Math.max(0, parseInt(String(item.dealQty ?? 0).trim(), 10) || 0);\r\nitem.unitPrice = Number.isFinite(+item.unitPrice) ? +item.unitPrice : 0;\r\nitem.dealPrice = Number.isFinite(+item.dealPrice) ? +item.dealPrice : 0;\r\n// END:   THAM:CANON_METHOD_V1\r\n"
-                    },
-                    {
-                        "id":  "P005_CARTSERVICE_METHOD8_HELPERS",
-                        "file":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\services\\cartService.js",
-                        "reason":  "Expose Method 8 helpers (A default + B documented) for unit testing",
-                        "insert_after":  "**EOF**",
-                        "code":  "// BEGIN: THAM:METHOD8_HELPERS_V1\r\n/**\r\n\r\n* Method 8 โ€” Buy N Get 1 Free\r\n* Interpretation A (DEFAULT):\r\n* dealQty = N\r\n* freeItems = floor(qty / dealQty)\r\n* payable = qty - freeItems\r\n*\r\n* Alternative Interpretation B (DOCUMENTED ONLY, tested):\r\n* For every (N + 1) items, 1 is free:\r\n* freeItems = floor(qty / (dealQty + 1))\r\n* payable = qty - freeItems\r\n  */\r\n  function tham_calcMethod8_A(qty, dealQty) {\r\n  const q = Math.max(0, parseInt(String(qty ?? 0).trim(), 10) || 0);\r\n  const n = Math.max(0, parseInt(String(dealQty ?? 0).trim(), 10) || 0);\r\n  if (n \u003c= 0) return { freeItems: 0, payableQty: q };\r\n  const freeItems = Math.floor(q / n);\r\n  const payableQty = Math.max(0, q - freeItems);\r\n  return { freeItems, payableQty };\r\n  }\r\n\r\nfunction tham_calcMethod8_B(qty, dealQty) {\r\nconst q = Math.max(0, parseInt(String(qty ?? 0).trim(), 10) || 0);\r\nconst n = Math.max(0, parseInt(String(dealQty ?? 0).trim(), 10) || 0);\r\nconst denom = n + 1;\r\nif (denom \u003c= 0) return { freeItems: 0, payableQty: q };\r\nconst freeItems = Math.floor(q / denom);\r\nconst payableQty = Math.max(0, q - freeItems);\r\nreturn { freeItems, payableQty };\r\n}\r\n\r\nexports.THAM = exports.THAM || {};\r\nexports.THAM.calcMethod8_A = tham_calcMethod8_A;\r\nexports.THAM.calcMethod8_B = tham_calcMethod8_B;\r\n// END:   THAM:METHOD8_HELPERS_V1"
-                    },
-                    {
-                        "id":  "P006_CARTSERVICE_NETTOTAL_PAYABLE",
-                        "file":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\services\\cartService.js",
-                        "reason":  "Fix: summary.netTotal should reflect payable amount (grandTotal) without UI changes",
-                        "insert_after":  "**EOF**",
-                        "code":  "/* BEGIN: THAM:WRAP_CARTSUMMARY_NETTOTAL_V1 */\r\n(() =\u003e {\r\nconst __orig = exports.calculateCartSummary;\r\nif (typeof __orig !== \u0027function\u0027) return;\r\n\r\nexports.calculateCartSummary = function (...args) {\r\nconst res = __orig.apply(this, args);\r\ntry {\r\nif (res \u0026\u0026 res.summary) {\r\nconst gt = res.summary.grandTotal;\r\nconst oldNet = res.summary.netTotal;\r\nif (typeof oldNet === \u0027number\u0027 \u0026\u0026 Number.isFinite(oldNet) \u0026\u0026 res.summary.netBeforeVat === undefined) {\r\nres.summary.netBeforeVat = oldNet;\r\n}\r\nif (typeof gt === \u0027number\u0027 \u0026\u0026 Number.isFinite(gt)) {\r\nres.summary.netTotal = gt;\r\n}\r\n}\r\n} catch (_) {}\r\nreturn res;\r\n};\r\n})();\r\n/* END:   THAM:WRAP_CARTSUMMARY_NETTOTAL_V1 */"
-                    },
-                    {
-                        "id":  "P007_CREATE_SELFTEST_METHOD8",
-                        "file":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\tests\\module1.method8.selftest.js",
-                        "reason":  "Selftest for Method 8 A+B",
-                        "insert_after":  "**CREATE_OR_REPLACE**",
-                        "code":  "// BEGIN: THAM:TEST_METHOD8_SELFTEST_V1\r\nconst assert = require(\u0027assert\u0027);\r\n\r\nfunction loadCartService() {\r\ntry { return require(\u0027../src/services/cartService\u0027); }\r\ncatch (e1) {\r\ntry { return require(\u0027../src/services/cartservice\u0027); }\r\ncatch (e2) { throw new Error(\u0027Cannot require cartService (cartService.js / cartservice.js).\u0027); }\r\n}\r\n}\r\n\r\nfunction run() {\r\nconst cart = loadCartService();\r\nif (!cart.THAM || typeof cart.THAM.calcMethod8_A !== \u0027function\u0027 || typeof cart.THAM.calcMethod8_B !== \u0027function\u0027) {\r\nthrow new Error(\u0027Missing THAM helpers. Ensure METHOD8 helpers patch applied.\u0027);\r\n}\r\n\r\nassert.deepStrictEqual(cart.THAM.calcMethod8_A(1, 2), { freeItems: 0, payableQty: 1 });\r\nassert.deepStrictEqual(cart.THAM.calcMethod8_A(2, 2), { freeItems: 1, payableQty: 1 });\r\nassert.deepStrictEqual(cart.THAM.calcMethod8_A(5, 2), { freeItems: 2, payableQty: 3 });\r\n\r\nassert.deepStrictEqual(cart.THAM.calcMethod8_B(3, 2), { freeItems: 1, payableQty: 2 });\r\nassert.deepStrictEqual(cart.THAM.calcMethod8_B(6, 2), { freeItems: 2, payableQty: 4 });\r\n\r\nconsole.log(\u0027[PASS] Module1 Method8 selftest OK\u0027);\r\n}\r\n\r\ntry { run(); }\r\ncatch (err) {\r\nconsole.error(\u0027[FAIL] Module1 Method8 selftest failed:\u0027, err \u0026\u0026 err.message ? err.message : err);\r\nprocess.exit(1);\r\n}\r\n// END:   THAM:TEST_METHOD8_SELFTEST_V1"
-                    },
-                    {
-                        "id":  "P008_CREATE_SELFTEST_CARTSUMMARY",
-                        "file":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\tests\\module1.cartsummary.selftest.js",
-                        "reason":  "Selftest for mapped fields + netTotal payable",
-                        "insert_after":  "**CREATE_OR_REPLACE**",
-                        "code":  "// BEGIN: THAM:TEST_CARTSUMMARY_SELFTEST_V1\r\nconst assert = require(\u0027assert\u0027);\r\n\r\nfunction loadCartService() {\r\ntry { return require(\u0027../src/services/cartService\u0027); }\r\ncatch (e1) {\r\ntry { return require(\u0027../src/services/cartservice\u0027); }\r\ncatch (e2) { throw new Error(\u0027Cannot require cartService (cartService.js / cartservice.js).\u0027); }\r\n}\r\n}\r\n\r\nfunction run() {\r\nconst cart = loadCartService();\r\nif (typeof cart.calculateCartSummary !== \u0027function\u0027) throw new Error(\u0027calculateCartSummary not found.\u0027);\r\n\r\nconst raw = {\r\nqty: 2,\r\nMETHOD: 8,\r\n\u0027DEAL QTY\u0027: 2,\r\n\u0027REG PRICE\u0027: 100,\r\n\u0027DESCRIPTION PRINT\u0027: \u0027TEST ITEM\u0027\r\n};\r\n\r\nconst res = cart.calculateCartSummary([raw], 0, [], 0, 0);\r\nassert.ok(res \u0026\u0026 res.items \u0026\u0026 res.items.length === 1, \u0027Expected 1 processed item\u0027);\r\nassert.strictEqual(res.items[0].calculatedTotal, 100, \u0027Method 8 discount not applied as expected\u0027);\r\nassert.strictEqual(res.summary.netTotal, res.summary.grandTotal, \u0027netTotal must equal grandTotal (payable)\u0027);\r\n\r\nconsole.log(\u0027[PASS] CartSummary selftest OK\u0027);\r\n}\r\n\r\ntry { run(); }\r\ncatch (err) {\r\nconsole.error(\u0027[FAIL] CartSummary selftest failed:\u0027, err \u0026\u0026 err.message ? err.message : err);\r\nprocess.exit(1);\r\n}\r\n// END:   THAM:TEST_CARTSUMMARY_SELFTEST_V1"
-                    },
-                    {
-                        "id":  "P009_POS_ADD_CALCULATEORDER_ALIAS",
-                        "file":  "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\src\\services\\posService.js",
-                        "reason":  "Fix: useCart expects posService.calculateOrder; add safe alias without guessing delegate",
-                        "insert_after":  "**EOF**",
-                        "code":  "// BEGIN: THAM:POS_CALCULATEORDER_ALIAS_V2\r\nif (typeof posService !== \u0027undefined\u0027 \u0026\u0026 posService \u0026\u0026 typeof posService.calculateOrder !== \u0027function\u0027) {\r\nposService.calculateOrder = (...args) =\u003e {\r\nconst preferred = [\u0027calculateCartSummary\u0027,\u0027calculateCart\u0027,\u0027calculateSummary\u0027,\u0027calculateTotals\u0027,\u0027calculateTotal\u0027];\r\nfor (const k of preferred) {\r\nconst fn = posService[k];\r\nif (typeof fn === \u0027function\u0027) return fn(...args);\r\n}\r\n\r\nconst calcKeys = Object.keys(posService).filter(k =\u003e\r\n  k !== \u0027calculateOrder\u0027 \u0026\u0026\r\n  /^calculate/i.test(k) \u0026\u0026\r\n  typeof posService[k] === \u0027function\u0027\r\n);\r\n\r\nif (calcKeys.length === 1) {\r\n  return posService[calcKeys[0]](...args);\r\n}\r\n\r\nthrow new Error(\u0027calculateOrder alias failed: no known calculate* delegate found on posService\u0027);\r\n```\r\n\r\n};\r\n}\r\n// END:   THAM:POS_CALCULATEORDER_ALIAS_V2"
-                    }
-                ]
+  "meta": {
+    "createdAt": "2026-01-02T19:07:22.9167472+07:00",
+    "root": "D:\\01 Main Work\\Boots\\Boots-POS Gemini",
+    "functionsDir": "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions",
+    "cartService": "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\services\\cartService.js",
+    "posService": "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\src\\services\\posService.js"
+  },
+  "patches": [
+    {
+      "id": "P001_CREATE_FIELD_MAPPER",
+      "file": "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\utils\\fieldMapper.js",
+      "reason": "Add server-side field normalization + mapping (single source of truth)",
+      "insert_after": "**CREATE_IF_MISSING**",
+      "code": "// BEGIN: THAM:FIELD_MAPPER_V1\r\nfunction normalizeKey(key) {\r\nreturn String(key)\r\n.trim()\r\n.toUpperCase()\r\n.replace(/[_\\s]+/g, \u0027 \u0027)\r\n.replace(/[()]/g, \u0027\u0027);\r\n}\r\n\r\nconst FIELD_MAP = Object.freeze({\r\n\u0027DESCRIPTION PRINT\u0027: \u0027name\u0027,\r\n\u0027REG PRICE\u0027: \u0027unitPrice\u0027,\r\n\u0027DEAL PRICE\u0027: \u0027dealPrice\u0027,\r\n\u0027DEAL QTY\u0027: \u0027dealQty\u0027,\r\n\u0027METHOD\u0027: \u0027method\u0027\r\n});\r\n\r\nfunction safeNumber(val) {\r\nconst n = parseFloat(String(val ?? \u0027\u0027).trim());\r\nreturn Number.isFinite(n) ? n : 0;\r\n}\r\n\r\nfunction safeInt(val) {\r\nconst n = parseInt(String(val ?? \u0027\u0027).trim(), 10);\r\nreturn Number.isFinite(n) ? n : 0;\r\n}\r\n\r\nfunction mapFields(input) {\r\nconst out = {};\r\nif (!input || typeof input !== \u0027object\u0027) return out;\r\n\r\nfor (const [k, v] of Object.entries(input)) {\r\nconst nk = normalizeKey(k);\r\nconst dest = FIELD_MAP[nk];\r\nif (!dest) continue;\r\n\r\nif (dest === \u0027unitPrice\u0027 || dest === \u0027dealPrice\u0027) out[dest] = safeNumber(v);\r\nelse if (dest === \u0027dealQty\u0027 || dest === \u0027method\u0027) out[dest] = safeInt(v);\r\nelse out[dest] = String(v ?? \u0027\u0027);\r\n\r\n}\r\nreturn out;\r\n}\r\n\r\nmodule.exports = {\r\nnormalizeKey,\r\nFIELD_MAP,\r\nsafeNumber,\r\nsafeInt,\r\nmapFields\r\n};\r\n// END:   THAM:FIELD_MAPPER_V1"
+    },
+    {
+      "id": "P002_CARTSERVICE_IMPORT_MAPPER",
+      "file": "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\services\\cartService.js",
+      "reason": "Server-side ONLY: import fieldMapper in cartService",
+      "insert_before": "const normalizeItem = (item) =\u003e {",
+      "code": "// BEGIN: THAM:IMPORT_FIELD_MAPPER_V1\r\nconst { mapFields: thamMapFields } = require(\u0027../utils/fieldMapper\u0027);\r\n// END:   THAM:IMPORT_FIELD_MAPPER_V1\r\n"
+    },
+    {
+      "id": "P003_CARTSERVICE_APPLY_MAPPER",
+      "file": "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\services\\cartService.js",
+      "reason": "Fix: items with METHOD present but missing mapped fields should still discount (apply field map fallback)",
+      "insert_after": "const item = normalizeItem(rawItem);",
+      "code": "// BEGIN: THAM:APPLY_FIELD_MAP_TO_LINE_V1\r\nconst mapped = thamMapFields(rawItem || {});\r\nif (mapped) {\r\nconst mappedName = String(mapped.name ?? \u0027\u0027).trim();\r\nif ((!item.name || String(item.name).trim() === \u0027\u0027) \u0026\u0026 mappedName) item.name = mappedName;\r\n\r\nconst mappedUnit = Number.isFinite(+mapped.unitPrice) ? +mapped.unitPrice : 0;\r\nif ((!Number.isFinite(+item.unitPrice) || +item.unitPrice \u003c= 0) \u0026\u0026 mappedUnit \u003e 0) item.unitPrice = mappedUnit;\r\n\r\nconst mappedDealPrice = Number.isFinite(+mapped.dealPrice) ? +mapped.dealPrice : 0;\r\nif ((!Number.isFinite(+item.dealPrice) || +item.dealPrice \u003c= 0) \u0026\u0026 mappedDealPrice \u003e 0) item.dealPrice = mappedDealPrice;\r\n\r\nconst mappedDealQty = parseInt(String(mapped.dealQty ?? 0).trim(), 10);\r\nif ((parseInt(String(item.dealQty ?? 0).trim(), 10) || 0) \u003c= 0 \u0026\u0026 Number.isFinite(mappedDealQty) \u0026\u0026 mappedDealQty \u003e 0) item.dealQty = mappedDealQty;\r\n\r\nconst baseMethod = String(item.method ?? \u00270\u0027).trim();\r\nconst mappedMethod = String(mapped.method ?? 0).trim();\r\nif ((baseMethod === \u0027\u0027 || baseMethod === \u00270\u0027) \u0026\u0026 mappedMethod !== \u0027\u0027 \u0026\u0026 mappedMethod !== \u00270\u0027) item.method = mappedMethod;\r\n\r\n}\r\n// END:   THAM:APPLY_FIELD_MAP_TO_LINE_V1\r\n"
+    },
+    {
+      "id": "P004_CARTSERVICE_CANON_METHOD",
+      "file": "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\services\\cartService.js",
+      "reason": "Fix: canonicalize numeric fields so discount logic triggers reliably",
+      "insert_after": "// END:   THAM:APPLY_FIELD_MAP_TO_LINE_V1",
+      "code": "// BEGIN: THAM:CANON_METHOD_V1\r\nconst __thamMethodNum = parseInt(String(item.method ?? \u00270\u0027).trim(), 10);\r\nitem.method = Number.isFinite(__thamMethodNum) ? String(__thamMethodNum) : \u00270\u0027;\r\nitem.qty = Math.max(0, parseInt(String(item.qty ?? 0).trim(), 10) || 0);\r\nitem.dealQty = Math.max(0, parseInt(String(item.dealQty ?? 0).trim(), 10) || 0);\r\nitem.unitPrice = Number.isFinite(+item.unitPrice) ? +item.unitPrice : 0;\r\nitem.dealPrice = Number.isFinite(+item.dealPrice) ? +item.dealPrice : 0;\r\n// END:   THAM:CANON_METHOD_V1\r\n"
+    },
+    {
+      "id": "P005_CARTSERVICE_METHOD8_HELPERS",
+      "file": "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\services\\cartService.js",
+      "reason": "Expose Method 8 helpers (A default + B documented) for unit testing",
+      "insert_after": "**EOF**",
+      "code": "// BEGIN: THAM:METHOD8_HELPERS_V1\r\n/**\r\n\r\n* Method 8 โ€” Buy N Get 1 Free\r\n* Interpretation A (DEFAULT):\r\n* dealQty = N\r\n* freeItems = floor(qty / dealQty)\r\n* payable = qty - freeItems\r\n*\r\n* Alternative Interpretation B (DOCUMENTED ONLY, tested):\r\n* For every (N + 1) items, 1 is free:\r\n* freeItems = floor(qty / (dealQty + 1))\r\n* payable = qty - freeItems\r\n  */\r\n  function tham_calcMethod8_A(qty, dealQty) {\r\n  const q = Math.max(0, parseInt(String(qty ?? 0).trim(), 10) || 0);\r\n  const n = Math.max(0, parseInt(String(dealQty ?? 0).trim(), 10) || 0);\r\n  if (n \u003c= 0) return { freeItems: 0, payableQty: q };\r\n  const freeItems = Math.floor(q / n);\r\n  const payableQty = Math.max(0, q - freeItems);\r\n  return { freeItems, payableQty };\r\n  }\r\n\r\nfunction tham_calcMethod8_B(qty, dealQty) {\r\nconst q = Math.max(0, parseInt(String(qty ?? 0).trim(), 10) || 0);\r\nconst n = Math.max(0, parseInt(String(dealQty ?? 0).trim(), 10) || 0);\r\nconst denom = n + 1;\r\nif (denom \u003c= 0) return { freeItems: 0, payableQty: q };\r\nconst freeItems = Math.floor(q / denom);\r\nconst payableQty = Math.max(0, q - freeItems);\r\nreturn { freeItems, payableQty };\r\n}\r\n\r\nexports.THAM = exports.THAM || {};\r\nexports.THAM.calcMethod8_A = tham_calcMethod8_A;\r\nexports.THAM.calcMethod8_B = tham_calcMethod8_B;\r\n// END:   THAM:METHOD8_HELPERS_V1"
+    },
+    {
+      "id": "P006_CARTSERVICE_NETTOTAL_PAYABLE",
+      "file": "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\src\\services\\cartService.js",
+      "reason": "Fix: summary.netTotal should reflect payable amount (grandTotal) without UI changes",
+      "insert_after": "**EOF**",
+      "code": "/* BEGIN: THAM:WRAP_CARTSUMMARY_NETTOTAL_V1 */\r\n(() =\u003e {\r\nconst __orig = exports.calculateCartSummary;\r\nif (typeof __orig !== \u0027function\u0027) return;\r\n\r\nexports.calculateCartSummary = function (...args) {\r\nconst res = __orig.apply(this, args);\r\ntry {\r\nif (res \u0026\u0026 res.summary) {\r\nconst gt = res.summary.grandTotal;\r\nconst oldNet = res.summary.netTotal;\r\nif (typeof oldNet === \u0027number\u0027 \u0026\u0026 Number.isFinite(oldNet) \u0026\u0026 res.summary.netBeforeVat === undefined) {\r\nres.summary.netBeforeVat = oldNet;\r\n}\r\nif (typeof gt === \u0027number\u0027 \u0026\u0026 Number.isFinite(gt)) {\r\nres.summary.netTotal = gt;\r\n}\r\n}\r\n} catch (_) {}\r\nreturn res;\r\n};\r\n})();\r\n/* END:   THAM:WRAP_CARTSUMMARY_NETTOTAL_V1 */"
+    },
+    {
+      "id": "P007_CREATE_SELFTEST_METHOD8",
+      "file": "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\tests\\module1.method8.selftest.js",
+      "reason": "Selftest for Method 8 A+B",
+      "insert_after": "**CREATE_OR_REPLACE**",
+      "code": "// BEGIN: THAM:TEST_METHOD8_SELFTEST_V1\r\nconst assert = require(\u0027assert\u0027);\r\n\r\nfunction loadCartService() {\r\ntry { return require(\u0027../src/services/cartService\u0027); }\r\ncatch (e1) {\r\ntry { return require(\u0027../src/services/cartservice\u0027); }\r\ncatch (e2) { throw new Error(\u0027Cannot require cartService (cartService.js / cartservice.js).\u0027); }\r\n}\r\n}\r\n\r\nfunction run() {\r\nconst cart = loadCartService();\r\nif (!cart.THAM || typeof cart.THAM.calcMethod8_A !== \u0027function\u0027 || typeof cart.THAM.calcMethod8_B !== \u0027function\u0027) {\r\nthrow new Error(\u0027Missing THAM helpers. Ensure METHOD8 helpers patch applied.\u0027);\r\n}\r\n\r\nassert.deepStrictEqual(cart.THAM.calcMethod8_A(1, 2), { freeItems: 0, payableQty: 1 });\r\nassert.deepStrictEqual(cart.THAM.calcMethod8_A(2, 2), { freeItems: 1, payableQty: 1 });\r\nassert.deepStrictEqual(cart.THAM.calcMethod8_A(5, 2), { freeItems: 2, payableQty: 3 });\r\n\r\nassert.deepStrictEqual(cart.THAM.calcMethod8_B(3, 2), { freeItems: 1, payableQty: 2 });\r\nassert.deepStrictEqual(cart.THAM.calcMethod8_B(6, 2), { freeItems: 2, payableQty: 4 });\r\n\r\nconsole.log(\u0027[PASS] Module1 Method8 selftest OK\u0027);\r\n}\r\n\r\ntry { run(); }\r\ncatch (err) {\r\nconsole.error(\u0027[FAIL] Module1 Method8 selftest failed:\u0027, err \u0026\u0026 err.message ? err.message : err);\r\nprocess.exit(1);\r\n}\r\n// END:   THAM:TEST_METHOD8_SELFTEST_V1"
+    },
+    {
+      "id": "P008_CREATE_SELFTEST_CARTSUMMARY",
+      "file": "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\functions\\tests\\module1.cartsummary.selftest.js",
+      "reason": "Selftest for mapped fields + netTotal payable",
+      "insert_after": "**CREATE_OR_REPLACE**",
+      "code": "// BEGIN: THAM:TEST_CARTSUMMARY_SELFTEST_V1\r\nconst assert = require(\u0027assert\u0027);\r\n\r\nfunction loadCartService() {\r\ntry { return require(\u0027../src/services/cartService\u0027); }\r\ncatch (e1) {\r\ntry { return require(\u0027../src/services/cartservice\u0027); }\r\ncatch (e2) { throw new Error(\u0027Cannot require cartService (cartService.js / cartservice.js).\u0027); }\r\n}\r\n}\r\n\r\nfunction run() {\r\nconst cart = loadCartService();\r\nif (typeof cart.calculateCartSummary !== \u0027function\u0027) throw new Error(\u0027calculateCartSummary not found.\u0027);\r\n\r\nconst raw = {\r\nqty: 2,\r\nMETHOD: 8,\r\n\u0027DEAL QTY\u0027: 2,\r\n\u0027REG PRICE\u0027: 100,\r\n\u0027DESCRIPTION PRINT\u0027: \u0027TEST ITEM\u0027\r\n};\r\n\r\nconst res = cart.calculateCartSummary([raw], 0, [], 0, 0);\r\nassert.ok(res \u0026\u0026 res.items \u0026\u0026 res.items.length === 1, \u0027Expected 1 processed item\u0027);\r\nassert.strictEqual(res.items[0].calculatedTotal, 100, \u0027Method 8 discount not applied as expected\u0027);\r\nassert.strictEqual(res.summary.netTotal, res.summary.grandTotal, \u0027netTotal must equal grandTotal (payable)\u0027);\r\n\r\nconsole.log(\u0027[PASS] CartSummary selftest OK\u0027);\r\n}\r\n\r\ntry { run(); }\r\ncatch (err) {\r\nconsole.error(\u0027[FAIL] CartSummary selftest failed:\u0027, err \u0026\u0026 err.message ? err.message : err);\r\nprocess.exit(1);\r\n}\r\n// END:   THAM:TEST_CARTSUMMARY_SELFTEST_V1"
+    },
+    {
+      "id": "P009_POS_ADD_CALCULATEORDER_ALIAS",
+      "file": "D:\\01 Main Work\\Boots\\Boots-POS Gemini\\src\\services\\posService.js",
+      "reason": "Fix: useCart expects posService.calculateOrder; add safe alias without guessing delegate",
+      "insert_after": "**EOF**",
+      "code": "// BEGIN: THAM:POS_CALCULATEORDER_ALIAS_V2\r\nif (typeof posService !== \u0027undefined\u0027 \u0026\u0026 posService \u0026\u0026 typeof posService.calculateOrder !== \u0027function\u0027) {\r\nposService.calculateOrder = (...args) =\u003e {\r\nconst preferred = [\u0027calculateCartSummary\u0027,\u0027calculateCart\u0027,\u0027calculateSummary\u0027,\u0027calculateTotals\u0027,\u0027calculateTotal\u0027];\r\nfor (const k of preferred) {\r\nconst fn = posService[k];\r\nif (typeof fn === \u0027function\u0027) return fn(...args);\r\n}\r\n\r\nconst calcKeys = Object.keys(posService).filter(k =\u003e\r\n  k !== \u0027calculateOrder\u0027 \u0026\u0026\r\n  /^calculate/i.test(k) \u0026\u0026\r\n  typeof posService[k] === \u0027function\u0027\r\n);\r\n\r\nif (calcKeys.length === 1) {\r\n  return posService[calcKeys[0]](...args);\r\n}\r\n\r\nthrow new Error(\u0027calculateOrder alias failed: no known calculate* delegate found on posService\u0027);\r\n```\r\n\r\n};\r\n}\r\n// END:   THAM:POS_CALCULATEORDER_ALIAS_V2"
+    }
+  ]
 }

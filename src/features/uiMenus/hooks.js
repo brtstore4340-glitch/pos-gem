@@ -64,14 +64,24 @@ export function useUiMenus({ db, pageSize = 50, enabled = true }) {
   return { items, loading, error, hasMore };
 }
 
-export function useResolvedMenus({ db, auth, staticMenus = [], pageSize = 100, enabled = true }) {
+export function useResolvedMenus({
+  db,
+  auth,
+  staticMenus = [],
+  pageSize = 100,
+  enabled = true,
+}) {
   const { uid, roles, ready: authReady } = useUserClaimsRoles(auth);
-  const { items: dynamicMenus, loading, error } = useUiMenus({ db, pageSize, enabled });
+  const {
+    items: dynamicMenus,
+    loading,
+    error,
+  } = useUiMenus({ db, pageSize, enabled });
 
   const filteredDynamic = useMemo(() => {
     if (!authReady) return [];
     return (dynamicMenus || [])
-      .filter((m) => (m.enabled ?? true))
+      .filter((m) => m.enabled ?? true)
       .filter((m) => isMenuAllowed({ uid, roles, access: m.access }))
       .map((m) => ({
         id: m.id,
@@ -92,14 +102,22 @@ export function useResolvedMenus({ db, auth, staticMenus = [], pageSize = 100, e
       route: m.route,
       enabled: m.enabled ?? true,
       order: m.order ?? 9999,
-      placement: m.placement ?? { mode: "append_end", refId: null, index: null, group: m.group ?? "primary" },
+      placement: m.placement ?? {
+        mode: "append_end",
+        refId: null,
+        index: null,
+        group: m.group ?? "primary",
+      },
       access: m.access ?? null,
       group: m.group ?? "primary",
     }));
   }, [staticMenus]);
 
   const resolved = useMemo(() => {
-    return resolveMenus({ staticMenus: normalizedStatic, dynamicMenus: filteredDynamic });
+    return resolveMenus({
+      staticMenus: normalizedStatic,
+      dynamicMenus: filteredDynamic,
+    });
   }, [normalizedStatic, filteredDynamic]);
 
   return { resolved, loading, error, uid, roles };

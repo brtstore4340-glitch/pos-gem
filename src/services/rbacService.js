@@ -1,18 +1,16 @@
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../firebase';
-
-
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../firebase";
 
 // Reuse a single functions instance so callables don't re-init each call.
-const bootstrapAdminFn = httpsCallable(functions, 'bootstrapAdmin');
-const listMyIdsFn = httpsCallable(functions, 'listMyIds');
-const verifyIdPinFn = httpsCallable(functions, 'verifyIdPin');
-const createIdFn = httpsCallable(functions, 'createId');
-const updateIdFn = httpsCallable(functions, 'updateId');
-const resetPinFn = httpsCallable(functions, 'resetPin');
-const setPinFn = httpsCallable(functions, 'setPin');
-const searchIdsFn = httpsCallable(functions, 'searchIds');
-const getAuditLogsFn = httpsCallable(functions, 'getAuditLogs');
+const bootstrapAdminFn = httpsCallable(functions, "bootstrapAdmin");
+const listMyIdsFn = httpsCallable(functions, "listMyIds");
+const verifyIdPinFn = httpsCallable(functions, "verifyIdPin");
+const createIdFn = httpsCallable(functions, "createId");
+const updateIdFn = httpsCallable(functions, "updateId");
+const resetPinFn = httpsCallable(functions, "resetPin");
+const setPinFn = httpsCallable(functions, "setPin");
+const searchIdsFn = httpsCallable(functions, "searchIds");
+const getAuditLogsFn = httpsCallable(functions, "getAuditLogs");
 
 export async function bootstrapAdmin(payload) {
   try {
@@ -20,8 +18,8 @@ export async function bootstrapAdmin(payload) {
     return res.data;
   } catch (err) {
     // Surface a friendlier message while keeping console detail for debugging.
-    const msg = err?.message || 'Bootstrap admin failed';
-    console.error('bootstrapAdmin error:', err);
+    const msg = err?.message || "Bootstrap admin failed";
+    console.error("bootstrapAdmin error:", err);
     throw new Error(msg);
   }
 }

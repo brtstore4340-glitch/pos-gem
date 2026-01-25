@@ -1,6 +1,7 @@
 # 🎨 Boots POS UI Elegant Redesign Plan
 
 ## 📋 Overview
+
 แผนการปรับปรุง UI ของ Boots POS ให้สวยงาม เรียบหรู และใช้งานง่ายยิ่งขึ้น โดยปรับโครงสร้างการจัดวาง ลดความซ้ำซ้อน และเพิ่ม visual hierarchy
 
 ---
@@ -8,12 +9,15 @@
 ## 🎯 การเปลี่ยนแปลงหลัก
 
 ### 1. **Top Navigation Bar Redesign**
+
 **ปัญหาปัจจุบัน:**
+
 - มี 2 แถวของ Dashboard/POS Terminal ซ้ำซ้อนกัน
 - แถวบน (Main tabs): Dashboard, POS, Inventory, Orders, Admin Settings
 - แถวล่าง (Secondary): Dashboard, POS Terminal (สวยกว่า ใช้ไอคอนสวย)
 
 **การแก้ไข:**
+
 ```
 BEFORE (2 rows):
 ┌─────────────────────────────────────────────────────────────┐
@@ -31,6 +35,7 @@ AFTER (1 row เดียว - รวมทุกอย่างไว้ด้�
 ```
 
 **รายละเอียด:**
+
 - **ลบ Row แรกออก** (Main tabs: Dashboard, POS, Inventory, Orders)
 - **เก็บ Row ที่สอง** แต่ปรับให้เป็น Main Navigation
 - **เพิ่มองค์ประกอบใหม่:**
@@ -43,10 +48,13 @@ AFTER (1 row เดียว - รวมทุกอย่างไว้ด้�
 ---
 
 ### 2. **Cart Header Simplification**
+
 **ปัญหาปัจจุบัน:**
+
 - Header มีข้อมูลหลายอย่างที่ซ้ำกับ Top Navigation
 
 **การแก้ไข:**
+
 ```
 BEFORE:
 ┌─────────────────────────────────────────────────────────────┐
@@ -61,6 +69,7 @@ AFTER (เหลือแค่):
 ```
 
 **รายละเอียด:**
+
 - **ลบออก:** Boots Logo, รายการขาย, Version, Daily Report, Settings
 - **ย้ายไป Top Navigation:** Logo, รายการขาย, Version, Daily Report, Settings
 - **เก็บไว้:**
@@ -70,16 +79,19 @@ AFTER (เหลือแค่):
 ---
 
 ### 3. **ปุ่มเมนูส่วนลด - เปลี่ยนสีเป็นเหลืองอ่อน**
+
 **การเปลี่ยนแปลง:**
+
 ```jsx
 // BEFORE:
-className="bg-orange-600 hover:bg-orange-500"
+className = "bg-orange-600 hover:bg-orange-500";
 
 // AFTER:
-className="bg-yellow-300 hover:bg-yellow-400 text-slate-800"
+className = "bg-yellow-300 hover:bg-yellow-400 text-slate-800";
 ```
 
 **สีที่แนะนำ:**
+
 - Background: `bg-yellow-300` (เหลืองอ่อน)
 - Hover: `hover:bg-yellow-400`
 - Text: `text-slate-800` (เปลี่ยนจาก white เป็นเทาเข้ม เพื่อ contrast)
@@ -88,7 +100,9 @@ className="bg-yellow-300 hover:bg-yellow-400 text-slate-800"
 ---
 
 ### 4. **Cart Footer - ลบ "ยอดรวมสินค้า"**
+
 **ปัญหาปัจจุบัน:**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │ ยอดรวมสินค้า: ฿XXX    ส่วนลดท้ายบิล: -฿XXX    │  ← ส่วนนี้
@@ -98,6 +112,7 @@ className="bg-yellow-300 hover:bg-yellow-400 text-slate-800"
 ```
 
 **การแก้ไข:**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │ [ลบออก - ไม่ต้องแสดง]                          │
@@ -107,6 +122,7 @@ className="bg-yellow-300 hover:bg-yellow-400 text-slate-800"
 ```
 
 **รายละเอียด:**
+
 - ลบส่วน "Detailed Summary" ออกทั้งหมด
 - เก็บแค่ส่วนจำนวนชิ้นรวม และยอดสุทธิ
 - ทำให้ footer กระทัดรัดขึ้น
@@ -114,15 +130,17 @@ className="bg-yellow-300 hover:bg-yellow-400 text-slate-800"
 ---
 
 ### 5. **ลดขนาดฟอนต์ในส่วน Footer**
+
 **การเปลี่ยนแปลง:**
 
-| Element | Current | New |
-|---------|---------|-----|
+| Element               | Current           | New               |
+| --------------------- | ----------------- | ----------------- |
 | จำนวนชิ้นรวม (Number) | `text-4xl` (36px) | `text-3xl` (30px) |
-| ยอดสุทธิ (Net Total) | `text-7xl` (72px) | `text-5xl` (48px) |
-| Label Text | `text-sm` | `text-xs` |
+| ยอดสุทธิ (Net Total)  | `text-7xl` (72px) | `text-5xl` (48px) |
+| Label Text            | `text-sm`         | `text-xs`         |
 
 **เหตุผล:**
+
 - ลดความสูงของ footer ให้พื้นที่กับ cart items มากขึ้น
 - ยังคงอ่านง่าย แต่ไม่กินพื้นที่มากเกินไป
 
@@ -165,6 +183,7 @@ className="bg-yellow-300 hover:bg-yellow-400 text-slate-800"
 ## 🎨 Design Improvements
 
 ### Color Palette
+
 ```css
 /* ปุ่มเมนูส่วนลด (New) */
 bg-yellow-300      /* Light Yellow - Main */
@@ -186,6 +205,7 @@ hover:bg-red-600
 ```
 
 ### Typography Scale
+
 ```css
 /* Headers */
 text-sm uppercase tracking-wider  /* Section Headers */
@@ -202,6 +222,7 @@ text-xs text-slate-400          /* Small labels */
 ```
 
 ### Spacing & Layout
+
 ```css
 /* Top Navigation */
 py-4 px-6                       /* More spacious */
@@ -222,7 +243,9 @@ h-auto                         /* Auto height (was fixed) */
 ### [`PosUI.jsx`](src/components/PosUI.jsx)
 
 #### 1. Top Navigation Section (Lines 502-519)
+
 **Changes:**
+
 - ลบแถวแรก (Dashboard, POS, Inventory, Orders tabs)
 - แทนที่ด้วย Single Row ที่มี:
   - Boots Logo + "รายการขาย" + Version (ซ้าย)
@@ -232,21 +255,28 @@ h-auto                         /* Auto height (was fixed) */
   - เมนูส่วนลด (floating badge สีเหลือง)
 
 #### 2. Cart Header (Lines 310-355)
+
 **Changes:**
+
 - ลบ: Logo, รายการขาย text, Version info
 - ลบ: Daily Report, Settings buttons
 - เก็บแค่: Table column headers
 - เพิ่ม: Staff badge ขนาดเล็กที่มุม (optional)
 
 #### 3. Discount Button (Line 334-339)
+
 **Changes:**
+
 ```jsx
 // Change color from orange to yellow
-className="bg-yellow-300 hover:bg-yellow-400 text-slate-800 border-yellow-400"
+className =
+  "bg-yellow-300 hover:bg-yellow-400 text-slate-800 border-yellow-400";
 ```
 
 #### 4. Footer Section (Lines 444-493)
+
 **Changes:**
+
 - **ลบ Lines 446-471:** Detailed Summary section ทั้งหมด
 - **ปรับ Lines 473-485:** ลดขนาด font
   - `text-4xl` → `text-3xl` (จำนวนชิ้น)
@@ -258,16 +288,19 @@ className="bg-yellow-300 hover:bg-yellow-400 text-slate-800 border-yellow-400"
 ## 📱 Responsive Considerations
 
 ### Desktop (1920x1080+)
+
 - Top navigation: Full width, all elements visible
 - Left panel: 35%
 - Right panel: 65%
 
 ### Laptop (1366x768)
+
 - Maintain same proportions
 - Slightly smaller font sizes
 - Compact spacing
 
 ### Tablet (1024x768)
+
 - Stack layout if needed
 - Collapsible sidebar
 
@@ -276,6 +309,7 @@ className="bg-yellow-300 hover:bg-yellow-400 text-slate-800 border-yellow-400"
 ## ✨ Visual Enhancements
 
 ### 1. **Consistent Icon Usage**
+
 - Dashboard: `<LayoutDashboard />`
 - POS Terminal: `<Monitor />`
 - Daily Report: `<FileText />`
@@ -283,6 +317,7 @@ className="bg-yellow-300 hover:bg-yellow-400 text-slate-800 border-yellow-400"
 - Theme: `<Sun />` / `<Moon />`
 
 ### 2. **Shadow & Depth**
+
 ```css
 /* Elevated Cards */
 shadow-sm hover:shadow-md
@@ -295,6 +330,7 @@ shadow-sm hover:shadow-lg active:shadow-none
 ```
 
 ### 3. **Transitions**
+
 ```css
 /* Smooth animations */
 transition-all duration-200
@@ -307,11 +343,15 @@ hover:bg-opacity-90
 ```
 
 ### 4. **Staff Badge Placement**
+
 **Option A:** Floating badge in cart corner
+
 ```jsx
 <div className="absolute top-4 right-4 z-10">
-  <div className="bg-white/90 dark:bg-dark-panel/90 backdrop-blur-sm 
-                  px-3 py-1.5 rounded-full border shadow-sm">
+  <div
+    className="bg-white/90 dark:bg-dark-panel/90 backdrop-blur-sm 
+                  px-3 py-1.5 rounded-full border shadow-sm"
+  >
     <User size={14} /> Staff #01
   </div>
 </div>
@@ -324,22 +364,26 @@ hover:bg-opacity-90
 ## 🎯 Implementation Priority
 
 ### Phase 1: Structure Changes (High Priority)
+
 - [x] Remove duplicate navigation row
 - [x] Redesign top navigation with all elements
 - [x] Simplify cart header
 - [x] Remove "ยอดรวมสินค้า" from footer
 
 ### Phase 2: Styling Updates (High Priority)
+
 - [x] Change discount button color to yellow
 - [x] Reduce font sizes in footer
 - [x] Adjust spacing and padding
 
 ### Phase 3: Polish & Refinement (Medium Priority)
+
 - [x] Add smooth transitions
 - [x] Improve hover states
 - [x] Enhance icon consistency
 
 ### Phase 4: Testing & Validation (Final)
+
 - [x] Test on different screen sizes
 - [x] Verify all functionality works
 - [x] Check accessibility
@@ -350,16 +394,18 @@ hover:bg-opacity-90
 ## 📊 Before/After Comparison
 
 ### Metrics
-| Aspect | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Navigation Rows | 2 | 1 | -50% clutter |
-| Cart Header Height | ~120px | ~60px | -50% space |
-| Footer Height | ~200px | ~140px | -30% space |
-| Net Total Font | 72px | 48px | More balanced |
-| Total Items Font | 36px | 30px | More balanced |
-| Discount Button | Orange | Yellow | ✓ New branding |
+
+| Aspect             | Before | After  | Improvement    |
+| ------------------ | ------ | ------ | -------------- |
+| Navigation Rows    | 2      | 1      | -50% clutter   |
+| Cart Header Height | ~120px | ~60px  | -50% space     |
+| Footer Height      | ~200px | ~140px | -30% space     |
+| Net Total Font     | 72px   | 48px   | More balanced  |
+| Total Items Font   | 36px   | 30px   | More balanced  |
+| Discount Button    | Orange | Yellow | ✓ New branding |
 
 ### Visual Impact
+
 - **Cleaner:** Single navigation row
 - **Organized:** All controls in logical groups
 - **Spacious:** More room for cart items
@@ -381,6 +427,7 @@ hover:bg-opacity-90
 ## 💡 Additional Recommendations
 
 ### Consider Adding:
+
 1. **Keyboard Shortcuts Indicator**
    - แสดง shortcut keys บน hover (F12 = Checkout)
 
@@ -398,6 +445,7 @@ hover:bg-opacity-90
    - System messages
 
 ### Consider Removing:
+
 1. **DB Last Update** - ย้ายไป footer หรือ settings
 2. **Device Info** - ไม่จำเป็นต้องแสดงตลอด
 3. **Redundant labels** - ใช้ icons + tooltips
@@ -425,25 +473,25 @@ graph TD
     B --> B4[Daily Report Button]
     B --> B5[Settings Button]
     B --> B6[Theme Toggle]
-    
+
     A --> C[POS Terminal View]
     C --> D[Left Panel 35%]
     C --> E[Right Panel 65%]
-    
+
     D --> D1[Scan Input]
     D --> D2[Void Mode Toggle]
     D --> D3[Last Scanned Display]
     D --> D4[Product Lookup]
-    
+
     E --> E1[Cart Table]
     E1 --> E2[Table Header]
     E1 --> E3[Cart Items Scrollable]
     E1 --> E4[Footer Summary]
-    
+
     E4 --> F1[Item Count]
     E4 --> F2[Net Total]
     E4 --> F3[Checkout Button]
-    
+
     style B fill:#e3f2fd
     style B4 fill:#fff9c4
     style B5 fill:#f5f5f5

@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
   const [ids, setIds] = useState([]);
   const [authLoading, setAuthLoading] = useState(true);
   const [lastIdCode, _setLastIdCode] = useState(() =>
-    safeLocalGet("lastIdCode", "")
+    safeLocalGet("lastIdCode", ""),
   );
 
   const setLastIdCode = useCallback((val) => {
@@ -70,25 +70,23 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const verifyPin = useCallback(async (idCode, pin) => {
-    const sessionRes = await verifyIdPin({ idCode, pin });
-    if (!sessionRes) {
-      throw new Error("Invalid session");
-    }
-    setSession(sessionRes);
-    setLastIdCode(idCode);
-    return sessionRes;
-  }, [setLastIdCode]);
-
-  const setPin = useCallback(
-    async (idCode, currentPin, newPin) => {
-      await setPinService({ idCode, currentPin, newPin });
-      setSession((prev) =>
-        prev ? { ...prev, pinResetRequired: false } : prev
-      );
+  const verifyPin = useCallback(
+    async (idCode, pin) => {
+      const sessionRes = await verifyIdPin({ idCode, pin });
+      if (!sessionRes) {
+        throw new Error("Invalid session");
+      }
+      setSession(sessionRes);
+      setLastIdCode(idCode);
+      return sessionRes;
     },
-    []
+    [setLastIdCode],
   );
+
+  const setPin = useCallback(async (idCode, currentPin, newPin) => {
+    await setPinService({ idCode, currentPin, newPin });
+    setSession((prev) => (prev ? { ...prev, pinResetRequired: false } : prev));
+  }, []);
 
   const signOut = useCallback(async () => {
     await fbSignOut(auth);
@@ -221,7 +219,7 @@ export function AuthProvider({ children }) {
       loginEmail,
       signupEmail,
       loginAnonymous,
-    ]
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

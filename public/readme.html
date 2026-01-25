@@ -1,218 +1,260 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>คู่มือการใช้งาน Prompt (Tham-Pro Workflow)</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        :root {
-            --primary-color: #1a73e8; /* Google Blue */
-            --primary-hover: #1557b0;
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-main: #202124;
-            --text-secondary: #5f6368;
-            --border-radius: 12px;
-            --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-        }
+      :root {
+        --primary-color: #1a73e8; /* Google Blue */
+        --primary-hover: #1557b0;
+        --bg-color: #f8f9fa;
+        --card-bg: #ffffff;
+        --text-main: #202124;
+        --text-secondary: #5f6368;
+        --border-radius: 12px;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+      }
 
-        body {
-            font-family: 'Noto Sans Thai', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
-            line-height: 1.6;
-        }
+      body {
+        font-family: "Noto Sans Thai", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        margin: 0;
+        padding: 40px 20px;
+        line-height: 1.6;
+      }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
 
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
+      header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
 
-        h1 {
-            color: var(--primary-color);
-            font-weight: 700;
-            margin: 0;
-            font-size: 2rem;
-        }
+      h1 {
+        color: var(--primary-color);
+        font-weight: 700;
+        margin: 0;
+        font-size: 2rem;
+      }
 
-        p.subtitle {
-            color: var(--text-secondary);
-            margin-top: 8px;
-            font-size: 1.1rem;
-        }
+      p.subtitle {
+        color: var(--text-secondary);
+        margin-top: 8px;
+        font-size: 1.1rem;
+      }
 
-        .card {
-            background: var(--card-bg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 30px;
-            margin-bottom: 24px;
-            border-left: 5px solid var(--primary-color);
-        }
+      .card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        padding: 30px;
+        margin-bottom: 24px;
+        border-left: 5px solid var(--primary-color);
+      }
 
-        h2 {
-            font-size: 1.25rem;
-            margin-top: 0;
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+      h2 {
+        font-size: 1.25rem;
+        margin-top: 0;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-        .step-number {
-            background-color: var(--primary-color);
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
+      .step-number {
+        background-color: var(--primary-color);
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        font-weight: bold;
+      }
 
-        code {
-            font-family: 'Consolas', 'Monaco', monospace;
-            background-color: #f1f3f4;
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: #d93025; /* Red accent for inline code */
-        }
+      code {
+        font-family: "Consolas", "Monaco", monospace;
+        background-color: #f1f3f4;
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: #d93025; /* Red accent for inline code */
+      }
 
-        .code-block {
-            background-color: #282c34;
-            color: #abb2bf;
-            padding: 15px;
-            border-radius: 8px;
-            overflow-x: auto;
-            font-family: 'Consolas', 'Monaco', monospace;
-            margin: 15px 0;
-            border-left: 4px solid #98c379;
-        }
+      .code-block {
+        background-color: #282c34;
+        color: #abb2bf;
+        padding: 15px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-family: "Consolas", "Monaco", monospace;
+        margin: 15px 0;
+        border-left: 4px solid #98c379;
+      }
 
-        .code-block .cmd {
-            color: #61afef;
-        }
+      .code-block .cmd {
+        color: #61afef;
+      }
 
-        .code-block .flag {
-            color: #d19a66;
-        }
+      .code-block .flag {
+        color: #d19a66;
+      }
 
-        ul {
-            padding-left: 20px;
-            color: var(--text-secondary);
-        }
+      ul {
+        padding-left: 20px;
+        color: var(--text-secondary);
+      }
 
-        li {
-            margin-bottom: 8px;
-        }
+      li {
+        margin-bottom: 8px;
+      }
 
-        .warning-box {
-            background-color: #fce8e6;
-            color: #c5221f;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-weight: 500;
-            border: 1px solid #fad2cf;
-        }
+      .warning-box {
+        background-color: #fce8e6;
+        color: #c5221f;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+        font-weight: 500;
+        border: 1px solid #fad2cf;
+      }
 
-        .highlight {
-            font-weight: 600;
-            color: var(--primary-color);
-        }
+      .highlight {
+        font-weight: 600;
+        color: var(--primary-color);
+      }
 
-        footer {
-            text-align: center;
-            margin-top: 50px;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
+      footer {
+        text-align: center;
+        margin-top: 50px;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
     </style>
-</head>
-<body>
-
-<div class="container">
-    <header>
+  </head>
+  <body>
+    <div class="container">
+      <header>
         <h1>คู่มือการใช้งาน Prompt</h1>
-        <p class="subtitle">Workflow การสร้างสคริปต์ tham-pro.ps1 ด้วย Codex/Gemini</p>
-    </header>
+        <p class="subtitle">
+          Workflow การสร้างสคริปต์ tham-pro.ps1 ด้วย Codex/Gemini
+        </p>
+      </header>
 
-    <div class="card">
+      <div class="card">
         <h2><span class="step-number">1</span>เตรียม Prompt และสั่งงาน AI</h2>
         <p>ให้พี่ทำตามขั้นตอนง่ายๆ ดังนี้ครับ:</p>
         <ul>
-            <li>เปิดไฟล์ <code>PROMPT_Codex.txt</code> (หรือข้อความ Prompt ที่ธามให้)</li>
-            <li>กด <strong>Ctrl+A</strong> (เลือกทั้งหมด) → <strong>Ctrl+C</strong> (คัดลอก)</li>
-            <li>ไปที่หน้าแชท Codex หรือ Gemini (เปิดแชทใหม่)</li>
-            <li><strong>วาง Prompt (Ctrl+V)</strong> ลงไป แต่อย่าเพิ่งกดส่งทันที</li>
+          <li>
+            เปิดไฟล์ <code>PROMPT_Codex.txt</code> (หรือข้อความ Prompt
+            ที่ธามให้)
+          </li>
+          <li>
+            กด <strong>Ctrl+A</strong> (เลือกทั้งหมด) →
+            <strong>Ctrl+C</strong> (คัดลอก)
+          </li>
+          <li>ไปที่หน้าแชท Codex หรือ Gemini (เปิดแชทใหม่)</li>
+          <li>
+            <strong>วาง Prompt (Ctrl+V)</strong> ลงไป แต่อย่าเพิ่งกดส่งทันที
+          </li>
         </ul>
-    </div>
+      </div>
 
-    <div class="card">
+      <div class="card">
         <h2><span class="step-number">2</span>แนบ Context ที่จำเป็น (สำคัญ)</h2>
-        <p>เพื่อให้ Prompt "ทำ patch server-side" ทำงานได้จริง ในแชทเดียวกัน พี่ต้องแนบข้อมูลเพิ่มอย่างใดอย่างหนึ่ง:</p>
+        <p>
+          เพื่อให้ Prompt "ทำ patch server-side" ทำงานได้จริง ในแชทเดียวกัน
+          พี่ต้องแนบข้อมูลเพิ่มอย่างใดอย่างหนึ่ง:
+        </p>
         <ul>
-            <li><strong>แนบไฟล์โค้ดจริง:</strong> เช่น <code>functions/src/services/cartService.js</code> (ทั้งไฟล์)</li>
-            <li><strong>แนบโครงสร้างโฟลเดอร์:</strong> <code>functions/src/</code> (แจ้งด้วยว่ามี jest/mocha หรือไม่)</li>
-            <li>หรือพิมพ์บอก AI ว่า <em>"ให้สแกน repo"</em> (ถ้าเครื่องมือรองรับ)</li>
+          <li>
+            <strong>แนบไฟล์โค้ดจริง:</strong> เช่น
+            <code>functions/src/services/cartService.js</code> (ทั้งไฟล์)
+          </li>
+          <li>
+            <strong>แนบโครงสร้างโฟลเดอร์:</strong>
+            <code>functions/src/</code> (แจ้งด้วยว่ามี jest/mocha หรือไม่)
+          </li>
+          <li>
+            หรือพิมพ์บอก AI ว่า <em>"ให้สแกน repo"</em> (ถ้าเครื่องมือรองรับ)
+          </li>
         </ul>
-        <p><em>*ถ้าไม่แนบไฟล์ AI อาจจะจินตนาการโค้ดขึ้นมาเองและใช้งานไม่ได้จริงครับ</em></p>
-    </div>
+        <p>
+          <em
+            >*ถ้าไม่แนบไฟล์ AI
+            อาจจะจินตนาการโค้ดขึ้นมาเองและใช้งานไม่ได้จริงครับ</em
+          >
+        </p>
+      </div>
 
-    <div class="card">
+      <div class="card">
         <h2><span class="step-number">3</span>รับ Code และบันทึกไฟล์</h2>
-        <p>เมื่อ AI ตอบกลับ มันควรจะให้ Code ที่เป็น <strong>PowerShell Script</strong> มาครับ</p>
+        <p>
+          เมื่อ AI ตอบกลับ มันควรจะให้ Code ที่เป็น
+          <strong>PowerShell Script</strong> มาครับ
+        </p>
         <ul>
-            <li>ให้พี่ copy code นั้น</li>
-            <li>สร้างไฟล์ชื่อ <code>tham-pro.ps1</code> ไว้ที่ <strong>root ของโปรเจกต์</strong></li>
-            <li>วางโค้ดและบันทึกไฟล์</li>
+          <li>ให้พี่ copy code นั้น</li>
+          <li>
+            สร้างไฟล์ชื่อ <code>tham-pro.ps1</code> ไว้ที่
+            <strong>root ของโปรเจกต์</strong>
+          </li>
+          <li>วางโค้ดและบันทึกไฟล์</li>
         </ul>
-    </div>
+      </div>
 
-    <div class="card">
+      <div class="card">
         <h2><span class="step-number">4</span>รันคำสั่ง (Execution)</h2>
-        <p>เปิด <strong>VS Code Terminal (PowerShell)</strong> ที่ root โปรเจกต์ แล้วรันตามลำดับนี้:</p>
+        <p>
+          เปิด <strong>VS Code Terminal (PowerShell)</strong> ที่ root โปรเจกต์
+          แล้วรันตามลำดับนี้:
+        </p>
 
         <p><strong>1. สร้างแผนงาน (Init)</strong></p>
         <div class="code-block">
-            .\tham-pro.ps1 <span class="flag">-Init</span>
+          .\tham-pro.ps1 <span class="flag">-Init</span>
         </div>
         <p class="small">จะสร้างไฟล์ <code>PATCHPLAN.json</code> ขึ้นมา</p>
 
         <p><strong>2. เริ่ม Patch (Apply)</strong></p>
         <div class="code-block">
-            .\tham-pro.ps1 <span class="flag">-Apply</span>
+          .\tham-pro.ps1 <span class="flag">-Apply</span>
         </div>
-        <p class="small">ระบบจะ backup และ apply patch ทีละอัน (ถ้าพังจะหยุดทันที)</p>
+        <p class="small">
+          ระบบจะ backup และ apply patch ทีละอัน (ถ้าพังจะหยุดทันที)
+        </p>
 
         <p><strong>3. ตรวจสอบความถูกต้อง (Validate)</strong></p>
         <div class="code-block">
-            .\tham-pro.ps1 <span class="flag">-Validate</span>
+          .\tham-pro.ps1 <span class="flag">-Validate</span>
         </div>
         <p class="small">รัน build หรือ lint ตามที่มีในโปรเจกต์</p>
 
         <div class="warning-box">
-            ⚠️ ถ้าขึ้น FAIL ห้ามฝืนรันต่อ! <br>
-            ให้ดูข้อความแจ้งเตือน แล้วใช้ไฟล์ Backup ที่สคริปต์สร้างไว้เพื่อ Rollback กลับมาครับ
+          ⚠️ ถ้าขึ้น FAIL ห้ามฝืนรันต่อ! <br />
+          ให้ดูข้อความแจ้งเตือน แล้วใช้ไฟล์ Backup ที่สคริปต์สร้างไว้เพื่อ
+          Rollback กลับมาครับ
         </div>
+      </div>
+
+      <footer>
+        <p>
+          หากต้องการให้ช่วยเขียน "คำสั่งประกบ" สำหรับแนบไฟล์
+          ให้ส่งโครงสร้างโฟลเดอร์มาได้เลยครับ<br />— ธาม (Time)
+        </p>
+      </footer>
     </div>
-
-    <footer>
-        <p>หากต้องการให้ช่วยเขียน "คำสั่งประกบ" สำหรับแนบไฟล์ ให้ส่งโครงสร้างโฟลเดอร์มาได้เลยครับ<br>— ธาม (Time)</p>
-    </footer>
-</div>
-
-</body>
+  </body>
 </html>

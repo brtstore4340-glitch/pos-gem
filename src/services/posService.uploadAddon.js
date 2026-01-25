@@ -8,11 +8,24 @@
 */
 
 import { db } from "../firebase";
-import { doc, getDoc, query, collection, limit, where, getDocs } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  query,
+  collection,
+  limit,
+  where,
+  getDocs,
+} from "firebase/firestore";
 
 const memCache = new Map();
-function cacheGet(k) { return memCache.get(k); }
-function cacheSet(k, v) { memCache.set(k, v); if (memCache.size > 500) memCache.delete(memCache.keys().next().value); }
+function cacheGet(k) {
+  return memCache.get(k);
+}
+function cacheSet(k, v) {
+  memCache.set(k, v);
+  if (memCache.size > 500) memCache.delete(memCache.keys().next().value);
+}
 
 async function getByItemCode(itemCode) {
   const ck = `p:${itemCode}`;
@@ -49,7 +62,7 @@ export async function scanItemFast(skuOrBarcode) {
       sku: p.itemCode,
       name: p.name || p.description || "Unknown",
       price: Number(p.dealPrice || p.price || p.regPrice || 0),
-      badgeText: p.dealPrice ? "DEAL" : ""
+      badgeText: p.dealPrice ? "DEAL" : "",
     };
   } catch {
     // ignore
@@ -65,7 +78,7 @@ export async function scanItemFast(skuOrBarcode) {
     sku: p.itemCode,
     name: p.name || p.description || "Unknown",
     price: Number(p.dealPrice || p.price || p.regPrice || 0),
-    badgeText: p.dealPrice ? "DEAL" : ""
+    badgeText: p.dealPrice ? "DEAL" : "",
   };
 }
 
@@ -77,7 +90,13 @@ export async function searchProductsLight(text) {
   const itemCode = await resolveBarcodeToItemCode(qtext);
   if (itemCode) {
     const p = await getByItemCode(itemCode);
-    return [{ sku: p.itemCode, name: p.name || p.description, price: Number(p.dealPrice || p.price || 0) }];
+    return [
+      {
+        sku: p.itemCode,
+        name: p.name || p.description,
+        price: Number(p.dealPrice || p.price || 0),
+      },
+    ];
   }
 
   // keywordsText range query
@@ -88,12 +107,16 @@ export async function searchProductsLight(text) {
     collection(db, "products"),
     where("keywordsText", ">=", start),
     where("keywordsText", "<=", end),
-    limit(20)
+    limit(20),
   );
 
   const snaps = await getDocs(qr);
-  return snaps.docs.map(d => {
+  return snaps.docs.map((d) => {
     const p = d.data();
-    return { sku: p.itemCode, name: p.name || p.description, price: Number(p.dealPrice || p.price || 0) };
+    return {
+      sku: p.itemCode,
+      name: p.name || p.description,
+      price: Number(p.dealPrice || p.price || 0),
+    };
   });
 }

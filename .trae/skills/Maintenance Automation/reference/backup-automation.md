@@ -329,7 +329,7 @@ class BackupAutomationEngine:
         try:
             # Load backup metadata
             metadata = self._load_backup_metadata(backup_id)
-            
+
             if not metadata:
                 raise Exception(f"Backup metadata not found for {backup_id}")
 
@@ -344,7 +344,7 @@ class BackupAutomationEngine:
                             result = self._restore_configuration(backup_id, metadata['components'][component])
                         elif component == 'dependencies':
                             result = self._restore_dependencies(backup_id, metadata['components'][component])
-                        
+
                         restore_result['components_restored'][component] = result
 
                     except Exception as e:
@@ -370,25 +370,25 @@ class BackupAutomationEngine:
 
         try:
             cutoff_date = datetime.now() - timedelta(days=retention_days)
-            
+
             # List all backups
             all_backups = self._list_all_backups()
-            
+
             for backup in all_backups:
                 backup_date = datetime.fromisoformat(backup['timestamp'])
-                
+
                 if backup_date < cutoff_date:
                     try:
                         # Delete backup
                         deleted_size = self._delete_backup(backup['backup_id'])
-                        
+
                         cleanup_result['cleaned_up_backups'].append({
                             'backup_id': backup['backup_id'],
                             'timestamp': backup['timestamp'],
                             'size_bytes': deleted_size
                         })
                         cleanup_result['space_freed_bytes'] += deleted_size
-                        
+
                     except Exception as e:
                         cleanup_result['errors'].append(f"Failed to delete {backup['backup_id']}: {str(e)}")
 
@@ -457,7 +457,7 @@ class S3BackupStorage:
             # Get object size before deletion
             response = self.s3_client.head_object(Bucket=self.bucket_name, Key=storage_key)
             size = response['ContentLength']
-            
+
             # Delete object
             self.s3_client.delete_object(Bucket=self.bucket_name, Key=storage_key)
             return size
@@ -469,21 +469,21 @@ class S3BackupStorage:
         backups = []
         try:
             response = self.s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix='backup_')
-            
+
             for obj in response.get('Contents', []):
                 if obj['Key'].endswith('/metadata.json'):
                     # Download and parse metadata
                     metadata_content = self.s3_client.get_object(
-                        Bucket=self.bucket_name, 
+                        Bucket=self.bucket_name,
                         Key=obj['Key']
                     )['Body'].read().decode('utf-8')
-                    
+
                     metadata = json.loads(metadata_content)
                     backups.append(metadata)
-                    
+
         except Exception as e:
             print(f"Error listing S3 backups: {e}")
-            
+
         return backups
 ```
 
@@ -495,33 +495,33 @@ class S3BackupStorage:
 # backup_config.yaml
 backup_automation:
   enabled: true
-  storage_type: "s3"  # local, s3, gcs, azure
-  
+  storage_type: "s3" # local, s3, gcs, azure
+
   schedule:
     enabled: true
-    frequency: "daily"  # hourly, daily, weekly, monthly
-    time: "02:00"       # 24-hour format
-    day: 1              # For weekly (0=Sunday) or monthly (1-31)
-  
+    frequency: "daily" # hourly, daily, weekly, monthly
+    time: "02:00" # 24-hour format
+    day: 1 # For weekly (0=Sunday) or monthly (1-31)
+
   retention:
-    daily_backups: 7    # Keep 7 daily backups
-    weekly_backups: 4   # Keep 4 weekly backups
+    daily_backups: 7 # Keep 7 daily backups
+    weekly_backups: 4 # Keep 4 weekly backups
     monthly_backups: 12 # Keep 12 monthly backups
-  
+
   components:
     source_code: true
     database: true
     configuration: true
     dependencies: true
     user_data: false
-  
+
   compression:
     enabled: true
-    level: 6  # 1-9, higher is more compression but slower
-  
+    level: 6 # 1-9, higher is more compression but slower
+
   encryption:
     enabled: true
-    key_source: "env"  # env, file, kms
+    key_source: "env" # env, file, kms
     key_name: "BACKUP_ENCRYPTION_KEY"
 
 # Local storage configuration
@@ -533,7 +533,7 @@ local_config:
 s3_config:
   bucket_name: "company-backups"
   region: "us-west-2"
-  storage_class: "STANDARD_IA"  # STANDARD, STANDARD_IA, GLACIER
+  storage_class: "STANDARD_IA" # STANDARD, STANDARD_IA, GLACIER
   server_side_encryption: true
   access_key_id: "${AWS_ACCESS_KEY_ID}"
   secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
@@ -595,21 +595,21 @@ fi
 send_notification() {
     local message="$1"
     local status="$2"  # success, warning, error
-    
+
     if [ -n "$BACKUP_SLACK_WEBHOOK" ]; then
         local color="good"
         local icon="✅"
-        
+
         case $status in
             warning) color="warning"; icon="⚠️" ;;
             error) color="danger"; icon="❌" ;;
         esac
-        
+
         curl -X POST -H 'Content-type: application/json' \
             --data "{\"text\":\"$icon Backup: $message\", \"color\":\"$color\"}" \
             "$BACKUP_SLACK_WEBHOOK" > /dev/null 2>&1 || true
     fi
-    
+
     echo "[$(date)] $message"
 }
 
@@ -680,17 +680,20 @@ echo "✅ Disaster recovery completed"
 ## Benefits & ROI
 
 ### Time Savings
+
 - **Backup management**: 2 hours/month → 15 minutes/month (87.5% reduction)
 - **Disaster recovery**: 4 hours → 30 minutes (87.5% improvement)
 - **Backup verification**: Manual quarterly → Automated daily
 
-### Risk Reduction  
+### Risk Reduction
+
 - **Data loss prevention**: 99.9% protection vs. 95% manual backups
 - **Recovery time**: 4 hours → 30 minutes average
 - **Backup consistency**: 100% vs. 80% manual backup success rate
 - **Testing frequency**: Daily automated vs. quarterly manual
 
 ### Cost Benefits
+
 - **Storage optimization**: 40% reduction through compression and lifecycle policies
 - **Operations time**: $1,200/year saved on backup management
 - **Risk mitigation**: $15,000/year average data loss prevention value

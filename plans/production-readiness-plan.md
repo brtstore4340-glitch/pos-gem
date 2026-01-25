@@ -10,6 +10,7 @@
 ## Executive Summary
 
 This plan outlines the steps required to make the Boots POS system production-ready. The system currently has a functional foundation with:
+
 - ✅ Cloud Functions backend (scanItem, calculateOrder implemented)
 - ✅ React frontend with POS UI
 - ✅ Firebase integration configured
@@ -18,6 +19,7 @@ This plan outlines the steps required to make the Boots POS system production-re
 - ✅ Theme support (light/dark mode)
 
 **Critical Gaps:**
+
 - ❌ No authentication/authorization
 - ❌ No Firestore security rules
 - ❌ No error handling strategy
@@ -34,6 +36,7 @@ This plan outlines the steps required to make the Boots POS system production-re
 **Status:** ❌ Missing
 
 **Files to Create:**
+
 ```
 .env.example
 .env.local (template for developers)
@@ -41,6 +44,7 @@ This plan outlines the steps required to make the Boots POS system production-re
 ```
 
 **Required Variables:**
+
 ```bash
 # Firebase Configuration
 VITE_FIREBASE_API_KEY=your_api_key
@@ -60,6 +64,7 @@ FIREBASE_FUNCTIONS_REGION=asia-southeast1
 ```
 
 **Action Items:**
+
 1. Create [`config/firebase.env.example`](config/firebase.env.example)
 2. Add `.env*` to [`.gitignore`](.gitignore) (already done in pos-gem)
 3. Document environment setup in README
@@ -77,34 +82,34 @@ FIREBASE_FUNCTIONS_REGION=asia-southeast1
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Helper Functions
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function getUserRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
-    
+
     function isAdmin() {
       return isAuthenticated() && getUserRole() == 'admin';
     }
-    
+
     function isManager() {
       return isAuthenticated() && (getUserRole() == 'manager' || isAdmin());
     }
-    
+
     function isCashier() {
       return isAuthenticated() && (getUserRole() == 'cashier' || isManager());
     }
-    
+
     // Users Collection - Profile data
     match /users/{userId} {
       allow read: if isAuthenticated() && request.auth.uid == userId;
       allow write: if isAdmin();
     }
-    
+
     // Products - Read only for authenticated, write for admins
     match /products/{productId} {
       allow read: if isAuthenticated();
@@ -112,41 +117,41 @@ service cloud.firestore {
       allow create: if isAdmin();
       allow delete: if false; // Never allow deletion, use status flag
     }
-    
+
     // Invoices - Cashiers can create, admins can modify
     match /invoices/{invoiceId} {
       allow read: if isAuthenticated();
       allow create: if isCashier();
-      allow update: if isManager() || 
+      allow update: if isManager() ||
                        (isCashier() && resource.data.status == 'draft');
       allow delete: if false; // Never delete, use void status
     }
-    
+
     // Upload Metadata - Admin only
     match /uploadMetadata/{docId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
-    
+
     // App Settings - Admin only
     match /appSettings/{setting} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
-    
+
     // Stock Ledger - Read for authenticated, write for system
     match /stockLedger/{ledgerId} {
       allow read: if isAuthenticated();
       allow create: if isCashier(); // Via functions only
       allow update, delete: if false;
     }
-    
+
     // Daily Reports - Read by authenticated, create by system
     match /dailyReports/{reportId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
-    
+
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;
@@ -156,6 +161,7 @@ service cloud.firestore {
 ```
 
 **Action Items:**
+
 1. Create [`firestore.rules`](firestore.rules) with above content
 2. Test rules locally with Firebase Emulator
 3. Deploy rules: `firebase deploy --only firestore:rules`
@@ -170,16 +176,16 @@ service cloud.firestore {
 **Create:** [`src/context/AuthContext.jsx`](src/context/AuthContext.jsx)
 
 ```jsx
-import { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../lib/firebase';
-import { 
-  onAuthStateChanged, 
+import { createContext, useContext, useState, useEffect } from "react";
+import { auth } from "../lib/firebase";
+import {
+  onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
-  sendPasswordResetEmail
-} from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+  sendPasswordResetEmail,
+} from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
 const AuthContext = createContext();
 
@@ -194,20 +200,20 @@ export function AuthProvider({ children }) {
       try {
         if (firebaseUser) {
           // Fetch user profile from Firestore
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          
+          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+
           if (!userDoc.exists()) {
-            throw new Error('User profile not found');
+            throw new Error("User profile not found");
           }
-          
+
           const profile = userDoc.data();
-          
+
           setUser(firebaseUser);
           setUserData({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
-            role: profile.role || 'cashier',
-            storeId: profile.storeId || '4340',
+            role: profile.role || "cashier",
+            storeId: profile.storeId || "4340",
             displayName: profile.displayName || firebaseUser.email,
             permissions: profile.permissions || {},
           });
@@ -216,7 +222,7 @@ export function AuthProvider({ children }) {
           setUserData(null);
         }
       } catch (err) {
-        console.error('Auth state error:', err);
+        console.error("Auth state error:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -257,7 +263,7 @@ export function AuthProvider({ children }) {
 
   const hasPermission = (permission) => {
     if (!userData) return false;
-    if (userData.role === 'admin') return true;
+    if (userData.role === "admin") return true;
     return userData.permissions[permission] === true;
   };
 
@@ -270,22 +276,18 @@ export function AuthProvider({ children }) {
     signOut,
     resetPassword,
     hasPermission,
-    isAdmin: userData?.role === 'admin',
-    isManager: userData?.role === 'manager' || userData?.role === 'admin',
+    isAdmin: userData?.role === "admin",
+    isManager: userData?.role === "manager" || userData?.role === "admin",
     isCashier: !!userData,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
 };
@@ -298,35 +300,35 @@ export const useAuth = () => {
 **Create:** [`src/pages/LoginPage.jsx`](src/pages/LoginPage.jsx)
 
 ```jsx
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/pos';
+  const from = location.state?.from?.pathname || "/pos";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     const result = await signIn(email, password);
-    
+
     if (result.success) {
       navigate(from, { replace: true });
     } else {
-      setError(result.error || 'เข้าสู่ระบบไม่สำเร็จ / Login failed');
+      setError(result.error || "เข้าสู่ระบบไม่สำเร็จ / Login failed");
     }
-    
+
     setIsLoading(false);
   };
 
@@ -334,9 +336,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-boots-base to-boots-hover px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-boots-base mb-2">
-            Boots POS
-          </h1>
+          <h1 className="text-3xl font-bold text-boots-base mb-2">Boots POS</h1>
           <p className="text-boots-subtext">
             ระบบจุดขาย / Point of Sale System
           </p>
@@ -384,14 +384,12 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full bg-boots-base text-white py-3 rounded-lg font-medium hover:bg-boots-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ / Login'}
+            {isLoading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ / Login"}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-boots-subtext">
-            Store ID: 4340
-          </p>
+          <p className="text-sm text-boots-subtext">Store ID: 4340</p>
         </div>
       </div>
     </div>
@@ -406,10 +404,14 @@ export default function LoginPage() {
 **Create:** [`src/components/ProtectedRoute.jsx`](src/components/ProtectedRoute.jsx)
 
 ```jsx
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-export default function ProtectedRoute({ children, requiredRole, requiredPermission }) {
+export default function ProtectedRoute({
+  children,
+  requiredRole,
+  requiredPermission,
+}) {
   const { user, userData, loading } = useAuth();
   const location = useLocation();
 
@@ -452,7 +454,7 @@ export default function ProtectedRoute({ children, requiredRole, requiredPermiss
 
   // Check specific permission
   if (requiredPermission && !userData?.permissions?.[requiredPermission]) {
-    if (userData?.role !== 'admin') {
+    if (userData?.role !== "admin") {
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
@@ -481,9 +483,9 @@ export default function ProtectedRoute({ children, requiredRole, requiredPermiss
 Add AuthProvider wrapper and protected routes:
 
 ```jsx
-import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import LoginPage from './pages/LoginPage';
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
   return (
@@ -493,31 +495,40 @@ function App() {
           <ErrorBoundary>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
-              
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <HomePage />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/pos" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <PosUI />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/admin" element={
-                <ProtectedRoute requiredRole="admin">
-                  <Layout>
-                    <AdminSettings />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-              
+
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <HomePage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/pos"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <PosUI />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <Layout>
+                      <AdminSettings />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+
               <Route path="*" element={<Navigate to="/pos" replace />} />
             </Routes>
           </ErrorBoundary>
@@ -569,25 +580,30 @@ function App() {
 Add role checking to all functions:
 
 ```javascript
-const { getUserRole, hasPermission } = require('../middleware/auth');
+const { getUserRole, hasPermission } = require("../middleware/auth");
 
-exports.voidBill = functions.region('asia-southeast1').https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'User must be logged in');
-  }
+exports.voidBill = functions
+  .region("asia-southeast1")
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "User must be logged in",
+      );
+    }
 
-  // Check role
-  const userRole = await getUserRole(context.auth.uid);
-  if (userRole !== 'admin' && userRole !== 'manager') {
-    throw new functions.https.HttpsError(
-      'permission-denied', 
-      'Only managers and admins can void transactions'
-    );
-  }
+    // Check role
+    const userRole = await getUserRole(context.auth.uid);
+    if (userRole !== "admin" && userRole !== "manager") {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Only managers and admins can void transactions",
+      );
+    }
 
-  const { orderId, reason } = data;
-  // ... void logic
-});
+    const { orderId, reason } = data;
+    // ... void logic
+  });
 ```
 
 ---
@@ -599,32 +615,35 @@ exports.voidBill = functions.region('asia-southeast1').https.onCall(async (data,
 **Create:** [`functions/src/utils/validation.js`](functions/src/utils/validation.js)
 
 ```javascript
-const functions = require('firebase-functions');
+const functions = require("firebase-functions");
 
 class ValidationError extends Error {
   constructor(message, field) {
     super(message);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
     this.field = field;
   }
 }
 
 const validators = {
   isRequired: (value, fieldName) => {
-    if (value === null || value === undefined || value === '') {
+    if (value === null || value === undefined || value === "") {
       throw new ValidationError(`${fieldName} is required`, fieldName);
     }
   },
 
   isString: (value, fieldName) => {
-    if (typeof value !== 'string') {
+    if (typeof value !== "string") {
       throw new ValidationError(`${fieldName} must be a string`, fieldName);
     }
   },
 
   isNumber: (value, fieldName) => {
-    if (typeof value !== 'number' || isNaN(value)) {
-      throw new ValidationError(`${fieldName} must be a valid number`, fieldName);
+    if (typeof value !== "number" || isNaN(value)) {
+      throw new ValidationError(
+        `${fieldName} must be a valid number`,
+        fieldName,
+      );
     }
   },
 
@@ -641,30 +660,42 @@ const validators = {
   },
 
   isValidSKU: (sku) => {
-    validators.isRequired(sku, 'sku');
-    validators.isString(sku, 'sku');
+    validators.isRequired(sku, "sku");
+    validators.isString(sku, "sku");
     if (sku.length < 3 || sku.length > 50) {
-      throw new ValidationError('SKU must be between 3 and 50 characters', 'sku');
+      throw new ValidationError(
+        "SKU must be between 3 and 50 characters",
+        "sku",
+      );
     }
   },
 
   isValidOrderItems: (items) => {
-    validators.isRequired(items, 'items');
-    validators.isArray(items, 'items');
-    
+    validators.isRequired(items, "items");
+    validators.isArray(items, "items");
+
     if (items.length === 0) {
-      throw new ValidationError('Order must contain at least one item', 'items');
+      throw new ValidationError(
+        "Order must contain at least one item",
+        "items",
+      );
     }
 
     items.forEach((item, index) => {
       if (!item.sku) {
-        throw new ValidationError(`Item at index ${index} missing SKU`, `items[${index}].sku`);
+        throw new ValidationError(
+          `Item at index ${index} missing SKU`,
+          `items[${index}].sku`,
+        );
       }
-      if (typeof item.qty !== 'number' || item.qty <= 0) {
-        throw new ValidationError(`Invalid quantity for item ${item.sku}`, `items[${index}].qty`);
+      if (typeof item.qty !== "number" || item.qty <= 0) {
+        throw new ValidationError(
+          `Invalid quantity for item ${item.sku}`,
+          `items[${index}].qty`,
+        );
       }
     });
-  }
+  },
 };
 
 module.exports = { validators, ValidationError };
@@ -679,15 +710,15 @@ module.exports = { validators, ValidationError };
 Already exists but needs enhancement:
 
 ```jsx
-import React from 'react';
+import React from "react";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 
-      hasError: false, 
+    this.state = {
+      hasError: false,
       error: null,
-      errorInfo: null 
+      errorInfo: null,
     };
   }
 
@@ -698,26 +729,26 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     this.setState({
       error,
-      errorInfo
+      errorInfo,
     });
 
     // Log to error tracking service
-    console.error('Error caught by boundary:', error, errorInfo);
-    
+    console.error("Error caught by boundary:", error, errorInfo);
+
     // TODO: Send to Sentry or Firebase Crashlytics
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'exception', {
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", "exception", {
         description: error.toString(),
-        fatal: false
+        fatal: false,
       });
     }
   }
 
   handleReset = () => {
-    this.setState({ 
-      hasError: false, 
+    this.setState({
+      hasError: false,
       error: null,
-      errorInfo: null 
+      errorInfo: null,
     });
   };
 
@@ -736,7 +767,7 @@ class ErrorBoundary extends React.Component {
               </p>
             </div>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {process.env.NODE_ENV === "development" && this.state.error && (
               <details className="mb-4 p-4 bg-gray-100 rounded text-sm">
                 <summary className="cursor-pointer font-medium">
                   Error Details
@@ -756,7 +787,7 @@ class ErrorBoundary extends React.Component {
                 ลองอีกครั้ง / Try Again
               </button>
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => (window.location.href = "/")}
                 className="flex-1 bg-gray-500 text-white py-2 rounded hover:bg-gray-600 transition-colors"
               >
                 กลับหน้าหลัก / Go Home
@@ -781,10 +812,10 @@ export default ErrorBoundary;
 **Create:** [`functions/src/utils/logger.js`](functions/src/utils/logger.js)
 
 ```javascript
-const functions = require('firebase-functions');
+const functions = require("firebase-functions");
 
 class Logger {
-  constructor(context = 'general') {
+  constructor(context = "general") {
     this.context = context;
   }
 
@@ -794,29 +825,35 @@ class Logger {
       level,
       context: this.context,
       message,
-      ...data
+      ...data,
     };
   }
 
   info(message, data) {
-    console.log(JSON.stringify(this._formatMessage('INFO', message, data)));
+    console.log(JSON.stringify(this._formatMessage("INFO", message, data)));
   }
 
   warn(message, data) {
-    console.warn(JSON.stringify(this._formatMessage('WARN', message, data)));
+    console.warn(JSON.stringify(this._formatMessage("WARN", message, data)));
   }
 
   error(message, error, data) {
-    console.error(JSON.stringify(this._formatMessage('ERROR', message, {
-      ...data,
-      error: error.message,
-      stack: error.stack
-    })));
+    console.error(
+      JSON.stringify(
+        this._formatMessage("ERROR", message, {
+          ...data,
+          error: error.message,
+          stack: error.stack,
+        }),
+      ),
+    );
   }
 
   debug(message, data) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug(JSON.stringify(this._formatMessage('DEBUG', message, data)));
+    if (process.env.NODE_ENV !== "production") {
+      console.debug(
+        JSON.stringify(this._formatMessage("DEBUG", message, data)),
+      );
     }
   }
 }
@@ -831,11 +868,14 @@ module.exports = Logger;
 **Create:** [`functions/src/middleware/rateLimit.js`](functions/src/middleware/rateLimit.js)
 
 ```javascript
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
 
 const rateLimitStore = new Map();
 
-async function rateLimit(context, limits = { maxRequests: 100, windowMs: 60000 }) {
+async function rateLimit(
+  context,
+  limits = { maxRequests: 100, windowMs: 60000 },
+) {
   if (!context.auth) return true; // Skip for unauthenticated
 
   const userId = context.auth.uid;
@@ -844,8 +884,9 @@ async function rateLimit(context, limits = { maxRequests: 100, windowMs: 60000 }
 
   // Clean old entries
   if (rateLimitStore.has(userId)) {
-    const userRequests = rateLimitStore.get(userId)
-      .filter(timestamp => timestamp > windowStart);
+    const userRequests = rateLimitStore
+      .get(userId)
+      .filter((timestamp) => timestamp > windowStart);
     rateLimitStore.set(userId, userRequests);
   } else {
     rateLimitStore.set(userId, []);
@@ -855,8 +896,8 @@ async function rateLimit(context, limits = { maxRequests: 100, windowMs: 60000 }
 
   if (requests.length >= limits.maxRequests) {
     throw new functions.https.HttpsError(
-      'resource-exhausted',
-      'Too many requests. Please try again later.'
+      "resource-exhausted",
+      "Too many requests. Please try again later.",
     );
   }
 
@@ -874,11 +915,12 @@ module.exports = { rateLimit };
 ### 3.1 Testing Setup
 
 **Install Dependencies:**
+
 ```bash
 # Frontend testing
 npm install --save-dev @testing-library/react @testing-library/jest-dom @testing-library/user-event vitest jsdom
 
-# Backend testing  
+# Backend testing
 cd functions
 npm install --save-dev jest firebase-functions-test
 ```
@@ -886,24 +928,21 @@ npm install --save-dev jest firebase-functions-test
 **Configure Vitest:** Create [`vitest.config.js`](vitest.config.js)
 
 ```javascript
-import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/test/setup.js',
+    environment: "jsdom",
+    setupFiles: "./src/test/setup.js",
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'src/test/',
-      ]
-    }
-  }
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      exclude: ["node_modules/", "src/test/"],
+    },
+  },
 });
 ```
 
@@ -914,106 +953,118 @@ export default defineConfig({
 **Create:** [`functions/src/services/cartService.test.js`](functions/src/services/cartService.test.js)
 
 ```javascript
-const { calculateCartSummary } = require('./cartService');
+const { calculateCartSummary } = require("./cartService");
 
-describe('calculateCartSummary', () => {
-  describe('Promotion Method 8 (Buy N Get 1 Free)', () => {
-    it('should calculate buy 1 get 1 free correctly', () => {
-      const items = [{
-        sku: 'TEST001',
-        qty: 2,
-        unitPrice: 100,
-        method: '8',
-        dealQty: 2
-      }];
+describe("calculateCartSummary", () => {
+  describe("Promotion Method 8 (Buy N Get 1 Free)", () => {
+    it("should calculate buy 1 get 1 free correctly", () => {
+      const items = [
+        {
+          sku: "TEST001",
+          qty: 2,
+          unitPrice: 100,
+          method: "8",
+          dealQty: 2,
+        },
+      ];
 
       const result = calculateCartSummary(items);
-      
+
       expect(result.items[0].calculatedTotal).toBe(100); // Pay for 1, get 1 free
       expect(result.items[0].promoDiscount).toBe(-100);
-      expect(result.items[0].badgeText).toBe('ซื้อ 1 แถม 1');
+      expect(result.items[0].badgeText).toBe("ซื้อ 1 แถม 1");
     });
 
-    it('should handle buy 3 get 1 free with 6 items', () => {
-      const items = [{
-        sku: 'TEST002',
-        qty: 6,
-        unitPrice: 50,
-        method: '8',
-        dealQty: 3
-      }];
+    it("should handle buy 3 get 1 free with 6 items", () => {
+      const items = [
+        {
+          sku: "TEST002",
+          qty: 6,
+          unitPrice: 50,
+          method: "8",
+          dealQty: 3,
+        },
+      ];
 
       const result = calculateCartSummary(items);
-      
+
       // 6 items = 2 groups of 3, pay for 4 items
       expect(result.items[0].calculatedTotal).toBe(200); // 4 * 50
       expect(result.summary.totalItems).toBe(6);
     });
   });
 
-  describe('Promotion Method 9 (Bundle Price)', () => {
-    it('should calculate bundle pricing correctly', () => {
-      const items = [{
-        sku: 'TEST003',
-        qty: 4,
-        unitPrice: 30,
-        method: '9',
-        dealQty: 2,
-        dealPrice: 50
-      }];
+  describe("Promotion Method 9 (Bundle Price)", () => {
+    it("should calculate bundle pricing correctly", () => {
+      const items = [
+        {
+          sku: "TEST003",
+          qty: 4,
+          unitPrice: 30,
+          method: "9",
+          dealQty: 2,
+          dealPrice: 50,
+        },
+      ];
 
       const result = calculateCartSummary(items);
-      
+
       // 4 items = 2 bundles at 50 each = 100
       expect(result.items[0].calculatedTotal).toBe(100);
       expect(result.items[0].promoDiscount).toBe(-20); // Save 20 (120-100)
     });
 
-    it('should handle remainder items at regular price', () => {
-      const items = [{
-        sku: 'TEST004',
-        qty: 5,
-        unitPrice: 30,
-        method: '9',
-        dealQty: 2,
-        dealPrice: 50
-      }];
+    it("should handle remainder items at regular price", () => {
+      const items = [
+        {
+          sku: "TEST004",
+          qty: 5,
+          unitPrice: 30,
+          method: "9",
+          dealQty: 2,
+          dealPrice: 50,
+        },
+      ];
 
       const result = calculateCartSummary(items);
-      
+
       // 2 bundles (4 items) + 1 regular = (2*50) + 30 = 130
       expect(result.items[0].calculatedTotal).toBe(130);
     });
   });
 
-  describe('VAT Calculation', () => {
-    it('should calculate 7% VAT correctly', () => {
-      const items = [{
-        sku: 'TEST005',
-        qty: 1,
-        unitPrice: 107,
-        method: '0'
-      }];
+  describe("VAT Calculation", () => {
+    it("should calculate 7% VAT correctly", () => {
+      const items = [
+        {
+          sku: "TEST005",
+          qty: 1,
+          unitPrice: 107,
+          method: "0",
+        },
+      ];
 
       const result = calculateCartSummary(items);
-      
+
       expect(result.summary.grandTotal).toBe(107);
       expect(result.summary.vatTotal).toBeCloseTo(7, 2);
       expect(result.summary.netTotal).toBeCloseTo(100, 2);
     });
   });
 
-  describe('Bill Discount', () => {
-    it('should apply bill-wide discount correctly', () => {
-      const items = [{
-        sku: 'TEST006',
-        qty: 1,
-        unitPrice: 100,
-        method: '0'
-      }];
+  describe("Bill Discount", () => {
+    it("should apply bill-wide discount correctly", () => {
+      const items = [
+        {
+          sku: "TEST006",
+          qty: 1,
+          unitPrice: 100,
+          method: "0",
+        },
+      ];
 
       const result = calculateCartSummary(items, 10); // 10% discount
-      
+
       expect(result.summary.billDiscountAmount).toBe(-10);
       expect(result.summary.grandTotal).toBe(90);
     });
@@ -1028,14 +1079,14 @@ describe('calculateCartSummary', () => {
 **Create:** [`functions/test/integration/posController.test.js`](functions/test/integration/posController.test.js)
 
 ```javascript
-const test = require('firebase-functions-test')();
-const admin = require('firebase-admin');
+const test = require("firebase-functions-test")();
+const admin = require("firebase-admin");
 
-describe('POS Controller Integration', () => {
+describe("POS Controller Integration", () => {
   let scanItem, calculateOrder;
 
   beforeAll(() => {
-    const controller = require('../../src/controllers/posController');
+    const controller = require("../../src/controllers/posController");
     scanItem = test.wrap(controller.scanItem);
     calculateOrder = test.wrap(controller.calculateOrder);
   });
@@ -1044,22 +1095,22 @@ describe('POS Controller Integration', () => {
     test.cleanup();
   });
 
-  describe('scanItem', () => {
-    it('should reject unauthenticated requests', async () => {
-      await expect(
-        scanItem({ sku: 'TEST001' })
-      ).rejects.toThrow('unauthenticated');
+  describe("scanItem", () => {
+    it("should reject unauthenticated requests", async () => {
+      await expect(scanItem({ sku: "TEST001" })).rejects.toThrow(
+        "unauthenticated",
+      );
     });
 
-    it('should return product data for valid SKU', async () => {
+    it("should return product data for valid SKU", async () => {
       const result = await scanItem(
-        { sku: 'TEST001' },
-        { auth: { uid: 'test-user' } }
+        { sku: "TEST001" },
+        { auth: { uid: "test-user" } },
       );
 
-      expect(result).toHaveProperty('sku');
-      expect(result).toHaveProperty('name');
-      expect(result).toHaveProperty('price');
+      expect(result).toHaveProperty("sku");
+      expect(result).toHaveProperty("name");
+      expect(result).toHaveProperty("price");
     });
   });
 });
@@ -1073,29 +1124,29 @@ describe('POS Controller Integration', () => {
 
 ```javascript
 // Using Playwright or Cypress
-describe('POS Complete Workflow', () => {
-  it('should complete a full sale transaction', () => {
+describe("POS Complete Workflow", () => {
+  it("should complete a full sale transaction", () => {
     // 1. Login
-    cy.visit('/login');
-    cy.get('input[type="email"]').type('cashier@boots.com');
-    cy.get('input[type="password"]').type('password123');
+    cy.visit("/login");
+    cy.get('input[type="email"]').type("cashier@boots.com");
+    cy.get('input[type="password"]').type("password123");
     cy.get('button[type="submit"]').click();
 
     // 2. Navigate to POS
-    cy.url().should('include', '/pos');
-    
+    cy.url().should("include", "/pos");
+
     // 3. Scan items
-    cy.get('#scanner-input').type('7531745{enter}');
-    cy.get('.cart-items').should('contain', '7531745');
-    
+    cy.get("#scanner-input").type("7531745{enter}");
+    cy.get(".cart-items").should("contain", "7531745");
+
     // 4. Checkout
-    cy.get('#checkout-button').click();
-    cy.get('#payment-amount').type('200');
-    cy.get('#confirm-payment').click();
-    
+    cy.get("#checkout-button").click();
+    cy.get("#payment-amount").type("200");
+    cy.get("#confirm-payment").click();
+
     // 5. Verify receipt
-    cy.get('.receipt-modal').should('be.visible');
-    cy.get('.receipt-total').should('contain', '฿');
+    cy.get(".receipt-modal").should("be.visible");
+    cy.get(".receipt-total").should("contain", "฿");
   });
 });
 ```
@@ -1119,26 +1170,26 @@ export const posService = {
   scanItem: async (keyword) => {
     const cacheKey = `product:${keyword}`;
     const cached = productCache.get(cacheKey);
-    
+
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       return cached.data;
     }
 
-    const scanItemFn = httpsCallable(functions, 'scanItem');
+    const scanItemFn = httpsCallable(functions, "scanItem");
     const result = await scanItemFn({ sku: keyword });
-    
+
     productCache.set(cacheKey, {
       data: result.data,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
-    
+
     return result.data;
   },
-  
+
   // Clear cache on demand
   clearCache: () => {
     productCache.clear();
-  }
+  },
 };
 ```
 
@@ -1149,19 +1200,17 @@ export const posService = {
 **Modify:** [`src/App.jsx`](src/App.jsx)
 
 ```jsx
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense } from "react";
 
 // Lazy load heavy components
-const PosUI = lazy(() => import('./components/PosUI'));
-const AdminSettings = lazy(() => import('./components/AdminSettings'));
-const DailyReportModal = lazy(() => import('./components/DailyReportModal'));
+const PosUI = lazy(() => import("./components/PosUI"));
+const AdminSettings = lazy(() => import("./components/AdminSettings"));
+const DailyReportModal = lazy(() => import("./components/DailyReportModal"));
 
 function App() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
-      <Routes>
-        {/* ... routes */}
-      </Routes>
+      <Routes>{/* ... routes */}</Routes>
     </Suspense>
   );
 }
@@ -1174,25 +1223,20 @@ function App() {
 **Create:** [`public/sw.js`](public/sw.js)
 
 ```javascript
-const CACHE_NAME = 'boots-pos-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/src/main.jsx',
-  '/src/index.css',
-];
+const CACHE_NAME = "boots-pos-v1";
+const urlsToCache = ["/", "/index.html", "/src/main.jsx", "/src/index.css"];
 
-self.addEventListener('install', event => {
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache)),
   );
 });
 
-self.addEventListener('fetch', event => {
+self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+    caches
+      .match(event.request)
+      .then((response) => response || fetch(event.request)),
   );
 });
 ```
@@ -1206,7 +1250,7 @@ self.addEventListener('fetch', event => {
 **Add to:** [`src/lib/firebase.js`](src/lib/firebase.js)
 
 ```javascript
-import { getPerformance } from 'firebase/performance';
+import { getPerformance } from "firebase/performance";
 
 const perf = getPerformance(app);
 
@@ -1219,6 +1263,7 @@ export const trace = (name) => perf.trace(name);
 ### 5.2 Error Tracking with Sentry (Optional)
 
 **Install:**
+
 ```bash
 npm install @sentry/react @sentry/tracing
 ```
@@ -1244,9 +1289,9 @@ Sentry.init({
 ```javascript
 exports.health = functions.https.onRequest((req, res) => {
   res.status(200).json({
-    status: 'healthy',
+    status: "healthy",
     timestamp: new Date().toISOString(),
-    version: require('../../package.json').version
+    version: require("../../package.json").version,
   });
 });
 ```
@@ -1260,6 +1305,7 @@ exports.health = functions.https.onRequest((req, res) => {
 **Create:** [`docs/api/README.md`](docs/api/README.md)
 
 Document all Cloud Functions with:
+
 - Endpoint URL
 - Authentication requirements
 - Request/Response schemas
@@ -1307,25 +1353,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
-          
+          node-version: "20"
+
       - name: Install dependencies
         run: |
           npm ci
           cd functions && npm ci
-          
+
       - name: Run tests
         run: |
           npm test
           cd functions && npm test
-          
+
       - name: Build
         run: npm run build
-        
+
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
         with:
@@ -1354,11 +1400,13 @@ jobs:
 ### 8.2 Load Testing
 
 Use tools like:
+
 - Artillery
 - k6
 - JMeter
 
 Test scenarios:
+
 - 100 concurrent users scanning items
 - Peak hour transaction loads
 - Database query performance

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import PosUI from './components/DemoUI';
-import AdminSettings from './components/AdminSettings';
-import ProductSearchPage from './pages/ProductSearchPage';
+import React, { useState } from "react";
+import PosUI from "./components/DemoUI";
+import AdminSettings from "./components/AdminSettings";
+import ProductSearchPage from "./pages/ProductSearchPage";
 import {
   LayoutDashboard,
   Monitor,
@@ -9,11 +9,11 @@ import {
   Search as SearchIcon,
   Settings,
   UploadCloud,
-  ShieldCheck
-} from 'lucide-react';
+  ShieldCheck,
+} from "lucide-react";
 
 function App() {
-  const [view, setView] = useState('pos'); // 'pos' | 'admin' | 'search'
+  const [view, setView] = useState("pos"); // 'pos' | 'admin' | 'search'
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -34,21 +34,56 @@ function App() {
 
             <div className="flex items-center gap-1">
               {[
-                { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, view: null },
-                { id: 'pos', label: 'POS', icon: <Monitor size={20} />, view: 'pos' },
-                { id: 'report', label: 'Report', icon: <FileText size={20} />, view: null },
-                { id: 'search', label: 'Search', icon: <SearchIcon size={20} />, view: 'search' },
-                { id: 'upload', label: 'Upload', icon: <UploadCloud size={20} />, view: null },
-                { id: 'management', label: 'Management', icon: <ShieldCheck size={20} />, view: 'admin' },
-                { id: 'settings', label: 'Setting', icon: <Settings size={20} />, view: 'admin' }
+                {
+                  id: "dashboard",
+                  label: "Dashboard",
+                  icon: <LayoutDashboard size={20} />,
+                  view: null,
+                },
+                {
+                  id: "pos",
+                  label: "POS",
+                  icon: <Monitor size={20} />,
+                  view: "pos",
+                },
+                {
+                  id: "report",
+                  label: "Report",
+                  icon: <FileText size={20} />,
+                  view: null,
+                },
+                {
+                  id: "search",
+                  label: "Search",
+                  icon: <SearchIcon size={20} />,
+                  view: "search",
+                },
+                {
+                  id: "upload",
+                  label: "Upload",
+                  icon: <UploadCloud size={20} />,
+                  view: null,
+                },
+                {
+                  id: "management",
+                  label: "Management",
+                  icon: <ShieldCheck size={20} />,
+                  view: "admin",
+                },
+                {
+                  id: "settings",
+                  label: "Setting",
+                  icon: <Settings size={20} />,
+                  view: "admin",
+                },
               ].map((item) => {
                 const active = view === item.view;
                 const baseClasses =
-                  'w-[86px] h-[74px] flex flex-col items-center justify-center gap-1 rounded-xl transition-all duration-200 font-semibold';
+                  "w-[86px] h-[74px] flex flex-col items-center justify-center gap-1 rounded-xl transition-all duration-200 font-semibold";
                 const inactive =
-                  'text-slate-500 hover:bg-slate-100 shadow-sm bg-white border border-slate-200';
+                  "text-slate-500 hover:bg-slate-100 shadow-sm bg-white border border-slate-200";
                 const activeCls =
-                  'bg-blue-700 text-white shadow-lg border border-blue-800';
+                  "bg-blue-700 text-white shadow-lg border border-blue-800";
                 return (
                   <button
                     key={item.id}
@@ -58,13 +93,15 @@ function App() {
                     <span
                       className={`inline-flex items-center justify-center w-10 h-10 rounded-xl border transition-colors ${
                         active
-                          ? 'bg-white/10 border-white/20'
-                          : 'bg-white border-slate-200'
+                          ? "bg-white/10 border-white/20"
+                          : "bg-white border-slate-200"
                       }`}
                     >
                       {item.icon}
                     </span>
-                    <span className="text-[11px] leading-none">{item.label}</span>
+                    <span className="text-[11px] leading-none">
+                      {item.label}
+                    </span>
                   </button>
                 );
               })}
@@ -73,17 +110,20 @@ function App() {
         </div>
       </nav>
 
-      {view === 'pos' && (
+      {view === "pos" && (
         <div className="relative">
-          <PosUI onAdminSettings={() => setView('admin')} onSearch={() => setView('search')} />
+          <PosUI
+            onAdminSettings={() => setView("admin")}
+            onSearch={() => setView("search")}
+          />
         </div>
       )}
-      {view === 'search' && (
+      {view === "search" && (
         <div className="relative">
-          <ProductSearchPage onClose={() => setView('pos')} />
+          <ProductSearchPage onClose={() => setView("pos")} />
         </div>
       )}
-      {view === 'admin' && <AdminSettings onBack={() => setView('pos')} />}
+      {view === "admin" && <AdminSettings onBack={() => setView("pos")} />}
     </div>
   );
 }

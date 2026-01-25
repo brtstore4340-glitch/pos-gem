@@ -155,14 +155,14 @@ if __name__ == "__main__":
 
 ### Time Savings Analysis
 
-| Category | Manual Time | Automated Time | Monthly Savings | Annual Value |
-|----------|-------------|----------------|----------------|--------------|
-| **Dependency Updates** | 4 hours | 30 minutes | 3.5 hours | $4,200 |
-| **Security Monitoring** | 8 hours | 1 hour | 7 hours | $8,400 |
-| **Backup Management** | 2 hours | 15 minutes | 1.75 hours | $2,100 |
-| **System Monitoring** | 10 hours | 2 hours | 8 hours | $9,600 |
-| **Maintenance Tasks** | 6 hours | 1 hour | 5 hours | $6,000 |
-| **TOTAL** | **30 hours** | **4.75 hours** | **25.25 hours** | **$30,300** |
+| Category                | Manual Time  | Automated Time | Monthly Savings | Annual Value |
+| ----------------------- | ------------ | -------------- | --------------- | ------------ |
+| **Dependency Updates**  | 4 hours      | 30 minutes     | 3.5 hours       | $4,200       |
+| **Security Monitoring** | 8 hours      | 1 hour         | 7 hours         | $8,400       |
+| **Backup Management**   | 2 hours      | 15 minutes     | 1.75 hours      | $2,100       |
+| **System Monitoring**   | 10 hours     | 2 hours        | 8 hours         | $9,600       |
+| **Maintenance Tasks**   | 6 hours      | 1 hour         | 5 hours         | $6,000       |
+| **TOTAL**               | **30 hours** | **4.75 hours** | **25.25 hours** | **$30,300**  |
 
 ### Risk Reduction Benefits
 
@@ -195,7 +195,7 @@ risk_reduction_calculator = {
 }
 
 total_risk_reduction_value = sum(
-    category['annual_risk_value_reduction'] 
+    category['annual_risk_value_reduction']
     for category in risk_reduction_calculator.values()
 )  # $34,775
 ```
@@ -203,18 +203,21 @@ total_risk_reduction_value = sum(
 ### Cost-Benefit Analysis by Investment Level
 
 #### Basic Implementation (40 hours, $6,000 setup)
+
 - **Focus**: Dependency updates, basic security scanning
 - **Annual Savings**: $12,600
 - **ROI**: 110%
 - **Payback**: 5.7 months
 
 #### Standard Implementation (60 hours, $11,000 setup)
+
 - **Focus**: Full dependency + security + backup automation
 - **Annual Savings**: $30,300
 - **ROI**: 176%
 - **Payback**: 4.4 months
 
 #### Enterprise Implementation (100 hours, $17,000 setup)
+
 - **Focus**: Complete automation + monitoring + compliance
 - **Annual Savings**: $45,000
 - **ROI**: 165%
@@ -262,17 +265,20 @@ productivity_metrics = {
 ## Key Benefits
 
 ### Immediate Impact (0-3 months)
+
 - 87.5% reduction in manual maintenance time
 - 95% reduction in human error rates
 - 100% consistency in maintenance procedures
 
 ### Ongoing Benefits (3+ months)
+
 - $2,525 monthly operational cost savings
 - 60% reduction in security incident risk
 - 90% improvement in backup reliability
 - 80% reduction in unplanned downtime
 
 ### Strategic Value
+
 - **Scalability**: Automation scales linearly with team growth
 - **Compliance**: Automated audit trails and compliance checking
 - **Team Morale**: Developers focus on value-adding work vs. toil
@@ -280,13 +286,13 @@ productivity_metrics = {
 
 ## Risk Mitigation
 
-| Risk Category | Current Annual Cost | Reduced Annual Cost | Savings |
-|---------------|-------------------|-------------------|---------|
-| Security Incidents | $4,500 | $1,800 | $2,700 |
-| Data Loss | $3,750 | $375 | $3,375 |
-| System Downtime | $24,000 | $4,800 | $19,200 |
-| Compliance Issues | $10,000 | $500 | $9,500 |
-| **TOTAL RISK REDUCTION** | **$42,250** | **$7,475** | **$34,775** |
+| Risk Category            | Current Annual Cost | Reduced Annual Cost | Savings     |
+| ------------------------ | ------------------- | ------------------- | ----------- |
+| Security Incidents       | $4,500              | $1,800              | $2,700      |
+| Data Loss                | $3,750              | $375                | $3,375      |
+| System Downtime          | $24,000             | $4,800              | $19,200     |
+| Compliance Issues        | $10,000             | $500                | $9,500      |
+| **TOTAL RISK REDUCTION** | **$42,250**         | **$7,475**          | **$34,775** |
 
 ## Implementation Timeline
 
@@ -307,24 +313,24 @@ productivity_metrics = {
 ```python
 def calculate_team_roi(team_size: int, avg_salary: int = 120000) -> dict:
     """Calculate ROI based on team size"""
-    
+
     hourly_rate = avg_salary / 2080  # Assuming 2080 work hours/year
-    
+
     # Scale time savings with team size (larger teams = more coordination overhead)
     base_monthly_savings = 25.25
     scaled_monthly_savings = base_monthly_savings * (1 + (team_size - 5) * 0.1)
-    
+
     annual_time_savings = scaled_monthly_savings * 12
     annual_cost_savings = annual_time_savings * hourly_rate
-    
+
     # Setup cost scales with team size
     base_setup_hours = 60
     scaled_setup_hours = base_setup_hours * (1 + (team_size - 5) * 0.05)
     setup_cost = scaled_setup_hours * hourly_rate + 2000  # Tools cost
-    
+
     roi_percentage = ((annual_cost_savings - 2000) / setup_cost) * 100
     payback_months = setup_cost / (annual_cost_savings / 12)
-    
+
     return {
         'team_size': team_size,
         'annual_time_savings_hours': annual_time_savings,
@@ -346,18 +352,21 @@ for team_size in [3, 5, 10, 20]:
 ## Implementation Investment Levels
 
 ### Starter Package ($6,000)
+
 - Dependency automation
-- Basic security scanning  
+- Basic security scanning
 - Simple backup automation
 - **ROI**: 110% first year
 
 ### Professional Package ($11,000)
+
 - Complete dependency + security automation
 - Advanced backup with S3 integration
 - System health monitoring
 - **ROI**: 176% first year
 
 ### Enterprise Package ($17,000)
+
 - Full automation suite
 - Compliance automation
 - Advanced monitoring + alerting

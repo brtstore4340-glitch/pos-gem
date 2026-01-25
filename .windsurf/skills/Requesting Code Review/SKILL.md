@@ -15,6 +15,7 @@ Requesting Code Review ensures that code is thoroughly prepared before peer revi
 ### Self-Review Phase
 
 **Code Quality Validation:**
+
 - [ ] Code follows project style guidelines
 - [ ] No debugging code (console.log, print statements) left in
 - [ ] No commented-out code blocks
@@ -23,6 +24,7 @@ Requesting Code Review ensures that code is thoroughly prepared before peer revi
 - [ ] Complex logic has explanatory comments
 
 **Functionality Verification:**
+
 - [ ] All acceptance criteria are met
 - [ ] Edge cases are handled
 - [ ] Error conditions are managed appropriately
@@ -30,6 +32,7 @@ Requesting Code Review ensures that code is thoroughly prepared before peer revi
 - [ ] No breaking changes to existing functionality
 
 **Testing Completeness:**
+
 - [ ] Unit tests written for new functionality
 - [ ] Integration tests added where appropriate
 - [ ] Test coverage meets project standards (≥80%)
@@ -39,6 +42,7 @@ Requesting Code Review ensures that code is thoroughly prepared before peer revi
 ### Documentation Requirements
 
 **Code Documentation:**
+
 - [ ] Public functions have JSDoc/docstrings
 - [ ] Complex algorithms are explained
 - [ ] API endpoints are documented
@@ -46,6 +50,7 @@ Requesting Code Review ensures that code is thoroughly prepared before peer revi
 - [ ] Breaking changes are highlighted
 
 **Pull Request Documentation:**
+
 - [ ] Clear, descriptive PR title
 - [ ] Comprehensive description explaining changes
 - [ ] Screenshots/videos for UI changes
@@ -55,6 +60,7 @@ Requesting Code Review ensures that code is thoroughly prepared before peer revi
 ### Technical Validation
 
 **Performance Considerations:**
+
 - [ ] No obvious performance regressions
 - [ ] Database queries are optimized
 - [ ] Large files/datasets handled efficiently
@@ -62,6 +68,7 @@ Requesting Code Review ensures that code is thoroughly prepared before peer revi
 - [ ] API response times are acceptable
 
 **Security Review:**
+
 - [ ] Input validation implemented
 - [ ] Authentication/authorization checked
 - [ ] No sensitive data in logs or commits
@@ -89,6 +96,7 @@ git rebase -i HEAD~3   # Interactive rebase if needed
 ### Commit Message Quality
 
 **Good Commit Messages:**
+
 ```
 feat: add user authentication with JWT tokens
 
@@ -101,6 +109,7 @@ Closes #123
 ```
 
 **Bad Commit Messages:**
+
 ```
 fix bug
 updated stuff
@@ -112,32 +121,39 @@ asdf
 
 ```markdown
 ## Summary
+
 Brief description of what this PR accomplishes.
 
 ## Changes
+
 - [ ] New feature X
 - [ ] Bug fix for Y
 - [ ] Refactor Z component
 - [ ] Update documentation
 
 ## Testing
+
 - [ ] Unit tests added/updated
 - [ ] Integration tests pass
 - [ ] Manual testing completed
 - [ ] Performance impact assessed
 
 ## Screenshots/Videos
+
 (Include for UI changes)
 
 ## Breaking Changes
+
 - None / List any breaking changes
 
 ## Deployment Notes
+
 - Any special deployment instructions
 - Environment variable changes
 - Database migrations required
 
 ## Checklist
+
 - [ ] Code follows style guidelines
 - [ ] Self-review completed
 - [ ] Tests added/updated
@@ -179,12 +195,14 @@ echo "✅ Pre-review checks complete!"
 ### 2. Reviewer Selection
 
 **Choose appropriate reviewers based on:**
+
 - **Domain expertise**: Familiar with the code area
 - **Availability**: Can review within reasonable timeframe
 - **Team distribution**: Spread knowledge across team
 - **Code ownership**: Maintain code quality standards
 
 **Typical reviewer matrix:**
+
 - **Senior developer**: Architecture and design review
 - **Domain expert**: Business logic validation
 - **Security expert**: Security-sensitive changes
@@ -193,6 +211,7 @@ echo "✅ Pre-review checks complete!"
 ### 3. Review Request Context
 
 **Provide context in the PR:**
+
 - Why this change is needed
 - What alternatives were considered
 - Any trade-offs made
@@ -202,6 +221,7 @@ echo "✅ Pre-review checks complete!"
 ## Review-Ready Indicators
 
 ### Green Flags (Ready for Review)
+
 - ✅ All automated checks pass
 - ✅ Feature is complete and tested
 - ✅ Documentation is updated
@@ -210,6 +230,7 @@ echo "✅ Pre-review checks complete!"
 - ✅ No known issues remaining
 
 ### Red Flags (Not Ready)
+
 - ❌ Automated checks failing
 - ❌ WIP or incomplete features
 - ❌ Missing or inadequate tests
@@ -222,20 +243,22 @@ echo "✅ Pre-review checks complete!"
 ### Code Quality Issues
 
 **Naming and Clarity:**
+
 ```javascript
 // ❌ Poor naming
 function calc(u, p) {
-    return u * p * 1.08;
+  return u * p * 1.08;
 }
 
 // ✅ Clear naming
 function calculateTotalWithTax(unitPrice, quantity) {
-    const TAX_RATE = 0.08;
-    return unitPrice * quantity * (1 + TAX_RATE);
+  const TAX_RATE = 0.08;
+  return unitPrice * quantity * (1 + TAX_RATE);
 }
 ```
 
 **Error Handling:**
+
 ```python
 # ❌ Poor error handling
 def process_user_data(data):
@@ -260,6 +283,7 @@ def process_user_data(data):
 ### Architecture and Design
 
 **Single Responsibility Principle:**
+
 ```python
 # ❌ Too many responsibilities
 class UserManager:
@@ -292,34 +316,35 @@ class UserCreator:
 ### Testing and Coverage
 
 **Test Quality:**
+
 ```javascript
 // ❌ Poor test
-test('user test', () => {
-    const result = something();
-    expect(result).toBeTruthy();
+test("user test", () => {
+  const result = something();
+  expect(result).toBeTruthy();
 });
 
 // ✅ Good test
-describe('UserService.createUser', () => {
-    it('should create user with valid data and return user object', async () => {
-        // Arrange
-        const userData = {
-            email: 'test@example.com',
-            password: 'SecurePass123!',
-            name: 'Test User'
-        };
+describe("UserService.createUser", () => {
+  it("should create user with valid data and return user object", async () => {
+    // Arrange
+    const userData = {
+      email: "test@example.com",
+      password: "SecurePass123!",
+      name: "Test User",
+    };
 
-        // Act
-        const result = await userService.createUser(userData);
+    // Act
+    const result = await userService.createUser(userData);
 
-        // Assert
-        expect(result).toMatchObject({
-            id: expect.any(String),
-            email: 'test@example.com',
-            name: 'Test User'
-        });
-        expect(result.password).toBeUndefined();
+    // Assert
+    expect(result).toMatchObject({
+      id: expect.any(String),
+      email: "test@example.com",
+      name: "Test User",
     });
+    expect(result.password).toBeUndefined();
+  });
 });
 ```
 
@@ -330,6 +355,7 @@ describe('UserService.createUser', () => {
 Create specific checklists for different types of changes:
 
 **API Changes Checklist:**
+
 - [ ] Backwards compatibility maintained
 - [ ] Input validation implemented
 - [ ] Error responses standardized
@@ -338,6 +364,7 @@ Create specific checklists for different types of changes:
 - [ ] Versioning strategy followed
 
 **Database Changes Checklist:**
+
 - [ ] Migration is reversible
 - [ ] Performance impact assessed
 - [ ] Indexes added where needed
@@ -345,6 +372,7 @@ Create specific checklists for different types of changes:
 - [ ] Backup strategy considered
 
 **Security Changes Checklist:**
+
 - [ ] Authentication requirements met
 - [ ] Authorization checks implemented
 - [ ] Input sanitization applied
@@ -354,6 +382,7 @@ Create specific checklists for different types of changes:
 ### Automated Review Tools
 
 **Setup GitHub Actions for automated review:**
+
 ```yaml
 name: Automated Review
 
@@ -363,20 +392,20 @@ jobs:
   automated-review:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Run ESLint
-      run: npx eslint src/ --format @microsoft/eslint-formatter-sarif --output-file eslint-results.sarif
+      - name: Run ESLint
+        run: npx eslint src/ --format @microsoft/eslint-formatter-sarif --output-file eslint-results.sarif
 
-    - name: Upload ESLint results
-      uses: github/codeql-action/upload-sarif@v2
-      with:
-        sarif_file: eslint-results.sarif
+      - name: Upload ESLint results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: eslint-results.sarif
 
-    - name: Run security scan
-      uses: securecodewarrior/github-action-add-sarif@v1
-      with:
-        sarif-file: security-scan-results.sarif
+      - name: Run security scan
+        uses: securecodewarrior/github-action-add-sarif@v1
+        with:
+          sarif-file: security-scan-results.sarif
 ```
 
 ## Review Etiquette and Communication
@@ -384,6 +413,7 @@ jobs:
 ### Requesting Reviews
 
 **Good review requests:**
+
 ```
 @reviewer Hi! Could you please review this PR when you have time?
 
@@ -396,6 +426,7 @@ No rush - sometime this week would be great. Thanks!
 ```
 
 **Poor review requests:**
+
 ```
 @reviewer review pls
 ```
@@ -403,6 +434,7 @@ No rush - sometime this week would be great. Thanks!
 ### Responding to Feedback
 
 **Constructive response:**
+
 ```
 Thanks for the feedback! You're right about the error handling. I've:
 
@@ -415,6 +447,7 @@ Let me know if you'd like me to explain the approach.
 ```
 
 **Defensive response (avoid):**
+
 ```
 This works fine. The performance is not that bad.
 ```
@@ -424,6 +457,7 @@ This works fine. The performance is not that bad.
 ### Review Quality Metrics
 
 **Track these metrics to improve the review process:**
+
 - Average time from PR creation to first review
 - Number of review cycles per PR
 - Percentage of PRs with issues found in production
@@ -433,6 +467,7 @@ This works fine. The performance is not that bad.
 ### Continuous Improvement
 
 **Regular retrospectives on review process:**
+
 - What types of issues are commonly missed?
 - Are reviews taking too long?
 - Do reviewers need training in specific areas?
@@ -442,19 +477,25 @@ This works fine. The performance is not that bad.
 ## Additional Resources
 
 ### Reference Files
+
 For detailed review patterns and standards, consult:
+
 - **`references/review-standards.md`** - Detailed code review standards and guidelines
 - **`references/feedback-patterns.md`** - Effective feedback communication patterns
 - **`references/pr-templates.md`** - Pull request templates for different change types
 
 ### Example Files
+
 Working review examples in `examples/`:
+
 - **`examples/pr-description-examples.md`** - Good and bad PR description examples
 - **`examples/review-comments.md`** - Effective review comment examples
 - **`examples/self-review-checklist.md`** - Comprehensive self-review checklist
 
 ### Scripts
+
 Review preparation scripts in `scripts/`:
+
 - **`scripts/pre-review-check.sh`** - Automated pre-review validation
 - **`scripts/generate-pr-template.sh`** - Generate PR template based on changes
 - **`scripts/review-metrics.py`** - Generate review process metrics
@@ -462,11 +503,13 @@ Review preparation scripts in `scripts/`:
 ## Tools and Integration
 
 ### IDE Integration
+
 - **VS Code**: GitLens extension for better Git history
 - **IntelliJ**: Built-in code review tools
 - **Vim**: Fugitive plugin for Git integration
 
 ### Review Platforms
+
 - **GitHub**: Built-in review tools with suggestions
 - **GitLab**: Merge request reviews with approval rules
 - **Bitbucket**: Pull request reviews with automatic merging

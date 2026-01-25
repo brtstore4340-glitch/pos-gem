@@ -1,33 +1,33 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 
 export default function PinReset() {
   const { session, setPin } = useAuth();
-  const [currentPin, setCurrentPin] = useState('');
-  const [newPin, setNewPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
-  const [error, setError] = useState('');
+  const [currentPin, setCurrentPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     if (!currentPin || !newPin) {
-      setError('Please enter PIN');
+      setError("Please enter PIN");
       return;
     }
     if (newPin !== confirmPin) {
-      setError('PIN confirmation does not match');
+      setError("PIN confirmation does not match");
       return;
     }
     setLoading(true);
     try {
       await setPin(session?.idCode, currentPin, newPin);
-      setCurrentPin('');
-      setNewPin('');
-      setConfirmPin('');
+      setCurrentPin("");
+      setNewPin("");
+      setConfirmPin("");
     } catch (err) {
-      setError(err?.message || 'Failed to set PIN');
+      setError(err?.message || "Failed to set PIN");
     } finally {
       setLoading(false);
     }
@@ -37,11 +37,15 @@ export default function PinReset() {
     <div className="min-h-dvh flex items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-md rounded-2xl bg-white shadow-lg border border-slate-200 p-8">
         <h1 className="text-2xl font-bold text-slate-800">Reset PIN</h1>
-        <p className="text-slate-500 mt-2">Your PIN must be updated before continuing.</p>
+        <p className="text-slate-500 mt-2">
+          Your PIN must be updated before continuing.
+        </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="text-sm font-semibold text-slate-600">Current PIN</label>
+            <label className="text-sm font-semibold text-slate-600">
+              Current PIN
+            </label>
             <input
               type="password"
               inputMode="numeric"
@@ -52,7 +56,9 @@ export default function PinReset() {
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-slate-600">New PIN</label>
+            <label className="text-sm font-semibold text-slate-600">
+              New PIN
+            </label>
             <input
               type="password"
               inputMode="numeric"
@@ -63,7 +69,9 @@ export default function PinReset() {
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-slate-600">Confirm PIN</label>
+            <label className="text-sm font-semibold text-slate-600">
+              Confirm PIN
+            </label>
             <input
               type="password"
               inputMode="numeric"
@@ -80,7 +88,7 @@ export default function PinReset() {
             disabled={loading}
             className="w-full rounded-xl bg-blue-600 text-white font-semibold py-3 hover:bg-blue-500 disabled:opacity-50"
           >
-            {loading ? 'Saving...' : 'Set new PIN'}
+            {loading ? "Saving..." : "Set new PIN"}
           </button>
         </form>
       </div>

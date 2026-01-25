@@ -21,8 +21,8 @@ export default [
       "**/.venv/**",
       "**/.ai-logs/**",
       "**/.ai-backups/**",
-      "**/.eslintcache"
-    ]
+      "**/.eslintcache",
+    ],
   },
 
   js.configs.recommended,
@@ -35,20 +35,20 @@ export default [
       ecmaVersion: "latest",
       sourceType: "module",
       globals: { ...globals.browser },
-      parserOptions: { ecmaFeatures: { jsx: true } }
+      parserOptions: { ecmaFeatures: { jsx: true } },
     },
     plugins: {
       react,
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
-      "jsx-a11y": jsxA11y
+      "jsx-a11y": jsxA11y,
     },
     settings: { react: { version: "detect" } },
     rules: {
       "react/react-in-jsx-scope": "off",
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": "off"
-    }
+      "react-refresh/only-export-components": "off",
+    },
   },
 
   {
@@ -56,7 +56,7 @@ export default [
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
-      globals: { ...globals.node }
-    }
-  }
+      globals: { ...globals.node },
+    },
+  },
 ];

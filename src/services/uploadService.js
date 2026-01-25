@@ -1,9 +1,10 @@
-﻿﻿import Papa from "papaparse";
+﻿import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "../firebase";
 
-const firebaseRegion = import.meta.env.VITE_FIREBASE_REGION || "asia-southeast1";
+const firebaseRegion =
+  import.meta.env.VITE_FIREBASE_REGION || "asia-southeast1";
 const functions = getFunctions(app, firebaseRegion);
 const beginUpload = httpsCallable(functions, "beginUpload");
 const uploadChunk = httpsCallable(functions, "uploadChunk");
@@ -19,14 +20,21 @@ function chunkArray(arr, size) {
 async function sha256(text) {
   const enc = new TextEncoder().encode(text);
   const buf = await crypto.subtle.digest("SHA-256", enc);
-  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+  return [...new Uint8Array(buf)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 export async function parseCsv(file) {
   const text = await file.text();
   const checksum = await sha256(text.slice(0, 200000));
   return new Promise((resolve, reject) => {
-    Papa.parse(text, { header: true, skipEmptyLines: true, complete: (res) => resolve({ rows: res.data || [], checksum }), error: reject });
+    Papa.parse(text, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (res) => resolve({ rows: res.data || [], checksum }),
+      error: reject,
+    });
   });
 }
 
@@ -58,9 +66,17 @@ export async function runUploadFlow({ actorIdCode, type, file, onProgress }) {
   const rows = parsed.rows || [];
   const checksum = parsed.checksum;
 
-  onProgress?.({ phase: "parsing", percent: 15, meta: { rowCount: rows.length } });
+  onProgress?.({
+    phase: "parsing",
+    percent: 15,
+    meta: { rowCount: rows.length },
+  });
 
-  await beginUpload({ actorIdCode, type, fileMeta: { fileName: file.name, checksum, rowCount: rows.length } });
+  await beginUpload({
+    actorIdCode,
+    type,
+    fileMeta: { fileName: file.name, checksum, rowCount: rows.length },
+  });
   onProgress?.({ phase: "uploading", percent: 20 });
 
   const CHUNK_ROWS = type === "master" ? 200 : 400;
@@ -75,20 +91,33 @@ export async function runUploadFlow({ actorIdCode, type, file, onProgress }) {
     agg.skipped += r.skipped || 0;
     agg.invalid += r.invalid || 0;
 
-    const base = 20, span = 75;
+    const base = 20,
+      span = 75;
     const p = base + Math.round(((i + 1) / chunks.length) * span);
-    onProgress?.({ phase: "uploading", percent: p, meta: { ...agg, chunk: i + 1, totalChunks: chunks.length } });
+    onProgress?.({
+      phase: "uploading",
+      percent: p,
+      meta: { ...agg, chunk: i + 1, totalChunks: chunks.length },
+    });
   }
 
   onProgress?.({ phase: "finalizing", percent: 97, meta: agg });
-  await finalizeUpload({ actorIdCode, type, summary: { ...agg, rowCount: rows.length, checksum } });
+  await finalizeUpload({
+    actorIdCode,
+    type,
+    summary: { ...agg, rowCount: rows.length, checksum },
+  });
 
   onProgress?.({ phase: "done", percent: 100, meta: agg });
   return agg;
 }
 
 export async function abortUploadFlow(actorIdCode) {
-  if (!actorIdCode || typeof actorIdCode !== "string" || actorIdCode.trim() === "") {
+  if (
+    !actorIdCode ||
+    typeof actorIdCode !== "string" ||
+    actorIdCode.trim() === ""
+  ) {
     throw new Error("actorIdCode is required");
   }
   await abortUpload({ actorIdCode });

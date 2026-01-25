@@ -12,7 +12,8 @@ async function callOpenAI({ apiKey, model, prompt }) {
       input: [
         {
           role: "system",
-          content: "Return ONLY valid JSON matching the Plan schema described in the prompt. No markdown.",
+          content:
+            "Return ONLY valid JSON matching the Plan schema described in the prompt. No markdown.",
         },
         { role: "user", content: prompt },
       ],
@@ -28,7 +29,10 @@ async function callOpenAI({ apiKey, model, prompt }) {
   const data = await res.json();
   const text =
     data?.output_text ??
-    data?.output?.[0]?.content?.map((c) => c?.text).filter(Boolean).join("\n") ??
+    data?.output?.[0]?.content
+      ?.map((c) => c?.text)
+      .filter(Boolean)
+      .join("\n") ??
     "";
   return { text: String(text || "") };
 }

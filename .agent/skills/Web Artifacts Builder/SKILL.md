@@ -13,6 +13,7 @@ This skill provides tools and patterns for creating interactive web artifacts, i
 ## When to Use This Skill
 
 Use this skill when creating:
+
 - **Interactive component demos** and showcases
 - **Prototype interfaces** for user testing
 - **Live documentation** with working examples

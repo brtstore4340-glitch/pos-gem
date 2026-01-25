@@ -1,25 +1,27 @@
 // file: rebuild_src.js
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const srcPath = path.join(__dirname, 'src');
+const srcPath = path.join(__dirname, "src");
 
 console.log("🧹 Cleaning old src folder...");
 if (fs.existsSync(srcPath)) {
-    fs.rmSync(srcPath, { recursive: true, force: true });
+  fs.rmSync(srcPath, { recursive: true, force: true });
 }
 fs.mkdirSync(srcPath);
-fs.mkdirSync(path.join(srcPath, 'components'));
-fs.mkdirSync(path.join(srcPath, 'utils'));
+fs.mkdirSync(path.join(srcPath, "components"));
+fs.mkdirSync(path.join(srcPath, "utils"));
 
 console.log("🏗️ Rebuilding files...");
 
 // 1. main.jsx
-fs.writeFileSync(path.join(srcPath, 'main.jsx'), `
+fs.writeFileSync(
+  path.join(srcPath, "main.jsx"),
+  `
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
@@ -29,10 +31,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,
-)`.trim());
+)`.trim(),
+);
 
 // 2. App.jsx (ระบุ .jsx ใน import ให้ชัดเจนเพื่อกันพลาด)
-fs.writeFileSync(path.join(srcPath, 'App.jsx'), `
+fs.writeFileSync(
+  path.join(srcPath, "App.jsx"),
+  `
 import React from 'react'
 import DemoUI from './components/DemoUI.jsx'
 
@@ -44,10 +49,13 @@ function App() {
   )
 }
 
-export default App`.trim());
+export default App`.trim(),
+);
 
 // 3. index.css
-fs.writeFileSync(path.join(srcPath, 'index.css'), `
+fs.writeFileSync(
+  path.join(srcPath, "index.css"),
+  `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap');
 @tailwind base;
 @tailwind components;
@@ -68,19 +76,25 @@ fs.writeFileSync(path.join(srcPath, 'index.css'), `
   .btn-ghost {
     @apply bg-transparent text-google-blue hover:bg-google-blue-light px-4 py-2 rounded-lg transition-all duration-200;
   }
-}`.trim());
+}`.trim(),
+);
 
 // 4. utils/cn.js
-fs.writeFileSync(path.join(srcPath, 'utils', 'cn.js'), `
+fs.writeFileSync(
+  path.join(srcPath, "utils", "cn.js"),
+  `
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
-}`.trim());
+}`.trim(),
+);
 
 // 5. components/DemoUI.jsx
-fs.writeFileSync(path.join(srcPath, 'components', 'DemoUI.jsx'), `
+fs.writeFileSync(
+  path.join(srcPath, "components", "DemoUI.jsx"),
+  `
 import React from 'react';
 import { ShoppingCart, Search, Menu } from 'lucide-react';
 import { cn } from '../utils/cn';
@@ -109,30 +123,31 @@ export default function DemoUI() {
       </div>
     </div>
   );
-}`.trim());
+}`.trim(),
+);
 
 // --- Verification Step ---
 console.log("🔍 Verifying files...");
 const requiredFiles = [
-    'main.jsx',
-    'App.jsx',
-    'index.css',
-    'utils/cn.js',
-    'components/DemoUI.jsx'
+  "main.jsx",
+  "App.jsx",
+  "index.css",
+  "utils/cn.js",
+  "components/DemoUI.jsx",
 ];
 
 let hasError = false;
-requiredFiles.forEach(f => {
-    if (fs.existsSync(path.join(srcPath, f))) {
-        console.log(`✅ Found: src/${f}`);
-    } else {
-        console.error(`❌ MISSING: src/${f}`);
-        hasError = true;
-    }
+requiredFiles.forEach((f) => {
+  if (fs.existsSync(path.join(srcPath, f))) {
+    console.log(`✅ Found: src/${f}`);
+  } else {
+    console.error(`❌ MISSING: src/${f}`);
+    hasError = true;
+  }
 });
 
 if (!hasError) {
-    console.log("\n✨ Success! All files are in place. Now run: npm run dev");
+  console.log("\n✨ Success! All files are in place. Now run: npm run dev");
 } else {
-    console.log("\n⚠️ Some files are missing. Please check permissions.");
+  console.log("\n⚠️ Some files are missing. Please check permissions.");
 }

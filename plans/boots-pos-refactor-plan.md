@@ -9,13 +9,16 @@
 ## 1. Navigation & Layout Restructuring ✅
 
 ### Current State
+
 - [`src/components/Layout.jsx`](src/components/Layout.jsx) uses a left sidebar with navigation links
 - [`src/components/PosUI.jsx`](src/components/PosUI.jsx) has internal tab switching (Dashboard/POS)
 - Top header shows page title and shopping cart icon
 - Routes defined in [`src/App.jsx`](src/App.jsx) with React Router
 
 ### Target State
+
 **Single-Page Tab Interface** - All navigation consolidated into horizontal tabs at top:
+
 - Remove left sidebar completely
 - Remove top header with "POS and shopping cart" text/icon
 - Create horizontal tab bar with 5 primary tabs: **Dashboard | POS | Inventory | Orders | Admin Settings**
@@ -23,6 +26,7 @@
 - Admin Settings becomes a primary tab (not a modal)
 
 ### Implementation Strategy
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  [🏗️ Dashboard] [💻 POS] [📦 Inventory] [📋 Orders] [⚙️ Admin] │
@@ -35,6 +39,7 @@
 ```
 
 **Changes Required:**
+
 1. **Refactor [`App.jsx`](src/App.jsx)**: Remove `<Layout>` wrapper, remove React Router routes, implement state-based tab switching
 2. **Remove [`Layout.jsx`](src/components/Layout.jsx)**: No longer needed
 3. **Update [`PosUI.jsx`](src/components/PosUI.jsx)**: Keep POS terminal logic but integrate as tab content (not standalone)
@@ -49,16 +54,23 @@
 ## 2. Font & Typography ✅
 
 ### Requirement
+
 Replace all fonts with **Noto Sans Thai** for proper Thai language support.
 
 ### Implementation
+
 **File:** [`src/index.css`](src/index.css)
 
 ```css
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100;200;300;400;500;600;700;800;900&display=swap");
 
 * {
-  font-family: 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    "Noto Sans Thai",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
 ```
 
@@ -69,11 +81,11 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Noto Sans Thai', 'sans-serif'],
-      }
-    }
-  }
-}
+        sans: ["Noto Sans Thai", "sans-serif"],
+      },
+    },
+  },
+};
 ```
 
 ---
@@ -81,6 +93,7 @@ module.exports = {
 ## 3. Animation & Streaming Strategy ✅
 
 ### Requirements
+
 - Initial page load: streaming with Suspense (show skeleton → fill content)
 - Tab transitions: smooth, lightweight, low RAM usage
 - Technique: React.lazy + Suspense + framer-motion
@@ -88,34 +101,38 @@ module.exports = {
 ### Architecture
 
 #### A. Code Splitting with React.lazy
+
 ```jsx
 // App.jsx
-const DashboardPage = React.lazy(() => import('./pages/DashboardPage'));
-const PosUI = React.lazy(() => import('./components/PosUI'));
-const InventoryPage = React.lazy(() => import('./pages/InventoryPage'));
-const OrdersPage = React.lazy(() => import('./pages/OrdersPage'));
-const AdminSettingsPage = React.lazy(() => import('./pages/AdminSettingsPage'));
+const DashboardPage = React.lazy(() => import("./pages/DashboardPage"));
+const PosUI = React.lazy(() => import("./components/PosUI"));
+const InventoryPage = React.lazy(() => import("./pages/InventoryPage"));
+const OrdersPage = React.lazy(() => import("./pages/OrdersPage"));
+const AdminSettingsPage = React.lazy(() => import("./pages/AdminSettingsPage"));
 ```
 
 #### B. Suspense Boundaries with Skeletons
+
 ```jsx
 <Suspense fallback={<TabSkeleton />}>
-  {activeTab === 'dashboard' && <DashboardPage />}
-  {activeTab === 'pos' && <PosUI />}
-  {activeTab === 'inventory' && <InventoryPage />}
-  {activeTab === 'orders' && <OrdersPage />}
-  {activeTab === 'admin' && <AdminSettingsPage />}
+  {activeTab === "dashboard" && <DashboardPage />}
+  {activeTab === "pos" && <PosUI />}
+  {activeTab === "inventory" && <InventoryPage />}
+  {activeTab === "orders" && <OrdersPage />}
+  {activeTab === "admin" && <AdminSettingsPage />}
 </Suspense>
 ```
 
 **Create:** [`src/components/skeletons/TabSkeleton.jsx`](src/components/skeletons/TabSkeleton.jsx)
+
 - Lightweight shimmer effect
 - Mimics layout of content being loaded
 - No heavy animations
 
 #### C. Tab Transitions with Framer Motion
+
 ```jsx
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from "framer-motion";
 
 <AnimatePresence mode="wait">
   <motion.div
@@ -123,22 +140,22 @@ import { motion, AnimatePresence } from 'framer-motion';
     initial={{ opacity: 0, x: 20 }}
     animate={{ opacity: 1, x: 0 }}
     exit={{ opacity: 0, x: -20 }}
-    transition={{ duration: 0.2, ease: 'easeInOut' }}
+    transition={{ duration: 0.2, ease: "easeInOut" }}
   >
-    <Suspense fallback={<TabSkeleton />}>
-      {renderActiveTab()}
-    </Suspense>
+    <Suspense fallback={<TabSkeleton />}>{renderActiveTab()}</Suspense>
   </motion.div>
-</AnimatePresence>
+</AnimatePresence>;
 ```
 
 **Performance Optimizations:**
+
 - `will-change: transform, opacity` (CSS)
 - GPU acceleration via transforms (not position)
 - Memoize tab components with `React.memo`
 - Debounce tab switches if rapid clicking
 
 **Dependencies to Add:**
+
 ```json
 {
   "framer-motion": "^11.0.0"
@@ -150,9 +167,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 ## 4. Admin Settings Redesign ✅
 
 ### Current State
+
 [`src/components/AdminSettings.jsx`](src/components/AdminSettings.jsx) is a modal with single upload function.
 
 ### Target State
+
 **Full-page tab with two sub-tabs:**
 
 ```
@@ -164,6 +183,7 @@ Admin Settings
 ### A. Feature Toggles Sub-Tab
 
 **Layout:**
+
 ```
 ┌──────────────────────────────────────────┐
 │  Feature Management                      │
@@ -181,8 +201,10 @@ Admin Settings
 ```
 
 **Storage:**
+
 - Firestore collection: `appSettings/features`
 - Document structure:
+
 ```js
 {
   multiStoreMode: true,
@@ -206,6 +228,7 @@ Admin Settings
 3. **ItemMaintananceEvent** (Maintenance Data) - Optional
 
 **Layout:**
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │  Data Uploads                                       │
@@ -229,6 +252,7 @@ Admin Settings
 ```
 
 **Gating Logic:**
+
 ```js
 const canUploadPrint = uploadMetadata?.ProductAllDept?.uploaded === true;
 const canUploadMaint = uploadMetadata?.ProductAllDept?.uploaded === true;
@@ -241,6 +265,7 @@ const canUploadMaint = uploadMetadata?.ProductAllDept?.uploaded === true;
 ### UX Flow
 
 #### Step 1: File Selection
+
 ```
 ┌────────────────────────────────────────┐
 │  Drop file or click to browse         │
@@ -250,6 +275,7 @@ const canUploadMaint = uploadMetadata?.ProductAllDept?.uploaded === true;
 ```
 
 #### Step 2: Validation & Preview
+
 ```
 ┌────────────────────────────────────────┐
 │  File: ProductAllDept_20251230.xlsx    │
@@ -261,6 +287,7 @@ const canUploadMaint = uploadMetadata?.ProductAllDept?.uploaded === true;
 ```
 
 #### Step 3: Upload Progress
+
 ```
 ┌────────────────────────────────────────┐
 │  Uploading... 45%                      │
@@ -272,6 +299,7 @@ const canUploadMaint = uploadMetadata?.ProductAllDept?.uploaded === true;
 ```
 
 #### Step 4: Completion Summary
+
 ```
 ┌────────────────────────────────────────┐
 │  ✓ Upload Complete!                    │
@@ -291,76 +319,82 @@ uploadProductAllDept: async (file, onProgress) => {
   // 1. Parse file (XLSX/CSV)
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer);
-  const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-  
-  // 2. Filter ProductStatus = '0'
-  const validProducts = rows.filter(row => 
-    String(row['ProductStatus'] || '').trim().startsWith('0')
+  const rows = XLSX.utils.sheet_to_json(
+    workbook.Sheets[workbook.SheetNames[0]],
   );
-  
-  onProgress({ phase: 'Validating', percent: 10, total: validProducts.length });
-  
+
+  // 2. Filter ProductStatus = '0'
+  const validProducts = rows.filter((row) =>
+    String(row["ProductStatus"] || "")
+      .trim()
+      .startsWith("0"),
+  );
+
+  onProgress({ phase: "Validating", percent: 10, total: validProducts.length });
+
   // 3. Batch upsert to Firestore
   const BATCH_SIZE = 500;
   let batches = [];
   let currentBatch = writeBatch(db);
   let count = 0;
-  
+
   for (const row of validProducts) {
-    const productCode = String(row['ProductCode'] || row['GridProductCode']).trim();
+    const productCode = String(
+      row["ProductCode"] || row["GridProductCode"],
+    ).trim();
     if (!productCode) continue;
-    
-    const docRef = doc(db, 'products', productCode);
+
+    const docRef = doc(db, "products", productCode);
     const data = {
       ProductCode: productCode,
-      Barcode: String(row['Barcode'] || '').trim(),
-      ProductDesc: String(row['ProductDesc'] || '').trim(),
-      SellPrice: parseFloat(row['SellPrice'] || 0),
-      VatRate: parseFloat(row['VatRate'] || 0),
-      ProductStatus: row['ProductStatus'],
-      DeptCode: row['DeptCode'],
-      GroupCode: row['GroupCode'],
+      Barcode: String(row["Barcode"] || "").trim(),
+      ProductDesc: String(row["ProductDesc"] || "").trim(),
+      SellPrice: parseFloat(row["SellPrice"] || 0),
+      VatRate: parseFloat(row["VatRate"] || 0),
+      ProductStatus: row["ProductStatus"],
+      DeptCode: row["DeptCode"],
+      GroupCode: row["GroupCode"],
       ...row,
-      keywords: generateKeywords(row['ProductDesc']), // For search
+      keywords: generateKeywords(row["ProductDesc"]), // For search
       updatedAt: serverTimestamp(),
-      uploadSource: 'ProductAllDept'
+      uploadSource: "ProductAllDept",
     };
-    
+
     currentBatch.set(docRef, data, { merge: true });
     count++;
-    
+
     if (count >= BATCH_SIZE) {
       batches.push(currentBatch);
       currentBatch = writeBatch(db);
       count = 0;
     }
   }
-  
+
   if (count > 0) batches.push(currentBatch);
-  
+
   // 4. Execute batches with progress
   for (let i = 0; i < batches.length; i++) {
     await batches[i].commit();
     const percent = 10 + Math.floor((i / batches.length) * 90);
-    onProgress({ 
-      phase: 'Uploading', 
-      percent, 
+    onProgress({
+      phase: "Uploading",
+      percent,
       processed: (i + 1) * BATCH_SIZE,
-      total: validProducts.length 
+      total: validProducts.length,
     });
   }
-  
+
   // 5. Store metadata
-  await setDoc(doc(db, 'uploadMetadata', 'ProductAllDept'), {
+  await setDoc(doc(db, "uploadMetadata", "ProductAllDept"), {
     uploaded: true,
     itemCount: validProducts.length,
     uploadedAt: serverTimestamp(),
     fileName: file.name,
-    fileSize: file.size
+    fileSize: file.size,
   });
-  
+
   return { success: validProducts.length };
-}
+};
 ```
 
 ### Metadata Storage
@@ -398,57 +432,58 @@ uploadProductAllDept: async (file, onProgress) => {
 
 **Excel Columns → Firestore Fields:**
 
-| Excel Col | Index | Field Name | Example |
-|-----------|-------|------------|---------|
-| B | 1 | ItemCode | "7531745" |
-| F | 5 | Description | "BTS SCISSORS CURVED" |
-| L | 11 | Dept | "01" |
-| N | 13 | Class | "001" |
-| U | 20 | Merchandise | "Beauty" |
-| Y | 24 | RegPrice | 139.00 |
-| AD | 29 | Method | "RETAIL" |
-| AF | 31 | UnitPrice | 139.00 |
-| AJ | 35 | DealPrice | 99.00 |
-| AO | 40 | DealQty | 2 |
-| AS | 44 | Limit | 4 |
-| AV | 47 | MPG | "MPG01" |
-| AY | 50 | Tax | 7 |
-| BB | 53 | Brand | "BOOTS" |
+| Excel Col | Index | Field Name  | Example               |
+| --------- | ----- | ----------- | --------------------- |
+| B         | 1     | ItemCode    | "7531745"             |
+| F         | 5     | Description | "BTS SCISSORS CURVED" |
+| L         | 11    | Dept        | "01"                  |
+| N         | 13    | Class       | "001"                 |
+| U         | 20    | Merchandise | "Beauty"              |
+| Y         | 24    | RegPrice    | 139.00                |
+| AD        | 29    | Method      | "RETAIL"              |
+| AF        | 31    | UnitPrice   | 139.00                |
+| AJ        | 35    | DealPrice   | 99.00                 |
+| AO        | 40    | DealQty     | 2                     |
+| AS        | 44    | Limit       | 4                     |
+| AV        | 47    | MPG         | "MPG01"               |
+| AY        | 50    | Tax         | 7                     |
+| BB        | 53    | Brand       | "BOOTS"               |
 
 ### Processing Logic
 
 ```js
 uploadItemMasterPrintOnDept: async (file, onProgress) => {
   // 1. Check gating
-  const metadata = await getDoc(doc(db, 'uploadMetadata', 'ProductAllDept'));
+  const metadata = await getDoc(doc(db, "uploadMetadata", "ProductAllDept"));
   if (!metadata.exists() || !metadata.data().uploaded) {
-    throw new Error('Must upload ProductAllDept first');
+    throw new Error("Must upload ProductAllDept first");
   }
-  
+
   // 2. Parse file (.xls format)
   const workbook = XLSX.read(await file.arrayBuffer());
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-  
+
   let successCount = 0;
   let skippedCount = 0;
   const errors = [];
-  
+
   // 3. Process rows
-  for (const row of rows.slice(1)) { // Skip header
-    const itemCode = String(row[1] || '').trim(); // Column B
+  for (const row of rows.slice(1)) {
+    // Skip header
+    const itemCode = String(row[1] || "").trim(); // Column B
     if (!itemCode) continue;
-    
+
     // 4. Check if product exists
-    const productRef = doc(db, 'products', itemCode);
+    const productRef = doc(db, "products", itemCode);
     const productSnap = await getDoc(productRef);
-    
+
     if (!productSnap.exists()) {
       skippedCount++;
       errors.push(`Product ${itemCode} not found in master data`);
       continue;
     }
-    
+
     // 5. Merge print data
     await updateDoc(productRef, {
       description_print: row[5],
@@ -464,27 +499,27 @@ uploadItemMasterPrintOnDept: async (file, onProgress) => {
       mpg_print: row[47],
       tax_print: row[50],
       brand_print: row[53],
-      printData_updatedAt: serverTimestamp()
+      printData_updatedAt: serverTimestamp(),
     });
-    
+
     successCount++;
-    onProgress({ 
-      processed: successCount + skippedCount, 
-      total: rows.length - 1 
+    onProgress({
+      processed: successCount + skippedCount,
+      total: rows.length - 1,
     });
   }
-  
+
   // 6. Update metadata
-  await setDoc(doc(db, 'uploadMetadata', 'ItemMasterPrintOnDept'), {
+  await setDoc(doc(db, "uploadMetadata", "ItemMasterPrintOnDept"), {
     uploaded: true,
     itemCount: successCount,
     skipped: skippedCount,
     uploadedAt: serverTimestamp(),
-    fileName: file.name
+    fileName: file.name,
   });
-  
+
   return { success: successCount, skipped: skippedCount, errors };
-}
+};
 ```
 
 ---
@@ -493,51 +528,54 @@ uploadItemMasterPrintOnDept: async (file, onProgress) => {
 
 ### Column Mapping
 
-| Excel Col | Index | Field Name | Example |
-|-----------|-------|------------|---------|
-| B | 1 | ItemCode | "7531745" |
-| F | 5 | Description | "BTS SCISSORS" |
-| L | 11 | Type | "REGULAR" |
-| N | 13 | Dept | "01" |
-| R | 17 | Class | "001" |
-| V | 21 | RegPrice | 139.00 |
-| Y | 24 | Method | "RETAIL" |
-| AB | 27 | UnitPrice | 139.00 |
-| AF | 31 | DealPrice | 99.00 |
-| AL | 37 | DealQty | 2 |
-| AQ | 42 | LimitQty | 4 |
-| AT | 45 | MPGroup | "MPG01" |
+| Excel Col | Index | Field Name  | Example        |
+| --------- | ----- | ----------- | -------------- |
+| B         | 1     | ItemCode    | "7531745"      |
+| F         | 5     | Description | "BTS SCISSORS" |
+| L         | 11    | Type        | "REGULAR"      |
+| N         | 13    | Dept        | "01"           |
+| R         | 17    | Class       | "001"          |
+| V         | 21    | RegPrice    | 139.00         |
+| Y         | 24    | Method      | "RETAIL"       |
+| AB        | 27    | UnitPrice   | 139.00         |
+| AF        | 31    | DealPrice   | 99.00          |
+| AL        | 37    | DealQty     | 2              |
+| AQ        | 42    | LimitQty    | 4              |
+| AT        | 45    | MPGroup     | "MPG01"        |
 
 ### Processing Logic
 
 ```js
 uploadItemMaintananceEvent: async (file, onProgress) => {
   // 1. Gating check (same as print)
-  const metadata = await getDoc(doc(db, 'uploadMetadata', 'ProductAllDept'));
+  const metadata = await getDoc(doc(db, "uploadMetadata", "ProductAllDept"));
   if (!metadata.exists() || !metadata.data().uploaded) {
-    throw new Error('Must upload ProductAllDept first');
+    throw new Error("Must upload ProductAllDept first");
   }
-  
+
   // 2. Parse file
   const workbook = XLSX.read(await file.arrayBuffer());
-  const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
-  
+  const rows = XLSX.utils.sheet_to_json(
+    workbook.Sheets[workbook.SheetNames[0]],
+    { header: 1 },
+  );
+
   let successCount = 0;
   let skippedCount = 0;
-  
+
   // 3. Process rows
   for (const row of rows.slice(1)) {
-    const itemCode = String(row[1] || '').trim();
+    const itemCode = String(row[1] || "").trim();
     if (!itemCode) continue;
-    
-    const productRef = doc(db, 'products', itemCode);
+
+    const productRef = doc(db, "products", itemCode);
     const productSnap = await getDoc(productRef);
-    
+
     if (!productSnap.exists()) {
       skippedCount++;
       continue;
     }
-    
+
     // 4. Merge maintenance data
     await updateDoc(productRef, {
       description_maint: row[5],
@@ -551,24 +589,27 @@ uploadItemMaintananceEvent: async (file, onProgress) => {
       dealQty_maint: row[37],
       limitQty_maint: row[42],
       mpGroup_maint: row[45],
-      maintData_updatedAt: serverTimestamp()
+      maintData_updatedAt: serverTimestamp(),
     });
-    
+
     successCount++;
-    onProgress({ processed: successCount + skippedCount, total: rows.length - 1 });
+    onProgress({
+      processed: successCount + skippedCount,
+      total: rows.length - 1,
+    });
   }
-  
+
   // 5. Update metadata
-  await setDoc(doc(db, 'uploadMetadata', 'ItemMaintananceEvent'), {
+  await setDoc(doc(db, "uploadMetadata", "ItemMaintananceEvent"), {
     uploaded: true,
     itemCount: successCount,
     skipped: skippedCount,
     uploadedAt: serverTimestamp(),
-    fileName: file.name
+    fileName: file.name,
   });
-  
+
   return { success: successCount, skipped: skippedCount };
-}
+};
 ```
 
 ---
@@ -576,6 +617,7 @@ uploadItemMaintananceEvent: async (file, onProgress) => {
 ## 8. Autocomplete Search in Upload Page ✅
 
 ### Requirement
+
 Display autocomplete dropdown in upload pages when user types product search.
 
 ### Implementation
@@ -583,11 +625,11 @@ Display autocomplete dropdown in upload pages when user types product search.
 **Component:** [`src/components/ProductAutocomplete.jsx`](src/components/ProductAutocomplete.jsx)
 
 ```jsx
-import { useState, useEffect } from 'react';
-import { posService } from '../services/posService';
+import { useState, useEffect } from "react";
+import { posService } from "../services/posService";
 
 export default function ProductAutocomplete({ onSelect }) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -602,7 +644,7 @@ export default function ProductAutocomplete({ onSelect }) {
         setShowDropdown(false);
       }
     }, 300);
-    
+
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -615,7 +657,7 @@ export default function ProductAutocomplete({ onSelect }) {
         placeholder="Search products..."
         className="w-full px-4 py-2 border rounded-lg"
       />
-      
+
       {showDropdown && results.length > 0 && (
         <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-64 overflow-y-auto">
           {results.map((product) => (
@@ -624,13 +666,15 @@ export default function ProductAutocomplete({ onSelect }) {
               onClick={() => {
                 onSelect(product);
                 setShowDropdown(false);
-                setQuery('');
+                setQuery("");
               }}
               className="p-3 hover:bg-gray-100 cursor-pointer border-b"
             >
               <div className="font-bold text-gray-800">{product.name}</div>
               <div className="text-sm text-gray-500">SKU: {product.sku}</div>
-              <div className="text-lg font-bold text-blue-600">฿{product.price.toLocaleString()}</div>
+              <div className="text-lg font-bold text-blue-600">
+                ฿{product.price.toLocaleString()}
+              </div>
             </div>
           ))}
         </div>
@@ -641,11 +685,14 @@ export default function ProductAutocomplete({ onSelect }) {
 ```
 
 **Usage in Upload Pages:**
+
 ```jsx
-<ProductAutocomplete onSelect={(product) => {
-  console.log('Selected:', product);
-  // Use for validation or preview
-}} />
+<ProductAutocomplete
+  onSelect={(product) => {
+    console.log("Selected:", product);
+    // Use for validation or preview
+  }}
+/>
 ```
 
 ---
@@ -682,19 +729,21 @@ graph TD
 ### C. Implementation Strategy
 
 **1. Preload Next Likely Tab**
+
 ```jsx
 useEffect(() => {
   // Preload adjacent tabs on hover
   const preloadTab = (tabName) => {
-    if (tabName === 'pos') import('./components/PosUI');
-    if (tabName === 'inventory') import('./pages/InventoryPage');
+    if (tabName === "pos") import("./components/PosUI");
+    if (tabName === "inventory") import("./pages/InventoryPage");
   };
-  
+
   // Attach to tab hover events
 }, []);
 ```
 
 **2. Streaming Data Pattern**
+
 ```jsx
 function DashboardPage() {
   const [criticalData, setCriticalData] = useState(null);
@@ -703,7 +752,7 @@ function DashboardPage() {
   useEffect(() => {
     // Load critical data first
     fetchCriticalData().then(setCriticalData);
-    
+
     // Load secondary data after
     setTimeout(() => {
       fetchSecondaryData().then(setSecondaryData);
@@ -722,6 +771,7 @@ function DashboardPage() {
 **3. Skeleton Components**
 
 Create reusable skeletons:
+
 - [`src/components/skeletons/TabSkeleton.jsx`](src/components/skeletons/TabSkeleton.jsx)
 - [`src/components/skeletons/TableSkeleton.jsx`](src/components/skeletons/TableSkeleton.jsx)
 - [`src/components/skeletons/CardSkeleton.jsx`](src/components/skeletons/CardSkeleton.jsx)
@@ -743,6 +793,7 @@ export default function TabSkeleton() {
 ## 10. Authentication Refactor ✅
 
 ### Current State
+
 [`src/services/authService.js`](src/services/authService.js) has basic Firebase Auth stub.
 
 ### Target Architecture
@@ -767,11 +818,11 @@ export default function TabSkeleton() {
 **Create:** [`src/context/AuthContext.jsx`](src/context/AuthContext.jsx)
 
 ```jsx
-import { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { createContext, useContext, useState, useEffect } from "react";
+import { auth } from "../lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
 const AuthContext = createContext();
 
@@ -784,11 +835,11 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         // Fetch user role from Firestore
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
         const userData = userDoc.data();
-        
+
         setUser(firebaseUser);
-        setRole(userData?.role || 'cashier');
+        setRole(userData?.role || "cashier");
       } else {
         setUser(null);
         setRole(null);
@@ -814,30 +865,33 @@ export const useAuth = () => useContext(AuthContext);
 **Create:** [`src/pages/LoginPage.jsx`](src/pages/LoginPage.jsx)
 
 ```jsx
-import { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../lib/firebase';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../lib/firebase";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate('/');
+      navigate("/");
     } catch (err) {
-      setError('Invalid credentials');
+      setError("Invalid credentials");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleLogin} className="bg-white p-8 rounded-lg shadow-lg w-96">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-8 rounded-lg shadow-lg w-96"
+      >
         <h2 className="text-2xl font-bold mb-6">Boots POS Login</h2>
         {error && <div className="text-red-500 mb-4">{error}</div>}
         <input
@@ -854,7 +908,10 @@ export default function LoginPage() {
           placeholder="Password"
           className="w-full px-4 py-2 border rounded mb-4"
         />
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-2 rounded"
+        >
           Login
         </button>
       </form>
@@ -868,15 +925,15 @@ export default function LoginPage() {
 **Create:** [`src/components/ProtectedRoute.jsx`](src/components/ProtectedRoute.jsx)
 
 ```jsx
-import { useAuth } from '../context/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { useAuth } from "../context/AuthContext";
+import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({ children, requiredRole }) {
   const { user, role, loading } = useAuth();
 
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" />;
-  if (requiredRole && role !== requiredRole && role !== 'admin') {
+  if (requiredRole && role !== requiredRole && role !== "admin") {
     return <div>Access Denied</div>;
   }
 
@@ -885,12 +942,16 @@ export default function ProtectedRoute({ children, requiredRole }) {
 ```
 
 **Usage:**
+
 ```jsx
-<Route path="/admin" element={
-  <ProtectedRoute requiredRole="admin">
-    <AdminSettingsPage />
-  </ProtectedRoute>
-} />
+<Route
+  path="/admin"
+  element={
+    <ProtectedRoute requiredRole="admin">
+      <AdminSettingsPage />
+    </ProtectedRoute>
+  }
+/>
 ```
 
 #### D. Firestore Security Rules
@@ -901,31 +962,31 @@ export default function ProtectedRoute({ children, requiredRole }) {
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Users collection - only authenticated users can read their own data
     match /users/{userId} {
       allow read: if request.auth.uid == userId;
       allow write: if request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-    
+
     // Products - cashiers can read, only admins can write
     match /products/{productId} {
       allow read: if request.auth != null;
       allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-    
+
     // Upload metadata - only admins
     match /uploadMetadata/{docId} {
       allow read: if request.auth != null;
       allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-    
+
     // App settings - only admins
     match /appSettings/{docId} {
       allow read: if request.auth != null;
       allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-    
+
     // Invoices - authenticated users can create, read own
     match /invoices/{invoiceId} {
       allow read: if request.auth != null;
@@ -959,11 +1020,14 @@ Firebase Auth handles token refresh automatically. For manual checks:
 
 ```js
 useEffect(() => {
-  const interval = setInterval(async () => {
-    if (auth.currentUser) {
-      await auth.currentUser.getIdToken(true); // Force refresh
-    }
-  }, 55 * 60 * 1000); // Every 55 minutes
+  const interval = setInterval(
+    async () => {
+      if (auth.currentUser) {
+        await auth.currentUser.getIdToken(true); // Force refresh
+      }
+    },
+    55 * 60 * 1000,
+  ); // Every 55 minutes
 
   return () => clearInterval(interval);
 }, []);
@@ -976,11 +1040,13 @@ useEffect(() => {
 ### A. Sample Files Preparation
 
 **Create test files:**
+
 1. `test-files/ProductAllDept_sample.xlsx` - 100 rows, mixed valid/invalid
 2. `test-files/ItemMasterPrintOnDept_sample.xls` - 50 rows
 3. `test-files/ItemMaintananceEvent_sample.xlsx` - 50 rows
 
 **Test Cases:**
+
 - ✅ Valid file with all correct data
 - ❌ Empty file
 - ❌ Wrong headers/columns
@@ -993,6 +1059,7 @@ useEffect(() => {
 ### B. Upload Testing Checklist
 
 **ProductAllDept:**
+
 - [ ] Rejects upload without .xlsx/.xls/.csv extension
 - [ ] Shows validation errors for missing ProductCode
 - [ ] Filters out non-zero ProductStatus
@@ -1003,12 +1070,14 @@ useEffect(() => {
 - [ ] Error log displays failures
 
 **ItemMasterPrintOnDept:**
+
 - [ ] Blocked if ProductAllDept not uploaded
 - [ ] Maps columns B,F,L,N,U,Y,AD,AF,AJ,AO,AS,AV,AY,BB correctly
 - [ ] Skips products not in master
 - [ ] Shows skipped count in summary
 
 **ItemMaintananceEvent:**
+
 - [ ] Blocked if ProductAllDept not uploaded
 - [ ] Maps columns B,F,L,N,R,V,Y,AB,AF,AL,AQ,AT correctly
 - [ ] Merges data without overwriting master fields
@@ -1016,6 +1085,7 @@ useEffect(() => {
 ### C. Animation/Performance Testing
 
 **Metrics:**
+
 - [ ] Initial load < 2 seconds (with cache)
 - [ ] Tab switch < 300ms (already loaded)
 - [ ] Tab switch < 1 second (lazy load)
@@ -1024,6 +1094,7 @@ useEffect(() => {
 - [ ] No layout shift during skeleton → content transition
 
 **Tools:**
+
 - Chrome DevTools Performance tab
 - React DevTools Profiler
 - Lighthouse audit
@@ -1031,12 +1102,14 @@ useEffect(() => {
 ### D. Thai Font Testing
 
 **Verify:**
+
 - [ ] Thai characters render correctly across all pages
 - [ ] Font weight variations (100-900) display properly
 - [ ] No fallback to system font
 - [ ] Consistent spacing and line height
 
 **Test Strings:**
+
 ```
 สแกนบาร์โค้ด...
 ตะกร้าว่างเปล่า
@@ -1047,6 +1120,7 @@ useEffect(() => {
 ### E. Auth Testing
 
 **Scenarios:**
+
 - [ ] Login with valid credentials
 - [ ] Login with invalid credentials
 - [ ] Logout and session clear
@@ -1058,6 +1132,7 @@ useEffect(() => {
 ### F. Cross-Browser Testing
 
 **Browsers:**
+
 - [ ] Chrome (latest)
 - [ ] Firefox (latest)
 - [ ] Edge (latest)
@@ -1076,6 +1151,7 @@ useEffect(() => {
 ## 12. Implementation Roadmap
 
 ### Phase 1: Foundation (Week 1)
+
 - [x] Install dependencies (framer-motion)
 - [ ] Apply Noto Sans Thai font globally
 - [ ] Remove Layout.jsx sidebar
@@ -1084,6 +1160,7 @@ useEffect(() => {
 - [ ] Create skeleton components
 
 ### Phase 2: Admin Settings (Week 2)
+
 - [ ] Build AdminSettingsPage with sub-tabs
 - [ ] Implement Feature Toggles UI
 - [ ] Create upload panel layout with 3 sections
@@ -1091,6 +1168,7 @@ useEffect(() => {
 - [ ] Implement gating logic
 
 ### Phase 3: Upload Backend (Week 2-3)
+
 - [ ] Refactor posService.uploadProductAllDept
 - [ ] Add posService.uploadItemMasterPrintOnDept
 - [ ] Add posService.uploadItemMaintananceEvent
@@ -1098,6 +1176,7 @@ useEffect(() => {
 - [ ] Add progress tracking
 
 ### Phase 4: UX Polish (Week 3)
+
 - [ ] Build ProductAutocomplete component
 - [ ] Add framer-motion transitions
 - [ ] Create upload progress bars
@@ -1105,6 +1184,7 @@ useEffect(() => {
 - [ ] Test streaming/skeleton flow
 
 ### Phase 5: Authentication (Week 4)
+
 - [ ] Create AuthContext
 - [ ] Build LoginPage
 - [ ] Add ProtectedRoute guards
@@ -1112,6 +1192,7 @@ useEffect(() => {
 - [ ] Implement token refresh
 
 ### Phase 6: Testing & Deployment (Week 4)
+
 - [ ] Prepare sample test files
 - [ ] Run full QA checklist
 - [ ] Performance optimization
@@ -1154,18 +1235,18 @@ graph TB
         H --> J[PrintOnDept]
         H --> K[MaintenanceEvent]
     end
-    
+
     subgraph "Services Layer"
         L[posService.js] --> M[Upload Functions]
         N[authService.js] --> O[Firebase Auth]
     end
-    
+
     subgraph "Backend - Firebase"
         P[Firestore]
         Q[Authentication]
         R[Security Rules]
     end
-    
+
     M --> P
     O --> Q
     R --> P
@@ -1176,6 +1257,7 @@ graph TB
 ## Files to Create/Modify
 
 ### Create New Files:
+
 1. [`src/pages/DashboardPage.jsx`](src/pages/DashboardPage.jsx)
 2. [`src/pages/InventoryPage.jsx`](src/pages/InventoryPage.jsx)
 3. [`src/pages/OrdersPage.jsx`](src/pages/OrdersPage.jsx)
@@ -1188,6 +1270,7 @@ graph TB
 10. [`src/context/AuthContext.jsx`](src/context/AuthContext.jsx)
 
 ### Modify Existing Files:
+
 1. [`src/App.jsx`](src/App.jsx) - Remove router, add tab logic
 2. [`src/index.css`](src/index.css) - Add Noto Sans Thai font
 3. [`tailwind.config.js`](tailwind.config.js) - Configure font
@@ -1196,6 +1279,7 @@ graph TB
 6. [`firestore.rules`](firestore.rules) - Add security rules
 
 ### Delete Files:
+
 1. [`src/components/Layout.jsx`](src/components/Layout.jsx) - No longer needed
 
 ---

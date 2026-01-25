@@ -1,13 +1,16 @@
-const { OpenAIProvider } = require('./providers/openai');
-const { VertexAIProvider } = require('./providers/vertex');
-const { AnthropicProvider } = require('./providers/anthropic');
-const admin = require('firebase-admin');
-const crypto = require('crypto');
+const { OpenAIProvider } = require("./providers/openai");
+const { VertexAIProvider } = require("./providers/vertex");
+const { AnthropicProvider } = require("./providers/anthropic");
+const admin = require("firebase-admin");
+const crypto = require("crypto");
 
 class AIOrchestrator {
   constructor(config) {
     this.openai = new OpenAIProvider(config.openaiKey);
-    this.vertex = new VertexAIProvider(config.vertexProject, config.vertexLocation);
+    this.vertex = new VertexAIProvider(
+      config.vertexProject,
+      config.vertexLocation,
+    );
     this.anthropic = new AnthropicProvider(config.anthropicKey);
     this.db = admin.firestore();
   }
@@ -18,34 +21,39 @@ class AIOrchestrator {
 
     try {
       console.log(`[Orchestrator ${runId}] Starting 3-AI generation...`);
-      
-      const [openaiResponse, vertexResponse, anthropicResponse] = await Promise.all([
-        this.openai.generatePlan(spec, schemaContext),
-        this.vertex.generatePlan(spec, schemaContext),
-        this.anthropic.generatePlan(spec, schemaContext),
-      ]);
+
+      const [openaiResponse, vertexResponse, anthropicResponse] =
+        await Promise.all([
+          this.openai.generatePlan(spec, schemaContext),
+          this.vertex.generatePlan(spec, schemaContext),
+          this.anthropic.generatePlan(spec, schemaContext),
+        ]);
 
       const providers = [openaiResponse, vertexResponse, anthropicResponse];
-      const successfulProviders = providers.filter(p => p.success && p.plan);
+      const successfulProviders = providers.filter((p) => p.success && p.plan);
 
-      console.log(`[Orchestrator ${runId}] Successful: ${successfulProviders.length}/3`);
+      console.log(
+        `[Orchestrator ${runId}] Successful: ${successfulProviders.length}/3`,
+      );
 
       if (successfulProviders.length < 2) {
         return this.createFailedResult(
-          runId, 
-          providers, 
-          'Insufficient successful AI responses (need 2/3)'
+          runId,
+          providers,
+          "Insufficient successful AI responses (need 2/3)",
         );
       }
 
-      const normalizedPlans = successfulProviders.map(p => this.normalizePlan(p.plan));
+      const normalizedPlans = successfulProviders.map((p) =>
+        this.normalizePlan(p.plan),
+      );
       const quorumResult = this.findQuorum(normalizedPlans);
 
       if (!quorumResult.found) {
         return this.createFailedResult(
-          runId, 
-          providers, 
-          'No quorum reached: AI providers disagree'
+          runId,
+          providers,
+          "No quorum reached: AI providers disagree",
         );
       }
 
@@ -54,9 +62,9 @@ class AIOrchestrator {
 
       if (!perfValidation.valid) {
         return this.createFailedResult(
-          runId, 
-          providers, 
-          `Performance budget exceeded: ${perfValidation.issues.join(', ')}`
+          runId,
+          providers,
+          `Performance budget exceeded: ${perfValidation.issues.join(", ")}`,
         );
       }
 
@@ -85,21 +93,21 @@ class AIOrchestrator {
   normalizePlan(plan) {
     return {
       ui: {
-        patches: (plan.ui?.patches || []).sort((a, b) => 
-          (a.targetPath || '').localeCompare(b.targetPath || '')
+        patches: (plan.ui?.patches || []).sort((a, b) =>
+          (a.targetPath || "").localeCompare(b.targetPath || ""),
         ),
       },
       db: {
-        reads: (plan.db?.reads || []).sort((a, b) => 
-          (a.collection || '').localeCompare(b.collection || '')
+        reads: (plan.db?.reads || []).sort((a, b) =>
+          (a.collection || "").localeCompare(b.collection || ""),
         ),
-        writes: (plan.db?.writes || []).sort((a, b) => 
-          (a.collection || '').localeCompare(b.collection || '')
+        writes: (plan.db?.writes || []).sort((a, b) =>
+          (a.collection || "").localeCompare(b.collection || ""),
         ),
       },
       ps: {
-        steps: (plan.ps?.steps || []).sort((a, b) => 
-          (a.targetPath || '').localeCompare(b.targetPath || '')
+        steps: (plan.ps?.steps || []).sort((a, b) =>
+          (a.targetPath || "").localeCompare(b.targetPath || ""),
         ),
       },
     };
@@ -125,8 +133,12 @@ class AIOrchestrator {
     let matches = 0;
     let total = 0;
 
-    const uiPaths1 = new Set((plan1.ui?.patches || []).map(p => p.targetPath));
-    const uiPaths2 = new Set((plan2.ui?.patches || []).map(p => p.targetPath));
+    const uiPaths1 = new Set(
+      (plan1.ui?.patches || []).map((p) => p.targetPath),
+    );
+    const uiPaths2 = new Set(
+      (plan2.ui?.patches || []).map((p) => p.targetPath),
+    );
     matches += this.setIntersectionSize(uiPaths1, uiPaths2);
     total += Math.max(uiPaths1.size, uiPaths2.size);
 
@@ -143,20 +155,22 @@ class AIOrchestrator {
 
   validatePerformance(plan) {
     const issues = [];
-    
+
     const totalCodeLength = (plan.ui?.patches || []).reduce(
-      (sum, patch) => sum + (patch.content?.length || 0), 
-      0
+      (sum, patch) => sum + (patch.content?.length || 0),
+      0,
     );
-    const estimatedBundleSizeKB = totalCodeLength / 1024 * 0.3;
+    const estimatedBundleSizeKB = (totalCodeLength / 1024) * 0.3;
 
     const totalReads = (plan.db?.reads || []).reduce(
-      (sum, op) => sum + (op.estimatedReads || 0), 
-      0
+      (sum, op) => sum + (op.estimatedReads || 0),
+      0,
     );
 
     if (estimatedBundleSizeKB > 5) {
-      issues.push(`Bundle size ${estimatedBundleSizeKB.toFixed(2)}KB exceeds 5KB`);
+      issues.push(
+        `Bundle size ${estimatedBundleSizeKB.toFixed(2)}KB exceeds 5KB`,
+      );
     }
 
     if (totalReads > 2) {
@@ -186,17 +200,20 @@ class AIOrchestrator {
 
   async saveAudit(runId, prompt, result, metrics) {
     try {
-      await this.db.collection('ai_audit').doc(runId).set({
-        runId,
-        prompt: this.sanitizePII(prompt),
-        responses: result.providers,
-        quorumResult: result.quorumMet,
-        agreedPlan: result.agreedPlan || null,
-        performanceMetrics: metrics || null,
-        success: result.success,
-        error: result.error || null,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      await this.db
+        .collection("ai_audit")
+        .doc(runId)
+        .set({
+          runId,
+          prompt: this.sanitizePII(prompt),
+          responses: result.providers,
+          quorumResult: result.quorumMet,
+          agreedPlan: result.agreedPlan || null,
+          performanceMetrics: metrics || null,
+          success: result.success,
+          error: result.error || null,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
     } catch (error) {
       console.error(`[Orchestrator ${runId}] Failed to save audit:`, error);
     }
@@ -204,12 +221,15 @@ class AIOrchestrator {
 
   sanitizePII(text) {
     return text
-      .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]')
-      .replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, '[PHONE]');
+      .replace(
+        /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+        "[EMAIL]",
+      )
+      .replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, "[PHONE]");
   }
 
   generateRunId() {
-    return `run_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    return `run_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
   }
 }
 

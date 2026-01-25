@@ -4,12 +4,20 @@ import { isMenuAllowed } from "./rbac";
 describe("isMenuAllowed", () => {
   describe("Deny-by-default (no access config)", () => {
     it("should deny when access is undefined", () => {
-      const result = isMenuAllowed({ uid: "user123", roles: ["user"], access: undefined });
+      const result = isMenuAllowed({
+        uid: "user123",
+        roles: ["user"],
+        access: undefined,
+      });
       expect(result).toBe(false);
     });
 
     it("should deny when access is null", () => {
-      const result = isMenuAllowed({ uid: "user123", roles: ["user"], access: null });
+      const result = isMenuAllowed({
+        uid: "user123",
+        roles: ["user"],
+        access: null,
+      });
       expect(result).toBe(false);
     });
 
@@ -24,7 +32,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: "user123",
         roles: [],
-        access: { allowedUsers: ["user123", "user456"] }
+        access: { allowedUsers: ["user123", "user456"] },
       });
       expect(result).toBe(true);
     });
@@ -33,7 +41,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: "user999",
         roles: [],
-        access: { allowedUsers: ["user123", "user456"] }
+        access: { allowedUsers: ["user123", "user456"] },
       });
       expect(result).toBe(false);
     });
@@ -42,7 +50,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: 0,
         roles: [],
-        access: { allowedUsers: [0, 1, 2] }
+        access: { allowedUsers: [0, 1, 2] },
       });
       expect(result).toBe(true);
     });
@@ -51,7 +59,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: "",
         roles: [],
-        access: { allowedUsers: ["", "user123"] }
+        access: { allowedUsers: ["", "user123"] },
       });
       expect(result).toBe(true);
     });
@@ -60,7 +68,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: null,
         roles: [],
-        access: { allowedUsers: ["user123"] }
+        access: { allowedUsers: ["user123"] },
       });
       expect(result).toBe(false);
     });
@@ -69,7 +77,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: undefined,
         roles: [],
-        access: { allowedUsers: ["user123"] }
+        access: { allowedUsers: ["user123"] },
       });
       expect(result).toBe(false);
     });
@@ -80,7 +88,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: "user123",
         roles: ["admin", "user"],
-        access: { defaultRoles: ["admin"], allowedRoles: [] }
+        access: { defaultRoles: ["admin"], allowedRoles: [] },
       });
       expect(result).toBe(true);
     });
@@ -89,7 +97,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: "user123",
         roles: ["user", "viewer"],
-        access: { defaultRoles: ["admin"], allowedRoles: ["viewer"] }
+        access: { defaultRoles: ["admin"], allowedRoles: ["viewer"] },
       });
       expect(result).toBe(true);
     });
@@ -98,7 +106,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: "user123",
         roles: ["guest"],
-        access: { defaultRoles: ["admin"], allowedRoles: ["moderator"] }
+        access: { defaultRoles: ["admin"], allowedRoles: ["moderator"] },
       });
       expect(result).toBe(false);
     });
@@ -107,7 +115,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: "user123",
         roles: ["guest", "user", "admin"],
-        access: { defaultRoles: ["admin"], allowedRoles: [] }
+        access: { defaultRoles: ["admin"], allowedRoles: [] },
       });
       expect(result).toBe(true);
     });
@@ -121,8 +129,8 @@ describe("isMenuAllowed", () => {
         access: {
           allowedUsers: ["user123"],
           defaultRoles: ["admin"],
-          allowedRoles: []
-        }
+          allowedRoles: [],
+        },
       });
       expect(result).toBe(true);
     });
@@ -134,8 +142,8 @@ describe("isMenuAllowed", () => {
         access: {
           allowedUsers: ["user123"],
           defaultRoles: ["admin"],
-          allowedRoles: []
-        }
+          allowedRoles: [],
+        },
       });
       expect(result).toBe(true);
     });
@@ -147,8 +155,8 @@ describe("isMenuAllowed", () => {
         access: {
           allowedUsers: ["user123"],
           defaultRoles: ["admin"],
-          allowedRoles: []
-        }
+          allowedRoles: [],
+        },
       });
       expect(result).toBe(false);
     });
@@ -159,7 +167,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: "user123",
         roles: ["user"],
-        access: { allowedUsers: [] }
+        access: { allowedUsers: [] },
       });
       expect(result).toBe(false);
     });
@@ -168,7 +176,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: "user123",
         roles: ["user"],
-        access: { allowedUsers: "not-an-array" }
+        access: { allowedUsers: "not-an-array" },
       });
       expect(result).toBe(false);
     });
@@ -177,7 +185,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: "user123",
         roles: "not-an-array",
-        access: { defaultRoles: ["user"] }
+        access: { defaultRoles: ["user"] },
       });
       expect(result).toBe(false);
     });
@@ -186,7 +194,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: "user123",
         roles: ["user"],
-        access: {}
+        access: {},
       });
       expect(result).toBe(false);
     });
@@ -195,7 +203,7 @@ describe("isMenuAllowed", () => {
       const result = isMenuAllowed({
         uid: "user123",
         roles: ["user"],
-        access: { defaultRoles: [], allowedRoles: [], allowedUsers: [] }
+        access: { defaultRoles: [], allowedRoles: [], allowedUsers: [] },
       });
       expect(result).toBe(false);
     });

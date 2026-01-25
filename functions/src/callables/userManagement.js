@@ -9,7 +9,9 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 function normLower(v) {
-  return String(v || "").trim().toLowerCase();
+  return String(v || "")
+    .trim()
+    .toLowerCase();
 }
 
 async function getCallerProfile(uid) {
@@ -52,7 +54,9 @@ exports.createManagedUser = async (data, context) => {
   const email = normLower(data && data.email);
   const password = String((data && data.password) || "").trim();
   const role = String((data && data.role) || "user").trim();
-  const allowedMenus = Array.isArray(data && data.allowedMenus) ? data.allowedMenus.map(String) : [];
+  const allowedMenus = Array.isArray(data && data.allowedMenus)
+    ? data.allowedMenus.map(String)
+    : [];
 
   if (!username || username.length < 3) {
     const err = new Error("Username must be at least 3 characters");
@@ -121,7 +125,9 @@ exports.createManagedUser = async (data, context) => {
     await batch.commit();
   } catch (e) {
     // Best-effort rollback auth user if Firestore write fails
-    try { await admin.auth().deleteUser(uid); } catch (_) {}
+    try {
+      await admin.auth().deleteUser(uid);
+    } catch (_) {}
     const msg = e && e.message ? e.message : "Failed to create user profile";
     const err = new Error(msg);
     err.code = "internal";

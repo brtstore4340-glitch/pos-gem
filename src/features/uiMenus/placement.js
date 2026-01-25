@@ -4,13 +4,23 @@ function normalizeGroup(g) {
 }
 
 function normalizeMode(m) {
-  if (m === "append_end" || m === "before_ref" || m === "after_ref" || m === "at_index") return m;
+  if (
+    m === "append_end" ||
+    m === "before_ref" ||
+    m === "after_ref" ||
+    m === "at_index"
+  )
+    return m;
   return "append_end";
 }
 
 export function applyPlacement(items, group) {
   const filtered = (items || [])
-    .filter((i) => (i.enabled ?? true) && normalizeGroup(i?.placement?.group ?? i.group) === group)
+    .filter(
+      (i) =>
+        (i.enabled ?? true) &&
+        normalizeGroup(i?.placement?.group ?? i.group) === group,
+    )
     .sort((a, b) => Number(a.order ?? 9999) - Number(b.order ?? 9999));
 
   const result = [];

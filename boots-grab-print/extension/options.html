@@ -1,37 +1,78 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GRAB PRINT Settings</title>
-  <style>
-    body { font-family: system-ui, Arial; margin: 0; padding: 16px; max-width: 720px; }
-    label { display:block; margin-top: 12px; font-size: 12px; color:#333; }
-    input { width:100%; padding: 8px; border: 1px solid #ddd; border-radius: 10px; }
-    button { margin-top: 14px; padding: 10px 12px; border:0; border-radius: 12px; background:#111827; color:#fff; font-weight: 800; cursor:pointer; }
-    .hint { font-size: 12px; color:#555; margin-top: 6px; }
-    .ok { color:#0a7; margin-top: 10px; }
-    .err { color:#b00020; margin-top: 10px; white-space: pre-wrap; }
-  </style>
-</head>
-<body>
-  <h2 style="margin:0 0 6px 0;">GRAB PRINT Settings</h2>
-  <div class="hint">ขั้นต่ำเพื่อเห็นเมนู: Load Unpacked + Pin. ส่วน Ingest ต้องใส่ branchId/token/baseUrl.</div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>GRAB PRINT Settings</title>
+    <style>
+      body {
+        font-family: system-ui, Arial;
+        margin: 0;
+        padding: 16px;
+        max-width: 720px;
+      }
+      label {
+        display: block;
+        margin-top: 12px;
+        font-size: 12px;
+        color: #333;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+      }
+      button {
+        margin-top: 14px;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 12px;
+        background: #111827;
+        color: #fff;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .hint {
+        font-size: 12px;
+        color: #555;
+        margin-top: 6px;
+      }
+      .ok {
+        color: #0a7;
+        margin-top: 10px;
+      }
+      .err {
+        color: #b00020;
+        margin-top: 10px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h2 style="margin: 0 0 6px 0">GRAB PRINT Settings</h2>
+    <div class="hint">
+      ขั้นต่ำเพื่อเห็นเมนู: Load Unpacked + Pin. ส่วน Ingest ต้องใส่
+      branchId/token/baseUrl.
+    </div>
 
-  <label>branchId</label>
-  <input id="branchId" placeholder="เช่น BKK001" />
+    <label>branchId</label>
+    <input id="branchId" placeholder="เช่น BKK001" />
 
-  <label>shared token</label>
-  <input id="token" placeholder="token" />
+    <label>shared token</label>
+    <input id="token" placeholder="token" />
 
-  <label>ingest baseUrl (เช่น https://&lt;project&gt;.web.app หรือ http://localhost:5000)</label>
-  <input id="baseUrl" placeholder="https://REPLACE_ME.web.app" />
+    <label
+      >ingest baseUrl (เช่น https://&lt;project&gt;.web.app หรือ
+      http://localhost:5000)</label
+    >
+    <input id="baseUrl" placeholder="https://REPLACE_ME.web.app" />
 
-  <button id="save">Save</button>
+    <button id="save">Save</button>
 
-  <div class="ok" id="ok"></div>
-  <div class="err" id="err"></div>
+    <div class="ok" id="ok"></div>
+    <div class="err" id="err"></div>
 
-  <script type="module" src="src/options.js"></script>
-</body>
+    <script type="module" src="src/options.js"></script>
+  </body>
 </html>

@@ -2,7 +2,7 @@
   let subtotal = 0;
   let totalItems = 0;
 
-  const processedItems = items.map(item => {
+  const processedItems = items.map((item) => {
     const total = item.price * item.qty;
     subtotal += total;
     totalItems += item.qty;
@@ -11,7 +11,7 @@
 
   const vatRate = 7;
   const grandTotal = subtotal;
-  const netTotal = grandTotal / (1 + (vatRate / 100));
+  const netTotal = grandTotal / (1 + vatRate / 100);
   const vatTotal = grandTotal - netTotal;
 
   return {
@@ -20,7 +20,7 @@
       totalItems,
       subtotal: Number(subtotal.toFixed(2)),
       vatTotal: Number(vatTotal.toFixed(2)),
-      grandTotal: Number(grandTotal.toFixed(2))
-    }
+      grandTotal: Number(grandTotal.toFixed(2)),
+    },
   };
 };

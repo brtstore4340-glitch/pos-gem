@@ -1,17 +1,18 @@
 ﻿/* THAM_APPCHECK_DISABLED_NOTE: AppCheck is disabled via VITE_ENABLE_APPCHECK=false to unblock Admin Console. */
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getFunctions } from 'firebase/functions';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
-import { firebaseConfig, firebaseRegion } from '../config/firebaseConfig';
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getStorage } from "firebase/storage";
+import { firebaseConfig, firebaseRegion } from "../config/firebaseConfig";
 
 // Force App Check on (ignore env override unless explicitly disabled in code).
 const __ENABLE_APPCHECK__ =
-  String(import.meta.env.VITE_ENABLE_APPCHECK ?? 'false').toLowerCase() === 'true';
+  String(import.meta.env.VITE_ENABLE_APPCHECK ?? "false").toLowerCase() ===
+  "true";
 
 // DEBUG: Log Firebase configuration
-console.log('🔥 Firebase Config Debug:', {
+console.log("🔥 Firebase Config Debug:", {
   hasApiKey: !!firebaseConfig.apiKey,
   hasAuthDomain: !!firebaseConfig.authDomain,
   hasProjectId: !!firebaseConfig.projectId,
@@ -22,8 +23,8 @@ console.log('🔥 Firebase Config Debug:', {
 });
 
 if (!firebaseConfig.apiKey) {
-  console.error('❌ Firebase Config is missing. Please check env files');
-  console.error('Available env vars:', Object.keys(import.meta.env));
+  console.error("❌ Firebase Config is missing. Please check env files");
+  console.error("Available env vars:", Object.keys(import.meta.env));
 }
 
 // Prevent double init (Vite HMR)
@@ -35,33 +36,42 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 
 const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: 'select_account' });
+googleProvider.setCustomParameters({ prompt: "select_account" });
 
 // App Check (reCAPTCHA v3) — gated by VITE_ENABLE_APPCHECK
 const appCheckSiteKey = import.meta.env.VITE_APPCHECK_SITE_KEY;
-const appCheckProviderKind = (import.meta.env.VITE_APPCHECK_PROVIDER || 'enterprise').toLowerCase();
+const appCheckProviderKind = (
+  import.meta.env.VITE_APPCHECK_PROVIDER || "enterprise"
+).toLowerCase();
 let appCheck = null;
 
 const initAppCheck = async () => {
   if (!__ENABLE_APPCHECK__) {
-    console.warn('⚠️ App Check is disabled (VITE_ENABLE_APPCHECK=false).');
+    console.warn("⚠️ App Check is disabled (VITE_ENABLE_APPCHECK=false).");
     return null;
   }
 
   // DEBUG ONLY (prints a debug token in console; add it in Firebase Console > App Check > Debug tokens)
   if (import.meta.env.DEV) {
-    globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN = globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN ?? true;
+    globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN =
+      globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN ?? true;
   }
 
   if (!appCheckSiteKey) {
-    console.warn('⚠️ App Check enabled but VITE_APPCHECK_SITE_KEY is missing. App Check not initialized.');
+    console.warn(
+      "⚠️ App Check enabled but VITE_APPCHECK_SITE_KEY is missing. App Check not initialized.",
+    );
     return null;
   }
 
   try {
-    const { initializeAppCheck, ReCaptchaV3Provider, ReCaptchaEnterpriseProvider } = await import('firebase/app-check');
+    const {
+      initializeAppCheck,
+      ReCaptchaV3Provider,
+      ReCaptchaEnterpriseProvider,
+    } = await import("firebase/app-check");
     const provider =
-      appCheckProviderKind === 'enterprise'
+      appCheckProviderKind === "enterprise"
         ? new ReCaptchaEnterpriseProvider(appCheckSiteKey)
         : new ReCaptchaV3Provider(appCheckSiteKey);
 
@@ -71,7 +81,7 @@ const initAppCheck = async () => {
     });
     return appCheck;
   } catch (err) {
-    console.error('❌ Failed to initialize Firebase App Check:', err);
+    console.error("❌ Failed to initialize Firebase App Check:", err);
     return null;
   }
 };

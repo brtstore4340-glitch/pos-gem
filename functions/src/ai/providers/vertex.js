@@ -1,6 +1,12 @@
 const { redactPII } = require("../types");
 
-async function callVertexGemini({ projectId, location, model, prompt, accessToken }) {
+async function callVertexGemini({
+  projectId,
+  location,
+  model,
+  prompt,
+  accessToken,
+}) {
   const url =
     `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}` +
     `/locations/${location}/publishers/google/models/${model}:generateContent`;
@@ -17,7 +23,9 @@ async function callVertexGemini({ projectId, location, model, prompt, accessToke
           role: "user",
           parts: [
             {
-              text: "Return ONLY valid JSON matching the Plan schema described below. No markdown.\n\n" + prompt,
+              text:
+                "Return ONLY valid JSON matching the Plan schema described below. No markdown.\n\n" +
+                prompt,
             },
           ],
         },
@@ -33,7 +41,10 @@ async function callVertexGemini({ projectId, location, model, prompt, accessToke
 
   const data = await res.json();
   const text =
-    data?.candidates?.[0]?.content?.parts?.map((p) => p?.text).filter(Boolean).join("\n") ?? "";
+    data?.candidates?.[0]?.content?.parts
+      ?.map((p) => p?.text)
+      .filter(Boolean)
+      .join("\n") ?? "";
   return { text: String(text || "") };
 }
 

@@ -1,7 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import { cn } from "../utils/cn";
 
-export default function LoadingSpinner({ label = "Loading...", size = 180, className }) {
+export default function LoadingSpinner({
+  label = "Loading...",
+  size = 180,
+  className,
+}) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -49,7 +53,14 @@ export default function LoadingSpinner({ label = "Loading...", size = 180, class
       ctx.translate(circle.x, circle.y);
       ctx.rotate(dToR(circle.rotation));
       ctx.beginPath();
-      ctx.arc(0, 0, circle.radius, dToR(circle.angleStart), dToR(circle.angleEnd), true);
+      ctx.arc(
+        0,
+        0,
+        circle.radius,
+        dToR(circle.angleStart),
+        dToR(circle.angleEnd),
+        true,
+      );
       ctx.lineWidth = circle.thickness;
       ctx.strokeStyle = gradient1;
       ctx.stroke();
@@ -67,7 +78,7 @@ export default function LoadingSpinner({ label = "Loading...", size = 180, class
         circle.radius + circle.thickness / 2,
         dToR(circle.angleStart),
         dToR(circle.angleEnd),
-        true
+        true,
       );
       ctx.lineWidth = 2;
       ctx.strokeStyle = gradient2;
@@ -80,7 +91,14 @@ export default function LoadingSpinner({ label = "Loading...", size = 180, class
       ctx.translate(circle.x, circle.y);
       ctx.rotate(dToR(circle.rotation));
       ctx.beginPath();
-      ctx.arc(0, 0, circle.radius, dToR(circle.angleStart), dToR(circle.angleStart + 10), true);
+      ctx.arc(
+        0,
+        0,
+        circle.radius,
+        dToR(circle.angleStart),
+        dToR(circle.angleStart + 10),
+        true,
+      );
       ctx.strokeStyle = flareGradient;
       ctx.lineWidth = circle.thickness / 2;
       ctx.stroke();
@@ -92,7 +110,14 @@ export default function LoadingSpinner({ label = "Loading...", size = 180, class
       ctx.translate(circle.x, circle.y);
       ctx.rotate(dToR(circle.rotation + 180));
       ctx.beginPath();
-      ctx.arc(0, 0, circle.radius, dToR(circle.angleStart), dToR(circle.angleStart + 8), true);
+      ctx.arc(
+        0,
+        0,
+        circle.radius,
+        dToR(circle.angleStart),
+        dToR(circle.angleStart + 8),
+        true,
+      );
       ctx.strokeStyle = flareGradient;
       ctx.lineWidth = circle.thickness / 3;
       ctx.stroke();
@@ -177,7 +202,14 @@ export default function LoadingSpinner({ label = "Loading...", size = 180, class
     gradient2.addColorStop(0.1, `hsla(${circle.hue}, 100%, 100%, .7)`);
     gradient2.addColorStop(1, `hsla(${circle.hue}, 100%, 50%, 0)`);
 
-    flareGradient = ctx.createRadialGradient(0, 0, circle.radius / 2, 0, 0, circle.radius + 40);
+    flareGradient = ctx.createRadialGradient(
+      0,
+      0,
+      circle.radius / 2,
+      0,
+      0,
+      circle.radius + 40,
+    );
     flareGradient.addColorStop(0, `hsla(${circle.hue}, 100%, 80%, .8)`);
     flareGradient.addColorStop(1, `hsla(${circle.hue}, 100%, 50%, 0)`);
 
@@ -187,7 +219,10 @@ export default function LoadingSpinner({ label = "Loading...", size = 180, class
 
   return (
     <div
-      className={cn("flex flex-col items-center justify-center gap-3 text-slate-500", className)}
+      className={cn(
+        "flex flex-col items-center justify-center gap-3 text-slate-500",
+        className,
+      )}
     >
       <canvas
         ref={canvasRef}

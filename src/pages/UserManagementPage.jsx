@@ -24,7 +24,11 @@ export default function UserManagementPage() {
   const scopeQuery = useMemo(() => {
     const base = collection(db, "users");
     if (role === "SM-SGM" && firebaseUser && firebaseUser.uid) {
-      return query(base, where("createdByUid", "==", firebaseUser.uid), limit(200));
+      return query(
+        base,
+        where("createdByUid", "==", firebaseUser.uid),
+        limit(200),
+      );
     }
     return query(base, limit(200));
   }, [role, firebaseUser]);
@@ -36,7 +40,9 @@ export default function UserManagementPage() {
       const snap = await getDocs(scopeQuery);
       const rows = [];
       snap.forEach((d) => rows.push(d.data()));
-      rows.sort((a, b) => String(a.username || "").localeCompare(String(b.username || "")));
+      rows.sort((a, b) =>
+        String(a.username || "").localeCompare(String(b.username || "")),
+      );
       setItems(rows);
     } catch (err) {
       setError(err && err.message ? err.message : "Failed to load users");
@@ -67,7 +73,13 @@ export default function UserManagementPage() {
         allowedMenus,
       });
 
-      setForm({ username: "", email: "", password: "", role: "user", allowedMenusText: "" });
+      setForm({
+        username: "",
+        email: "",
+        password: "",
+        role: "user",
+        allowedMenusText: "",
+      });
       await load();
     } catch (err) {
       setError(err && err.message ? err.message : "Create user failed");
@@ -91,17 +103,23 @@ export default function UserManagementPage() {
   return (
     <div style={{ padding: 16 }}>
       <h2>User Management</h2>
-      {error ? <div style={{ color: "crimson", margin: "10px 0" }}>{error}</div> : null}
+      {error ? (
+        <div style={{ color: "crimson", margin: "10px 0" }}>{error}</div>
+      ) : null}
 
       <div style={{ border: "1px solid #ddd", padding: 12, marginBottom: 16 }}>
         <h3 style={{ marginTop: 0 }}>Create User</h3>
         <form onSubmit={onCreate}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}
+          >
             <div>
               <label>username</label>
               <input
                 value={form.username}
-                onChange={(e) => setForm((s) => ({ ...s, username: e.target.value }))}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, username: e.target.value }))
+                }
                 style={{ width: "100%", padding: 8 }}
               />
             </div>
@@ -109,7 +127,9 @@ export default function UserManagementPage() {
               <label>email</label>
               <input
                 value={form.email}
-                onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, email: e.target.value }))
+                }
                 style={{ width: "100%", padding: 8 }}
               />
             </div>
@@ -117,7 +137,9 @@ export default function UserManagementPage() {
               <label>password</label>
               <input
                 value={form.password}
-                onChange={(e) => setForm((s) => ({ ...s, password: e.target.value }))}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, password: e.target.value }))
+                }
                 type="password"
                 style={{ width: "100%", padding: 8 }}
               />
@@ -126,7 +148,9 @@ export default function UserManagementPage() {
               <label>role</label>
               <select
                 value={form.role}
-                onChange={(e) => setForm((s) => ({ ...s, role: e.target.value }))}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, role: e.target.value }))
+                }
                 style={{ width: "100%", padding: 8 }}
               >
                 {ROLE_OPTIONS.map((r) => (
@@ -141,7 +165,9 @@ export default function UserManagementPage() {
             <label>allowedMenus (comma-separated)</label>
             <input
               value={form.allowedMenusText}
-              onChange={(e) => setForm((s) => ({ ...s, allowedMenusText: e.target.value }))}
+              onChange={(e) =>
+                setForm((s) => ({ ...s, allowedMenusText: e.target.value }))
+              }
               style={{ width: "100%", padding: 8 }}
               placeholder="e.g. dashboard,inventory,reports"
             />
@@ -154,7 +180,11 @@ export default function UserManagementPage() {
 
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <h3 style={{ margin: 0 }}>Users</h3>
-        <button onClick={load} disabled={loading} style={{ padding: "6px 10px" }}>
+        <button
+          onClick={load}
+          disabled={loading}
+          style={{ padding: "6px 10px" }}
+        >
           {loading ? "Loading..." : "Refresh"}
         </button>
       </div>
@@ -163,17 +193,53 @@ export default function UserManagementPage() {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 8 }}>username</th>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 8 }}>email</th>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 8 }}>role</th>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: 8 }}>allowedMenus</th>
+              <th
+                style={{
+                  textAlign: "left",
+                  borderBottom: "1px solid #ddd",
+                  padding: 8,
+                }}
+              >
+                username
+              </th>
+              <th
+                style={{
+                  textAlign: "left",
+                  borderBottom: "1px solid #ddd",
+                  padding: 8,
+                }}
+              >
+                email
+              </th>
+              <th
+                style={{
+                  textAlign: "left",
+                  borderBottom: "1px solid #ddd",
+                  padding: 8,
+                }}
+              >
+                role
+              </th>
+              <th
+                style={{
+                  textAlign: "left",
+                  borderBottom: "1px solid #ddd",
+                  padding: 8,
+                }}
+              >
+                allowedMenus
+              </th>
             </tr>
           </thead>
           <tbody>
             {items.map((u) => (
               <tr key={u.uid}>
-                <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>{u.username}</td>
-                <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>{u.email}</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>
+                  {u.username}
+                </td>
+                <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>
+                  {u.email}
+                </td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>
                   <select
                     value={u.role || "user"}
@@ -189,7 +255,11 @@ export default function UserManagementPage() {
                 </td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>
                   <input
-                    defaultValue={Array.isArray(u.allowedMenus) ? u.allowedMenus.join(",") : ""}
+                    defaultValue={
+                      Array.isArray(u.allowedMenus)
+                        ? u.allowedMenus.join(",")
+                        : ""
+                    }
                     onBlur={(e) =>
                       onQuickUpdate(u, {
                         allowedMenus: String(e.target.value || "")

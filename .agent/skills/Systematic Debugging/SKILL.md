@@ -17,12 +17,14 @@ Systematic debugging follows a structured 4-phase approach to identify, isolate,
 Establish a reliable way to reproduce the issue consistently.
 
 **Objectives:**
+
 - Create minimal reproduction case
 - Document exact steps to trigger the bug
 - Identify environmental factors
 - Establish success/failure criteria
 
 **Key Questions:**
+
 - What exactly happens vs. what should happen?
 - Under what conditions does it occur?
 - Can you reproduce it consistently?
@@ -33,6 +35,7 @@ Establish a reliable way to reproduce the issue consistently.
 Systematically collect all available information about the issue.
 
 **Data Sources:**
+
 - Error messages and stack traces
 - Log files and application output
 - System metrics and performance data
@@ -40,6 +43,7 @@ Systematically collect all available information about the issue.
 - Code changes and deployment history
 
 **Evidence Types:**
+
 - **Direct evidence**: Error messages, exceptions, failures
 - **Circumstantial evidence**: Timing, environment, patterns
 - **Historical evidence**: When did it start? What changed?
@@ -49,12 +53,14 @@ Systematically collect all available information about the issue.
 Develop testable theories about the root cause based on evidence.
 
 **Hypothesis Framework:**
+
 - **Input hypothesis**: Problem in data or user input
 - **Logic hypothesis**: Bug in business logic or algorithms
 - **Environment hypothesis**: System, infrastructure, or configuration issue
 - **Integration hypothesis**: Problem in external dependencies or APIs
 
 **Validation Criteria:**
+
 - Each hypothesis must be testable
 - Evidence should support or refute the theory
 - Prioritize hypotheses by probability and impact
@@ -64,6 +70,7 @@ Develop testable theories about the root cause based on evidence.
 Test each hypothesis systematically and implement verified solutions.
 
 **Testing Approach:**
+
 - Test hypotheses in order of likelihood
 - Change one variable at a time
 - Document test results
@@ -74,6 +81,7 @@ Test each hypothesis systematically and implement verified solutions.
 ### Code-Level Debugging
 
 **Print/Log Debugging:**
+
 ```python
 # Strategic print statements
 print(f"DEBUG: Variable x = {x}, type = {type(x)}")
@@ -81,6 +89,7 @@ print(f"DEBUG: Function entry - params: {locals()}")
 ```
 
 **Interactive Debuggers:**
+
 ```bash
 # Python
 python -m pdb script.py
@@ -92,6 +101,7 @@ debugger;  // Breakpoint in code
 ```
 
 **Assertion Debugging:**
+
 ```python
 # Validate assumptions
 assert user_id is not None, f"User ID should not be None at this point"
@@ -101,6 +111,7 @@ assert len(items) > 0, f"Items list should not be empty: {items}"
 ### System-Level Debugging
 
 **Log Analysis:**
+
 ```bash
 # Search for patterns
 grep -i "error" /var/log/application.log
@@ -111,6 +122,7 @@ awk '{print $4}' access.log | sort | uniq -c
 ```
 
 **Performance Analysis:**
+
 ```bash
 # CPU and Memory
 top -p $(pgrep python)
@@ -122,6 +134,7 @@ curl -v http://localhost:8080/api/health
 ```
 
 **Database Debugging:**
+
 ```sql
 -- Query performance
 EXPLAIN ANALYZE SELECT * FROM users WHERE email = 'test@example.com';
@@ -138,6 +151,7 @@ SELECT query, mean_time, calls FROM pg_stat_statements ORDER BY mean_time DESC;
 ### Logic Errors
 
 **Off-by-One Errors:**
+
 ```python
 # Bug: Missing last element
 for i in range(len(array) - 1):  # Should be len(array)
@@ -149,21 +163,23 @@ for i in range(len(array)):
 ```
 
 **Null/Undefined Handling:**
+
 ```javascript
 // Bug: Doesn't handle null case
 function processUser(user) {
-    return user.name.toUpperCase();  // Crashes if user is null
+  return user.name.toUpperCase(); // Crashes if user is null
 }
 
 // Fix: Add null checks
 function processUser(user) {
-    return user?.name?.toUpperCase() || 'Unknown';
+  return user?.name?.toUpperCase() || "Unknown";
 }
 ```
 
 ### Timing and Concurrency Issues
 
 **Race Conditions:**
+
 ```python
 # Bug: Race condition in counter
 class Counter:
@@ -189,23 +205,25 @@ class Counter:
 ```
 
 **Async/Await Issues:**
+
 ```javascript
 // Bug: Not awaiting async function
 async function fetchData() {
-    const result = api.getData();  // Missing await
-    return result.id;  // Tries to access property on Promise
+  const result = api.getData(); // Missing await
+  return result.id; // Tries to access property on Promise
 }
 
 // Fix: Proper async handling
 async function fetchData() {
-    const result = await api.getData();
-    return result.id;
+  const result = await api.getData();
+  return result.id;
 }
 ```
 
 ### Resource Management Issues
 
 **Memory Leaks:**
+
 ```python
 # Bug: Circular references
 class Parent:
@@ -233,12 +251,14 @@ class Parent:
 ### Web Application Debugging
 
 **Client-Side Issues:**
+
 1. Check browser console for JavaScript errors
 2. Inspect network tab for failed requests
 3. Validate form data and API payloads
 4. Test across different browsers and devices
 
 **Server-Side Issues:**
+
 1. Check application logs for errors
 2. Monitor database query performance
 3. Validate API request/response cycles
@@ -247,6 +267,7 @@ class Parent:
 ### API Debugging
 
 **Request/Response Debugging:**
+
 ```bash
 # Test API endpoints
 curl -X POST http://api.example.com/users \
@@ -261,6 +282,7 @@ curl -H "Authorization: Bearer token123" \
 ```
 
 **Database Integration:**
+
 ```python
 # Add query logging
 import logging
@@ -271,6 +293,7 @@ logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 ### Performance Debugging
 
 **Profiling Code:**
+
 ```python
 # Python profiling
 import cProfile
@@ -284,6 +307,7 @@ profiler.run('main()')
 ```
 
 **Memory Profiling:**
+
 ```python
 # Memory usage tracking
 import tracemalloc
@@ -300,6 +324,7 @@ tracemalloc.stop()
 ## Debugging Checklist
 
 ### Phase 1: REPRODUCE
+
 - [ ] Document exact error message or unexpected behavior
 - [ ] Identify steps to reproduce consistently
 - [ ] Note environmental factors (OS, browser, data)
@@ -307,6 +332,7 @@ tracemalloc.stop()
 - [ ] Verify issue exists in different environments
 
 ### Phase 2: GATHER
+
 - [ ] Collect all error messages and stack traces
 - [ ] Review relevant log files
 - [ ] Check system metrics (CPU, memory, disk)
@@ -314,6 +340,7 @@ tracemalloc.stop()
 - [ ] Gather user reports and patterns
 
 ### Phase 3: HYPOTHESIZE
+
 - [ ] List possible root causes
 - [ ] Prioritize hypotheses by likelihood
 - [ ] Define tests for each hypothesis
@@ -321,6 +348,7 @@ tracemalloc.stop()
 - [ ] Review similar past issues
 
 ### Phase 4: TEST
+
 - [ ] Test hypotheses systematically
 - [ ] Change only one variable at a time
 - [ ] Document test results
@@ -345,6 +373,7 @@ git bisect run ./test_script.sh
 ### Rubber Duck Debugging
 
 Explain the problem step-by-step to:
+
 - Identify assumptions and gaps
 - Clarify understanding
 - Generate new hypotheses
@@ -353,12 +382,14 @@ Explain the problem step-by-step to:
 ### Collaborative Debugging
 
 **Pair Debugging:**
+
 - Fresh perspective on the problem
 - Knowledge sharing and learning
 - Faster hypothesis generation
 - Reduced debugging tunnel vision
 
 **Debug Sessions:**
+
 - Screen sharing for real-time collaboration
 - Systematic walkthrough of the issue
 - Collective problem-solving
@@ -368,6 +399,7 @@ Explain the problem step-by-step to:
 ### Defensive Programming
 
 **Input Validation:**
+
 ```python
 def process_user_data(data):
     if not isinstance(data, dict):
@@ -381,6 +413,7 @@ def process_user_data(data):
 ```
 
 **Error Handling:**
+
 ```python
 def fetch_user_profile(user_id):
     try:
@@ -400,6 +433,7 @@ def fetch_user_profile(user_id):
 ### Monitoring and Observability
 
 **Structured Logging:**
+
 ```python
 import structlog
 
@@ -418,6 +452,7 @@ def process_order(order_id):
 ```
 
 **Health Checks:**
+
 ```python
 def health_check():
     checks = {
@@ -437,19 +472,25 @@ def health_check():
 ## Additional Resources
 
 ### Reference Files
+
 For detailed debugging patterns and advanced techniques, consult:
+
 - **`references/debugging-patterns.md`** - Common debugging patterns and anti-patterns
 - **`references/tool-specific-guides.md`** - Debugging guides for specific tools and frameworks
 - **`references/performance-debugging.md`** - Performance debugging and profiling techniques
 
 ### Example Files
+
 Working debugging examples in `examples/`:
+
 - **`examples/web-app-debugging.py`** - Complete web application debugging workflow
 - **`examples/api-debugging-session.py`** - API debugging scenarios
 - **`examples/performance-issue-analysis.py`** - Performance debugging example
 
 ### Scripts
+
 Debugging utility scripts in `scripts/`:
+
 - **`scripts/debug-session-logger.sh`** - Automated debugging session logging
 - **`scripts/log-analyzer.py`** - Log file analysis and pattern detection
 - **`scripts/system-health-check.sh`** - Comprehensive system health validation
@@ -457,12 +498,14 @@ Debugging utility scripts in `scripts/`:
 ## Success Metrics
 
 ### Debugging Efficiency
+
 - Time to identify root cause
 - Number of hypotheses tested
 - Accuracy of initial hypothesis
 - Resolution time
 
 ### Quality Improvement
+
 - Reduced bug recurrence
 - Improved error handling
 - Better monitoring coverage

@@ -72,7 +72,9 @@ export function detectKeyField(sample: Record<string, unknown>): string | null {
   return keys.length ? keys[0] : null;
 }
 
-export function detectStatusField(sample: Record<string, unknown>): string | null {
+export function detectStatusField(
+  sample: Record<string, unknown>,
+): string | null {
   const keys = Object.keys(sample || {});
   const candidates = ["status", "st", "active_status"];
   for (const c of candidates) {
@@ -82,12 +84,17 @@ export function detectStatusField(sample: Record<string, unknown>): string | nul
   return null;
 }
 
-export async function readExcelFile(file: File): Promise<Record<string, unknown>[]> {
+export async function readExcelFile(
+  file: File,
+): Promise<Record<string, unknown>[]> {
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
   const sheetName = wb.SheetNames[0];
   const ws = wb.Sheets[sheetName];
-  const json = XLSX.utils.sheet_to_json(ws, { defval: "" }) as Record<string, unknown>[];
+  const json = XLSX.utils.sheet_to_json(ws, { defval: "" }) as Record<
+    string,
+    unknown
+  >[];
 
   return json.map((row) => {
     const out: Record<string, unknown> = {};
@@ -98,7 +105,10 @@ export async function readExcelFile(file: File): Promise<Record<string, unknown>
   });
 }
 
-export function buildKeySet(rows: Record<string, unknown>[], keyField: string): Set<string> {
+export function buildKeySet(
+  rows: Record<string, unknown>[],
+  keyField: string,
+): Set<string> {
   const set = new Set<string>();
   for (const r of rows) {
     const key = s(r[keyField]);
@@ -110,7 +120,7 @@ export function buildKeySet(rows: Record<string, unknown>[], keyField: string): 
 export function filterMasterStatus0(
   rows: Record<string, unknown>[],
   keyField: string,
-  statusField: string | null
+  statusField: string | null,
 ): { filtered: Record<string, unknown>[]; keySet: Set<string> } {
   const filtered: Record<string, unknown>[] = [];
   for (const r of rows) {
@@ -135,7 +145,7 @@ export function filterMasterStatus0(
 export function filterByKeySet(
   rows: Record<string, unknown>[],
   keyField: string,
-  allowedKeys: Set<string>
+  allowedKeys: Set<string>,
 ): Record<string, unknown>[] {
   return rows.filter((r) => {
     const key = s(r[keyField]);
@@ -189,7 +199,7 @@ export async function uploadRowsChunked(params: {
             ...r,
             updatedAt: serverTimestamp(),
           },
-          { merge: true }
+          { merge: true },
         );
       } else {
         b.set(ref, r, { merge: true });
@@ -199,7 +209,8 @@ export async function uploadRowsChunked(params: {
     await b.commit();
     uploaded += c.length;
 
-    const percent = total === 0 ? 100 : Math.min(99, Math.floor((uploaded / total) * 100));
+    const percent =
+      total === 0 ? 100 : Math.min(99, Math.floor((uploaded / total) * 100));
     onProgress?.({
       phase: "uploading",
       percent,
@@ -219,7 +230,9 @@ export async function uploadRowsChunked(params: {
 
   const metaRef = doc(collection(db, "adminMeta"), "uploadStatus");
   const metaSnap = await getDoc(metaRef);
-  const old = metaSnap.exists() ? (metaSnap.data() as Record<string, unknown>) : {};
+  const old = metaSnap.exists()
+    ? (metaSnap.data() as Record<string, unknown>)
+    : {};
 
   const nowIso = new Date().toISOString();
   const next = {
@@ -232,13 +245,28 @@ export async function uploadRowsChunked(params: {
     updatedAt: serverTimestamp(),
   };
 
-  onProgress?.({ phase: "saving_meta", percent: 99, message: "Saving upload status...", uploaded, total });
+  onProgress?.({
+    phase: "saving_meta",
+    percent: 99,
+    message: "Saving upload status...",
+    uploaded,
+    total,
+  });
   await setDoc(metaRef, next, { merge: true });
 
-  onProgress?.({ phase: "done", percent: 100, message: "Done!", uploaded, total });
+  onProgress?.({
+    phase: "done",
+    percent: 100,
+    message: "Done!",
+    uploaded,
+    total,
+  });
 }
 
-export async function getUploadStatus(): Promise<Record<string, unknown> | null> {
+export async function getUploadStatus(): Promise<Record<
+  string,
+  unknown
+> | null> {
   const db = getFirestore();
   const ref = doc(collection(db, "adminMeta"), "uploadStatus");
   const snap = await getDoc(ref);

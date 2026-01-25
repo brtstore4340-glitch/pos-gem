@@ -1,9 +1,9 @@
-import React from 'react';
-import { useAuth } from '../../context/AuthContext';
-import GoogleSignIn from './GoogleSignIn';
-import IdPinLogin from './IdPinLogin';
-import PinReset from './PinReset';
-import LoadingSpinner from '../LoadingSpinner';
+import React from "react";
+import { useAuth } from "../../context/AuthContext";
+import GoogleSignIn from "./GoogleSignIn";
+import IdPinLogin from "./IdPinLogin";
+import PinReset from "./PinReset";
+import LoadingSpinner from "../LoadingSpinner";
 
 export default function AuthGate({ children }) {
   const { firebaseUser, authLoading, session } = useAuth();

@@ -456,19 +456,19 @@ vulnerability_scanning:
       - hadolint
 
 severity_thresholds:
-  critical: 0    # Block deployment
-  high: 2        # Allow max 2
-  medium: 10     # Allow max 10
+  critical: 0 # Block deployment
+  high: 2 # Allow max 2
+  medium: 10 # Allow max 10
   low: unlimited
 
 auto_remediation:
   dependency_updates: true
   configuration_fixes: true
-  secret_removal: false  # Manual review required
+  secret_removal: false # Manual review required
 
 notification_channels:
   slack: "${SECURITY_SLACK_WEBHOOK}"
-  email: 
+  email:
     - security@company.com
   jira:
     enabled: true
@@ -478,24 +478,27 @@ notification_channels:
 compliance_frameworks:
   - SOC2
   - GDPR
-  - HIPAA  # if applicable
+  - HIPAA # if applicable
 ```
 
 ## Benefits & ROI
 
 ### Security Improvements
+
 - **Vulnerability detection time**: 30 days → 1 day (96% improvement)
 - **Secret exposure prevention**: 99% of accidental commits caught
 - **Configuration drift detection**: Automated monitoring vs. quarterly reviews
 - **Container security**: 100% of images scanned vs. manual spot checks
 
 ### Compliance Benefits
+
 - **Audit trail**: Automated documentation of all security scans and fixes
 - **Policy enforcement**: 100% consistent application of security policies
 - **Incident response**: Average response time reduced from 4 hours to 30 minutes
 - **Reporting**: Automated compliance reports for SOC2, GDPR, HIPAA
 
 ### Cost Savings
+
 - **Security engineer time**: 8 hours/month → 1 hour/month manual review
 - **Incident prevention**: $10,000/year average prevented security incident cost
 - **Compliance costs**: 50% reduction in audit preparation time

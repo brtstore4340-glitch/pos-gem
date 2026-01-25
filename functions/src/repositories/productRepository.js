@@ -1,5 +1,5 @@
-﻿const { COLLECTIONS } = require('../../../shared/constants');
-const admin = require('firebase-admin');
+﻿const { COLLECTIONS } = require("../../../shared/constants");
+const admin = require("firebase-admin");
 
 exports.getProductBySku = async (sku) => {
   try {
@@ -11,43 +11,44 @@ exports.getProductBySku = async (sku) => {
     if (docSnap.exists) {
       const data = docSnap.data();
       // Check status (ProductStatus starting with '0' means active)
-      if (data.ProductStatus && data.ProductStatus.startsWith('0')) {
-        return { 
-          id: docSnap.id, 
+      if (data.ProductStatus && data.ProductStatus.startsWith("0")) {
+        return {
+          id: docSnap.id,
           sku: docSnap.id, // Ensure sku is populated
-          name: data.ProductDesc, 
-          price: Number(data.SellPrice), 
+          name: data.ProductDesc,
+          price: Number(data.SellPrice),
           vatRate: Number(data.VatRate),
-          ...data 
+          ...data,
         };
       }
     }
 
     // 2. Try barcode lookup
-    const snapshot = await db.collection(COLLECTIONS.PRODUCTS)
-      .where('barcode', '==', sku)
+    const snapshot = await db
+      .collection(COLLECTIONS.PRODUCTS)
+      .where("barcode", "==", sku)
       .limit(1)
       .get();
 
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
       const data = doc.data();
-      if (data.ProductStatus && data.ProductStatus.startsWith('0')) {
-        return { 
+      if (data.ProductStatus && data.ProductStatus.startsWith("0")) {
+        return {
           id: doc.id,
           sku: data.barcode, // Use barcode as sku if found by barcode? Or keep doc ID?
-                             // Let's use doc.id as the canonical ID, but return scanned sku for reference if needed
+          // Let's use doc.id as the canonical ID, but return scanned sku for reference if needed
           name: data.ProductDesc,
           price: Number(data.SellPrice),
           vatRate: Number(data.VatRate),
-          ...data 
+          ...data,
         };
       }
     }
 
     return null;
   } catch (error) {
-    console.error('Error fetching product:', error);
-    throw new Error('Database Error');
+    console.error("Error fetching product:", error);
+    throw new Error("Database Error");
   }
 };

@@ -7,6 +7,7 @@
 ## 🎯 Features
 
 ### Core Capabilities
+
 - **3-AI Orchestration**: OpenAI GPT-4, Vertex AI Gemini, and Anthropic Claude co-plan and cross-validate
 - **2/3 Quorum Requirement**: Changes only apply when at least 2 AIs agree
 - **Dynamic Menu Management**: Create/fix/edit menus with full placement control
@@ -15,6 +16,7 @@
 - **Schema Discovery**: Gemini analyzes Firestore structure for optimal implementation
 
 ### Safety & Quality
+
 - ✅ Performance Budget: ≤5KB gz, ≤10ms TTI, ≤2 reads/action
 - ✅ WCAG AA Accessibility
 - ✅ Least-privilege security rules
@@ -92,6 +94,7 @@ nano config/.env
 ```
 
 Required API keys:
+
 - **OpenAI**: https://platform.openai.com/api-keys
 - **Anthropic**: https://console.anthropic.com/
 - **Google Cloud**: Setup service account with Vertex AI access
@@ -147,16 +150,19 @@ npm run dev
 ### PowerShell Patch Tool
 
 #### Dry Run (Recommended First)
+
 ```powershell
 .\powershell\pos-ai-safe.ps1 -Apply -DryRun -PlanPath .\downloads\patchplan.json
 ```
 
 #### Apply Changes
+
 ```powershell
 .\powershell\pos-ai-safe.ps1 -Apply -PlanPath .\downloads\patchplan.json
 ```
 
 #### Rollback
+
 ```powershell
 .\powershell\pos-ai-safe.ps1 -Rollback -BackupId "20250107_143022"
 ```
@@ -190,17 +196,19 @@ Each menu has three access levels:
 ### Assigning Roles
 
 Via Cloud Function:
+
 ```javascript
 const functions = getFunctions();
-const assignRole = httpsCallable(functions, 'assignRole');
+const assignRole = httpsCallable(functions, "assignRole");
 
 await assignRole({
-  uid: 'user123',
-  roleId: 'admin'
+  uid: "user123",
+  roleId: "admin",
 });
 ```
 
 Via Firestore Console:
+
 ```json
 // Collection: user_roles, Document: {uid}
 {
@@ -215,17 +223,20 @@ Via Firestore Console:
 ## 🧪 Testing
 
 ### Unit Tests
+
 ```bash
 cd functions
 npm test
 ```
 
 ### E2E Tests
+
 ```bash
 npm run test:e2e
 ```
 
 ### Emulator Testing
+
 ```bash
 firebase emulators:start
 # Access: http://localhost:4000
@@ -236,6 +247,7 @@ firebase emulators:start
 ## 📊 Monitoring & Logging
 
 ### Cloud Logging
+
 ```bash
 # View function logs
 firebase functions:log
@@ -263,6 +275,7 @@ All AI orchestrations are logged in `ai_audit` collection:
 ### Performance Metrics
 
 Monitor in Firebase Console:
+
 - Function execution time
 - Cold start latency
 - Memory usage
@@ -275,7 +288,7 @@ Monitor in Firebase Console:
 ### Data Flow
 
 ```
-User → Admin UI → Cloud Function → [OpenAI, Vertex, Anthropic] 
+User → Admin UI → Cloud Function → [OpenAI, Vertex, Anthropic]
                                          ↓
                                     Orchestrator
                                          ↓
@@ -294,15 +307,15 @@ User → Admin UI → Cloud Function → [OpenAI, Vertex, Anthropic]
 
 ### Firestore Collections
 
-| Collection | Purpose | Access |
-|------------|---------|--------|
-| `ui_menus` | Menu configurations | All authenticated (read), Admin (write) |
-| `modules` | Generated modules | Admin/SM/SGM (read), Admin (write) |
-| `ai_audit` | AI orchestration logs | Admin only |
-| `ai_schema_suggestions` | Gemini schema analysis | Admin only |
-| `user_roles` | User role assignments | Self/Admin (read), Admin (write) |
-| `roles` | Role definitions | All authenticated (read), Admin (write) |
-| `backups` | PowerShell backups metadata | Admin only |
+| Collection              | Purpose                     | Access                                  |
+| ----------------------- | --------------------------- | --------------------------------------- |
+| `ui_menus`              | Menu configurations         | All authenticated (read), Admin (write) |
+| `modules`               | Generated modules           | Admin/SM/SGM (read), Admin (write)      |
+| `ai_audit`              | AI orchestration logs       | Admin only                              |
+| `ai_schema_suggestions` | Gemini schema analysis      | Admin only                              |
+| `user_roles`            | User role assignments       | Self/Admin (read), Admin (write)        |
+| `roles`                 | Role definitions            | All authenticated (read), Admin (write) |
+| `backups`               | PowerShell backups metadata | Admin only                              |
 
 ---
 
@@ -314,13 +327,13 @@ Edit `functions/src/ai/providers/`:
 
 ```typescript
 // openai.ts
-model: 'gpt-4-turbo-preview'  // Change to gpt-4o, etc.
+model: "gpt-4-turbo-preview"; // Change to gpt-4o, etc.
 
 // vertex.ts
-model: 'gemini-1.5-pro'        // Change to gemini-ultra, etc.
+model: "gemini-1.5-pro"; // Change to gemini-ultra, etc.
 
 // anthropic.ts
-model: 'claude-sonnet-4-20250514'  // Latest model
+model: "claude-sonnet-4-20250514"; // Latest model
 ```
 
 ### Performance Tuning
@@ -329,9 +342,9 @@ Edit `functions/src/types.ts`:
 
 ```typescript
 export const DEFAULT_PERF_BUDGET: PerformanceBudget = {
-  maxBundleSizeKB: 5,      // Adjust as needed
-  maxTTIImpactMs: 10,      // Adjust as needed
-  maxReadsPerAction: 2,    // Adjust as needed
+  maxBundleSizeKB: 5, // Adjust as needed
+  maxTTIImpactMs: 10, // Adjust as needed
+  maxReadsPerAction: 2, // Adjust as needed
 };
 ```
 
@@ -349,11 +362,11 @@ const result = await aiOrchestrator({
       mandatory: true,
       fields: [
         { name: "title", type: "string", required: true },
-        { name: "data", type: "object", required: true }
+        { name: "data", type: "object", required: true },
       ],
-      indexes: ["title", "createdAt DESC"]
-    }
-  ]
+      indexes: ["title", "createdAt DESC"],
+    },
+  ],
 });
 ```
 
@@ -384,8 +397,8 @@ firebase functions:log --only aiOrchestrator
 **Solution**: Check RBAC claims are synced.
 
 ```javascript
-const syncClaims = httpsCallable(functions, 'syncRBACClaims');
-await syncClaims({ uid: 'user123' });
+const syncClaims = httpsCallable(functions, "syncRBACClaims");
+await syncClaims({ uid: "user123" });
 ```
 
 ### Issue: Build validation fails after patch
@@ -405,6 +418,7 @@ Get-Content .\logs\*.log | Select-String "Backup created"
 ## 📝 Changelog
 
 ### v1.5.0 (2025-01-07)
+
 - ✨ Initial release
 - ✅ 3-AI orchestration with quorum
 - ✅ Dynamic menu management
@@ -443,6 +457,7 @@ Proprietary - Boots POS Internal Use Only
 ## 🎖️ Credits
 
 Built with:
+
 - React 18 + Vite
 - Firebase (Auth, Firestore, Functions)
 - OpenAI GPT-4

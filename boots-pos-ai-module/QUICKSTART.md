@@ -15,6 +15,7 @@ pwsh --version    # Should be 7+ (for PowerShell tool)
 ```
 
 Not installed? Get them:
+
 - **Node.js 22**: https://nodejs.org/
 - **PowerShell 7**: https://github.com/PowerShell/PowerShell
 
@@ -62,6 +63,7 @@ Copy-Item -Path "config/.env.template" -Destination "config/.env"
 ```
 
 In `.env`, set:
+
 ```env
 OPENAI_API_KEY=sk-your-key
 ANTHROPIC_API_KEY=sk-ant-your-key
@@ -89,6 +91,7 @@ firebase emulators:start
 ```
 
 In another terminal:
+
 ```bash
 # Run frontend
 npm run dev
@@ -115,6 +118,7 @@ npm run dev
 ## 6️⃣ Apply Changes with PowerShell
 
 **PowerShell 7+ (all platforms):**
+
 ```powershell
 # Dry run first (recommended)
 .\powershell\pos-ai-safe.ps1 -Apply -DryRun -PlanPath .\downloads\patchplan.json
@@ -131,6 +135,7 @@ npm run dev
 ## 7️⃣ Verify It Works
 
 Refresh your browser - you should see:
+
 - New "Reports" menu item in navigation
 - Clicking it shows the new reports page
 - All working! 🎉
@@ -140,26 +145,31 @@ Refresh your browser - you should see:
 ## 🆘 Troubleshooting
 
 ### "API key not found"
+
 - Check `.env` file has correct keys
 - Restart emulator after changing .env
 
 ### "Quorum not met"
+
 - One or more AI providers failed
 - Check API key validity
 - Check internet connection
 - View logs: `firebase functions:log`
 
 ### PowerShell tool fails
+
 - Ensure PowerShell 7+ installed
 - Run as Administrator if needed
 - Check file paths are correct
 
 ### Menu doesn't appear
+
 - Check RBAC - is user admin?
 - Sync claims:
+
 ```javascript
-const sync = httpsCallable(functions, 'syncRBACClaims');
-await sync({ uid: 'your-uid' });
+const sync = httpsCallable(functions, "syncRBACClaims");
+await sync({ uid: "your-uid" });
 ```
 
 ---

@@ -12,7 +12,8 @@ async function callAnthropic({ apiKey, model, prompt, maxTokens }) {
       model,
       max_tokens: Number(maxTokens || 4096),
       temperature: 0.2,
-      system: "Return ONLY valid JSON matching the Plan schema described in the prompt. No markdown.",
+      system:
+        "Return ONLY valid JSON matching the Plan schema described in the prompt. No markdown.",
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -23,7 +24,11 @@ async function callAnthropic({ apiKey, model, prompt, maxTokens }) {
   }
 
   const data = await res.json();
-  const text = data?.content?.map((c) => c?.text).filter(Boolean).join("\n") ?? "";
+  const text =
+    data?.content
+      ?.map((c) => c?.text)
+      .filter(Boolean)
+      .join("\n") ?? "";
   return { text: String(text || "") };
 }
 

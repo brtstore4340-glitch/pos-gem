@@ -1,4 +1,3 @@
-
 // ============================================================================
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getFirestore } = require("firebase-admin/firestore");
@@ -45,14 +44,18 @@ async function buildSchemaSnapshot(db, sampleLimit = 10) {
   return SchemaSnapshotSchema.parse(snapshot);
 }
 
-const schemaSnapshot = onCall({ region: "asia-southeast1", cors: true }, async (req) => {
-  const uid = req.auth?.uid;
-  const roles = req.auth?.token?.roles;
-  if (!uid) throw new HttpsError("unauthenticated", "Auth required.");
-  if (!Array.isArray(roles) || !roles.includes("admin")) throw new HttpsError("permission-denied", "Admin only.");
+const schemaSnapshot = onCall(
+  { region: "asia-southeast1", cors: true },
+  async (req) => {
+    const uid = req.auth?.uid;
+    const roles = req.auth?.token?.roles;
+    if (!uid) throw new HttpsError("unauthenticated", "Auth required.");
+    if (!Array.isArray(roles) || !roles.includes("admin"))
+      throw new HttpsError("permission-denied", "Admin only.");
 
-  const db = getFirestore();
-  return await buildSchemaSnapshot(db, 10);
-});
+    const db = getFirestore();
+    return await buildSchemaSnapshot(db, 10);
+  },
+);
 
 module.exports = { schemaSnapshot, buildSchemaSnapshot };

@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap');
+﻿@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -21,8 +21,23 @@
 }
 
 @media print {
-  @page { margin: 0; size: auto; }
-  body * { visibility: hidden; }
-  #receipt-area, #receipt-area * { visibility: visible; }
-  #receipt-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; }
+  @page {
+    margin: 0;
+    size: auto;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #receipt-area,
+  #receipt-area * {
+    visibility: visible;
+  }
+  #receipt-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
 }

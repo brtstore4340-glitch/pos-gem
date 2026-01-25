@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100;200;300;400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+﻿@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100;200;300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,7 +7,7 @@
 @layer base {
   body {
     @apply font-sans text-slate-800 bg-slate-50 antialiased selection:bg-blue-500/30 selection:text-blue-900;
-    font-family: 'Inter', 'Noto Sans Thai', sans-serif;
+    font-family: "Inter", "Noto Sans Thai", sans-serif;
   }
   .dark body {
     @apply bg-[#0f1014] text-[#e2e8f0];
@@ -20,7 +20,7 @@
   .glass-panel {
     @apply bg-white/70 dark:bg-[#1a1c23]/60 backdrop-blur-xl border border-white/40 dark:border-white/5 shadow-xl rounded-2xl;
   }
-  
+
   .glass-card {
     @apply bg-white/40 dark:bg-black/20 backdrop-blur-md border border-white/30 dark:border-white/5 shadow-lg rounded-xl;
   }
@@ -39,27 +39,30 @@
     @apply bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/10 px-6 py-3 rounded-xl transition-all duration-200 shadow-sm active:scale-[0.98] font-semibold flex items-center justify-center gap-2;
   }
 
-/* Base button press style */
-.btn-press {
-  @apply shadow-md transition-transform duration-150 ease-out active:scale-[0.95];
-}
+  /* Base button press style */
+  .btn-press {
+    @apply shadow-md transition-transform duration-150 ease-out active:scale-[0.95];
+  }
 
-  
   /* --- Unity Theme: Interactive "Sunken" Buttons --- */
   .btn-inset {
-    @apply relative overflow-hidden transition-all duration-150 ease-out 
-           bg-slate-100 dark:bg-[#25283
-           0] 
-           text-slate-600 dark:text-slate-300
-           border border-slate-200/80 dark:border-white/5
-           shadow-sm hover:brightness-105
-           active:shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.1)] 
-           active:translate-y-[1px] active:scale-[0.99]
-           rounded-xl flex flex-col items-center justify-center;
+    background-color: #f1f5f9; /* slate-100 */
   }
-  
+  .dark .btn-inset {
+    background-color: #252830;
+  }
+  .btn-inset {
+    @apply relative overflow-hidden transition-all duration-150 ease-out
+         text-slate-600 dark:text-slate-300
+         border border-slate-200/80 dark:border-white/5
+         shadow-sm hover:brightness-105
+         active:shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.1)]
+         active:translate-y-[1px] active:scale-[0.99]
+         rounded-xl flex flex-col items-center justify-center;
+  }
+
   .btn-inset-active {
-     @apply bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-[inset_0_1px_2px_0_rgba(0,0,0,0.05)];
+    @apply bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-[inset_0_1px_2px_0_rgba(0,0,0,0.05)];
   }
 
   /* Animations */
@@ -69,20 +72,32 @@
 }
 
 @layer utilities {
-    .text-shadow-sm {
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
+  .text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Custom Scrollbar */
@@ -101,8 +116,23 @@
 }
 
 @media print {
-  @page { margin: 0; size: auto; }
-  body * { visibility: hidden; }
-  #receipt-area, #receipt-area * { visibility: visible; }
-  #receipt-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; }
+  @page {
+    margin: 0;
+    size: auto;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #receipt-area,
+  #receipt-area * {
+    visibility: visible;
+  }
+  #receipt-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
 }

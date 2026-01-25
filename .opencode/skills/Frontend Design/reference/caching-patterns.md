@@ -52,12 +52,12 @@ def handle_button_click():
 
 ## TTL Selection Guide
 
-| Data Type | TTL | Example |
-|-----------|-----|---------|
-| Real-time | 30-60s | Live market prices |
-| Frequent | 300s (5min) | Lead scores, analytics |
-| Stable | 3600s (1h) | Property details |
-| Static | No TTL | Configuration data |
+| Data Type | TTL         | Example                |
+| --------- | ----------- | ---------------------- |
+| Real-time | 30-60s      | Live market prices     |
+| Frequent  | 300s (5min) | Lead scores, analytics |
+| Stable    | 3600s (1h)  | Property details       |
+| Static    | No TTL      | Configuration data     |
 
 ## Component Template
 
@@ -98,11 +98,13 @@ def render_my_component():
 ## Validation & Auto-Fix
 
 **Check for missing caching**:
+
 ```bash
 python .claude/scripts/validate-caching.py components/my_component.py
 ```
 
 **Auto-add decorators**:
+
 ```bash
 python .claude/scripts/add-caching-decorators.py components/my_component.py
 ```

@@ -3,17 +3,14 @@ import {
   createUserWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import {
-  doc,
-  getDoc,
-  setDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { auth, db, functions } from "../firebase";
 
 function normLower(v) {
-  return String(v || "").trim().toLowerCase();
+  return String(v || "")
+    .trim()
+    .toLowerCase();
 }
 
 export async function resolveUsernameToEmail(username) {
@@ -60,9 +57,11 @@ export async function registerSelf({ username, email, password }) {
   const u = normLower(username);
   const e = normLower(email);
   const p = String(password || "").trim();
-  if (!u || u.length < 3) throw new Error("Username must be at least 3 characters");
+  if (!u || u.length < 3)
+    throw new Error("Username must be at least 3 characters");
   if (!e || !e.includes("@")) throw new Error("Invalid email");
-  if (!p || p.length < 6) throw new Error("Password must be at least 6 characters");
+  if (!p || p.length < 6)
+    throw new Error("Password must be at least 6 characters");
 
   // Create auth user (will switch session to the new user)
   const cred = await createUserWithEmailAndPassword(auth, e, p);
