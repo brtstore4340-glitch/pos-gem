@@ -3,7 +3,7 @@ import { UploadCloud, Loader2, CheckCircle, AlertCircle, X } from "lucide-react"
 import { cn } from "../utils/cn";
 import { runUploadFlow, abortUploadFlow } from "../services/uploadService";
 import { useAuth } from "../context/AuthContext";
-import { db } from "../lib/firebase";
+import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 
 

@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 
 import { db, functions } from '../lib/firebase';
+=======
+import { db } from '../firebase';
+import { functions } from '../firebase';
+>>>>>>> 17970006e0fe96e9a2264bd63cf279f85833397b
 import { collection, doc, getDoc, getDocs, setDoc, writeBatch, getCountFromServer, serverTimestamp, query, limit, where/* , orderBy, startAt, endAt */ } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import * as XLSX from 'xlsx';
