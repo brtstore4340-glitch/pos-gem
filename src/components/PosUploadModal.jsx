@@ -92,10 +92,16 @@ export default function PosUploadModal({ open, onClose, isDarkMode = false }) {
 
   const abortNow = async () => {
     const actorIdCode = session?.idCode || lastIdCode || "";
+    if (!actorIdCode || actorIdCode.trim() === "") {
+      setErr("เลือก ID ก่อนยกเลิกอัปโหลด");
+      return;
+    }
     try {
       await abortUploadFlow(actorIdCode);
     } catch (e) {
       console.warn("abort upload failed", e);
+      setErr(e?.message || "Failed to abort upload");
+      return;
     }
     setBusy(false);
     setErr("Aborted");

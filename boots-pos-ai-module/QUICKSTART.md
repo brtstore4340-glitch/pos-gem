@@ -1,5 +1,7 @@
 # 🚀 Quick Start Guide
 
+**OS Support:** This guide includes commands for **PowerShell 7+ (Windows/Mac/Linux)** and **Bash (macOS/Linux)**. Choose the section matching your shell.
+
 Get the Boots POS AI Module running in 10 minutes!
 
 ---
@@ -48,10 +50,15 @@ npm install
 cd functions && npm install && cd ..
 
 # Copy environment template
-cp config/.env.template config/.env
+# PowerShell (Windows/Mac/Linux):
+Copy-Item -Path "config/.env.template" -Destination "config/.env"
+# Bash (macOS/Linux):
+# cp config/.env.template config/.env
 
-# Edit with your API keys
-nano config/.env
+# Edit config/.env with your preferred editor:
+# Windows/PowerShell: notepad config/.env
+# macOS: nano config/.env  OR  open -e config/.env
+# Linux: nano config/.env  OR  vim config/.env
 ```
 
 In `.env`, set:
@@ -107,6 +114,7 @@ npm run dev
 
 ## 6️⃣ Apply Changes with PowerShell
 
+**PowerShell 7+ (all platforms):**
 ```powershell
 # Dry run first (recommended)
 .\powershell\pos-ai-safe.ps1 -Apply -DryRun -PlanPath .\downloads\patchplan.json

@@ -194,6 +194,12 @@ def add_footer(canvas, doc):
     canvas.restoreState()
 
 # สร้างไฟล์ PDF
-doc.build(story, onFirstPage=add_footer, onLaterPages=add_footer)
-
-print(f"✅ สร้างไฟล์สำเร็จ: {out_path}")
+try:
+    doc.build(story, onFirstPage=add_footer, onLaterPages=add_footer)
+    print(f"✅ สร้างไฟล์สำเร็จ: {out_path}")
+except PermissionError:
+    print(f"❌ Error: ไม่มีสิทธิ์เขียนไฟล์: {out_path}")
+    raise SystemExit(1)
+except OSError as e:
+    print(f"❌ Error: ไม่สามารถสร้างไฟล์ PDF: {e}")
+    raise SystemExit(1)

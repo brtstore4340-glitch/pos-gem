@@ -1,14 +1,13 @@
 # =============================================================================
-# RUN THIS IN REPO ROOT:
-#   D:\01 Main Work\Boots\Boots-POS Gemini
+# RUN THIS IN REPO ROOT (PowerShell script will auto-detect via $PSScriptRoot)
 # Creates:
 #   .\@PRD.md
 #   .\scripts\powershell\validate-ps.ps1
 # Then validates PowerShell syntax before you run anything else.
 # =============================================================================
 
-cd "D:\01 Main Work\Boots\Boots-POS Gemini"
-
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+Set-Location $RepoRoot
 New-Item -ItemType Directory -Path ".\scripts\powershell" -Force | Out-Null
 
 @'
@@ -80,7 +79,8 @@ Fields used by client (compact):
 Run in repo root:
 
 ```powershell
-cd "D:\01 Main Work\Boots\Boots-POS Gemini"
+# Navigate to repo root (auto-detected or from $env:REPO_ROOT if set)
+# For portable scripts: Set-Location (Split-Path -Parent $PSScriptRoot)
 
 # Install ESLint tooling (adjust versions as your repo policy)
 npm i -D eslint eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y

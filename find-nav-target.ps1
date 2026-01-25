@@ -1,5 +1,6 @@
-cd "D:\01 Main Work\Boots\Boots-POS Gemini"
-New-Item -ItemType Directory -Path ".\scripts\powershell" -Force | Out-Null
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+$outputDir = Join-Path $RepoRoot "scripts\powershell"
+New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 
 @'
 [CmdletBinding()]
@@ -47,5 +48,5 @@ $candidates |
   Sort-Object Score -Descending |
   Select-Object -First $Top |
   Format-Table -AutoSize
-'@ | Set-Content -Path ".\scripts\powershell\find-nav-target.ps1" -Encoding UTF8
+'@ | Set-Content -Path (Join-Path $outputDir "find-nav-target.ps1") -Encoding UTF8
 # End of find-nav-target.ps1

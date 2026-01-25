@@ -1,4 +1,4 @@
-﻿import Papa from "papaparse";
+﻿﻿import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "../firebase";
@@ -40,6 +40,17 @@ export async function parseXls(file) {
 }
 
 export async function runUploadFlow({ actorIdCode, type, file, onProgress }) {
+  if (!actorIdCode) {
+    throw new Error("actorIdCode is required");
+  }
+  if (!type) {
+    throw new Error("type is required");
+  }
+  if (!file) {
+    throw new Error("file is required");
+  }
+
+  onProgress?.({ phase: "parsing", percent: 5 });
   onProgress?.({ phase: "parsing", percent: 5 });
 
   const isCsv = file.name.toLowerCase().endsWith(".csv");
@@ -77,5 +88,8 @@ export async function runUploadFlow({ actorIdCode, type, file, onProgress }) {
 }
 
 export async function abortUploadFlow(actorIdCode) {
+  if (!actorIdCode || typeof actorIdCode !== "string" || actorIdCode.trim() === "") {
+    throw new Error("actorIdCode is required");
+  }
   await abortUpload({ actorIdCode });
 }

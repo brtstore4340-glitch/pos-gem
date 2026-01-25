@@ -47,7 +47,6 @@ export default [
     rules: {
       "react/react-in-jsx-scope": "off",
       ...reactHooks.configs.recommended.rules,
-      "react-hooks/set-state-in-effect": "off",
       "react-refresh/only-export-components": "off"
     }
   },

@@ -4,11 +4,37 @@
   - Enforces POST
   - Validates JSON body
   - Returns readable 400/405 instead of 500
+  - Restricts CORS to whitelisted origins (rejects 403 if not allowed)
 */
-const cors = require("cors")({ origin: true });
+const functions = require("firebase-functions");
+const cors = require("cors");
+
+// Whitelist of allowed origins
+const allowedOrigins = [
+  "http://localhost:5173",      // Local dev
+  "http://127.0.0.1:5173",      // Local dev (IP)
+  "https://boots-pos.example.com" // Production (update to your domain)
+];
+
+// CORS middleware with origin validation
+const corsWithValidation = cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Reject non-whitelisted origins
+    return callback(new Error(`CORS not allowed for origin: ${origin}`), false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "OPTIONS"]
+});
 
 exports.bootstrapAdmin = functions.region("asia-southeast1").https.onRequest((req, res) => {
-  cors(req, res, async () => {
+  corsWithValidation(req, res, async () => {
     try {
       if (req.method === "OPTIONS") return res.status(204).send("");
       if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
