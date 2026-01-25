@@ -1,5 +1,5 @@
-import { db } from '../lib/firebase';
-import { functions } from '../lib/firebase';
+import { db } from '../firebase';
+import { functions } from '../firebase';
 import { collection, doc, getDoc, getDocs, setDoc, writeBatch, getCountFromServer, serverTimestamp, query, limit, where/* , orderBy, startAt, endAt */ } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import * as XLSX from 'xlsx';

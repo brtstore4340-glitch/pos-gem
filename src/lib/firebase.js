@@ -4,7 +4,6 @@ import { getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
-import { initializeAppCheck, ReCaptchaV3Provider, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { firebaseConfig, firebaseRegion } from '../config/firebaseConfig';
 
 // Force App Check on (ignore env override unless explicitly disabled in code).
@@ -43,13 +42,24 @@ const appCheckSiteKey = import.meta.env.VITE_APPCHECK_SITE_KEY;
 const appCheckProviderKind = (import.meta.env.VITE_APPCHECK_PROVIDER || 'enterprise').toLowerCase();
 let appCheck = null;
 
-if (__ENABLE_APPCHECK__) {
+const initAppCheck = async () => {
+  if (!__ENABLE_APPCHECK__) {
+    console.warn('⚠️ App Check is disabled (VITE_ENABLE_APPCHECK=false).');
+    return null;
+  }
+
   // DEBUG ONLY (prints a debug token in console; add it in Firebase Console > App Check > Debug tokens)
   if (import.meta.env.DEV) {
     globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN = globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN ?? true;
   }
 
-  if (appCheckSiteKey) {
+  if (!appCheckSiteKey) {
+    console.warn('⚠️ App Check enabled but VITE_APPCHECK_SITE_KEY is missing. App Check not initialized.');
+    return null;
+  }
+
+  try {
+    const { initializeAppCheck, ReCaptchaV3Provider, ReCaptchaEnterpriseProvider } = await import('firebase/app-check');
     const provider =
       appCheckProviderKind === 'enterprise'
         ? new ReCaptchaEnterpriseProvider(appCheckSiteKey)
@@ -59,12 +69,14 @@ if (__ENABLE_APPCHECK__) {
       provider,
       isTokenAutoRefreshEnabled: true,
     });
-  } else {
-    console.warn('⚠️ App Check enabled but VITE_APPCHECK_SITE_KEY is missing. App Check not initialized.');
+    return appCheck;
+  } catch (err) {
+    console.error('❌ Failed to initialize Firebase App Check:', err);
+    return null;
   }
-} else {
-  console.warn('⚠️ App Check is disabled (VITE_ENABLE_APPCHECK=false).');
-}
+};
+
+void initAppCheck();
 
 export { app, db, functions, auth, storage, googleProvider, appCheck };
 // dev-only diagnostics

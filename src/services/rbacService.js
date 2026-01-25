@@ -1,5 +1,5 @@
 import { httpsCallable } from 'firebase/functions';
-import { functions } from '../lib/firebase';
+import { functions } from '../firebase';
 
 function __requireIdCodePin__(payload) {
   const idCode = payload?.idCode ?? payload?.id ?? payload?.code;
