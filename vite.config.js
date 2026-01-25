@@ -17,5 +17,18 @@ export default defineConfig({
   },
 
   plugins: [react()],
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions', 'firebase/storage'],
+          xlsx: ['xlsx'],
+          ui: ['lucide-react', 'clsx', 'tailwind-merge', 'react-hot-toast']
+        }
+      }
+    }
+  }
 })
 

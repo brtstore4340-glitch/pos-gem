@@ -52,7 +52,7 @@ function s(v: unknown): string {
   return String(v).trim();
 }
 
-export function detectKeyField(sample: Record<string, any>): string | null {
+export function detectKeyField(sample: Record<string, unknown>): string | null {
   const keys = Object.keys(sample || {});
   const candidates = [
     "itemcode",
@@ -72,7 +72,7 @@ export function detectKeyField(sample: Record<string, any>): string | null {
   return keys.length ? keys[0] : null;
 }
 
-export function detectStatusField(sample: Record<string, any>): string | null {
+export function detectStatusField(sample: Record<string, unknown>): string | null {
   const keys = Object.keys(sample || {});
   const candidates = ["status", "st", "active_status"];
   for (const c of candidates) {
@@ -82,15 +82,15 @@ export function detectStatusField(sample: Record<string, any>): string | null {
   return null;
 }
 
-export async function readExcelFile(file: File): Promise<Record<string, any>[]> {
+export async function readExcelFile(file: File): Promise<Record<string, unknown>[]> {
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
   const sheetName = wb.SheetNames[0];
   const ws = wb.Sheets[sheetName];
-  const json = XLSX.utils.sheet_to_json(ws, { defval: "" }) as Record<string, any>[];
+  const json = XLSX.utils.sheet_to_json(ws, { defval: "" }) as Record<string, unknown>[];
 
   return json.map((row) => {
-    const out: Record<string, any> = {};
+    const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(row)) {
       out[normalizeKey(k)] = v;
     }
@@ -98,7 +98,7 @@ export async function readExcelFile(file: File): Promise<Record<string, any>[]> 
   });
 }
 
-export function buildKeySet(rows: Record<string, any>[], keyField: string): Set<string> {
+export function buildKeySet(rows: Record<string, unknown>[], keyField: string): Set<string> {
   const set = new Set<string>();
   for (const r of rows) {
     const key = s(r[keyField]);
@@ -108,11 +108,11 @@ export function buildKeySet(rows: Record<string, any>[], keyField: string): Set<
 }
 
 export function filterMasterStatus0(
-  rows: Record<string, any>[],
+  rows: Record<string, unknown>[],
   keyField: string,
   statusField: string | null
-): { filtered: Record<string, any>[]; keySet: Set<string> } {
-  const filtered: Record<string, any>[] = [];
+): { filtered: Record<string, unknown>[]; keySet: Set<string> } {
+  const filtered: Record<string, unknown>[] = [];
   for (const r of rows) {
     const key = s(r[keyField]);
     if (!key) continue;
@@ -133,10 +133,10 @@ export function filterMasterStatus0(
 }
 
 export function filterByKeySet(
-  rows: Record<string, any>[],
+  rows: Record<string, unknown>[],
   keyField: string,
   allowedKeys: Set<string>
-): Record<string, any>[] {
+): Record<string, unknown>[] {
   return rows.filter((r) => {
     const key = s(r[keyField]);
     return key && allowedKeys.has(key);
@@ -151,7 +151,7 @@ function chunk<T>(arr: T[], size: number): T[][] {
 
 export async function uploadRowsChunked(params: {
   kind: UploadKind;
-  rows: Record<string, any>[];
+  rows: Record<string, unknown>[];
   keyField: string;
   collectionName: string;
   chunkSize?: number;
@@ -219,7 +219,7 @@ export async function uploadRowsChunked(params: {
 
   const metaRef = doc(collection(db, "adminMeta"), "uploadStatus");
   const metaSnap = await getDoc(metaRef);
-  const old = metaSnap.exists() ? (metaSnap.data() as any) : {};
+  const old = metaSnap.exists() ? (metaSnap.data() as Record<string, unknown>) : {};
 
   const nowIso = new Date().toISOString();
   const next = {
@@ -238,10 +238,10 @@ export async function uploadRowsChunked(params: {
   onProgress?.({ phase: "done", percent: 100, message: "Done!", uploaded, total });
 }
 
-export async function getUploadStatus(): Promise<Record<string, any> | null> {
+export async function getUploadStatus(): Promise<Record<string, unknown> | null> {
   const db = getFirestore();
   const ref = doc(collection(db, "adminMeta"), "uploadStatus");
   const snap = await getDoc(ref);
   if (!snap.exists()) return null;
-  return snap.data() as any;
+  return snap.data() as Record<string, unknown>;
 }

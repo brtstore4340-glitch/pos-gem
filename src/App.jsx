@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState, Suspense, lazy } from "react";
+﻿﻿import React, { useEffect, useMemo, useState, Suspense, lazy, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -11,7 +11,9 @@ import {
   ShieldCheck,
   Search,
   LogOut,
-  Lock
+  Lock,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -27,16 +29,28 @@ import logoDark from "./image/logodark.png";
 import AuthGate from './components/auth/AuthGate';
 import AccessDenied from './components/auth/AccessDenied';
 
-// Lazy load tab components
-const DashboardPage = lazy(() => import("./pages/DashboardPage"));
-const PosUI = lazy(() => import("./components/PosUI"));
-const ReportPage = lazy(() => import("./pages/ReportPage"));
-const InventoryPage = lazy(() => import("./pages/InventoryPage"));
-const OrdersPage = lazy(() => import("./pages/OrdersPage"));
-const AdminSettings = lazy(() => import("./pages/AdminSettingsPage"));
-const FileUploadPage = lazy(() => import("./pages/FileUploadPage"));
-const ManagementConsole = lazy(() => import("./pages/ManagementConsole"));
-const ProductSearchPage = lazy(() => import("./pages/ProductSearchPage"));
+// Lazy load tab components with retry mechanism
+const lazyRetry = (componentImport) =>
+  lazy(async () => {
+    try {
+      return await componentImport();
+    } catch (error) {
+      console.error("Chunk load failed, reloading page...", error);
+      window.location.reload(); 
+      // Prevent infinite reload loop ideally, but simple reload is standard for this error
+      return new Promise(() => {}); // Never resolves to prevent UI crash before reload
+    }
+  });
+
+const DashboardPage = lazyRetry(() => import("./pages/DashboardPage"));
+const PosUI = lazyRetry(() => import("./components/PosUI"));
+const ReportPage = lazyRetry(() => import("./pages/ReportPage"));
+const InventoryPage = lazyRetry(() => import("./pages/InventoryPage"));
+const OrdersPage = lazyRetry(() => import("./pages/OrdersPage"));
+const AdminSettings = lazyRetry(() => import("./pages/AdminSettingsPage"));
+const FileUploadPage = lazyRetry(() => import("./pages/FileUploadPage"));
+const ManagementConsole = lazyRetry(() => import("./pages/ManagementConsole"));
+const ProductSearchPage = lazyRetry(() => import("./pages/ProductSearchPage"));
 
 const DEFAULT_ALLOWED_MENUS = {
   admin: ["dashboard", "pos", "search", "report", "inventory", "orders", "settings", "Upload", "management"],
@@ -48,8 +62,42 @@ function AppShell() {
   const { isDark } = useTheme();
   const { session, signOut, lockTerminal } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const tabsContainerRef = useRef(null);
   const logoSrc = isDark ? logoDark : logoLight;
   const isManager = session?.role === "admin" || session?.role === "SM-SGM";
+
+  // Handle tabs horizontal scroll indicator
+  const checkTabsScroll = () => {
+    const container = tabsContainerRef.current;
+    if (container) {
+      setCanScrollLeft(container.scrollLeft > 0);
+      setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth - 5);
+    }
+  };
+
+  const scrollTabs = (direction) => {
+    const container = tabsContainerRef.current;
+    if (container) {
+      const scrollAmount = 200;
+      container.scrollBy({ left: direction === "left" ? -scrollAmount : scrollAmount, behavior: "smooth" });
+      setTimeout(checkTabsScroll, 400);
+    }
+  };
+
+  useEffect(() => {
+    checkTabsScroll();
+    const container = tabsContainerRef.current;
+    if (container) {
+      container.addEventListener("scroll", checkTabsScroll);
+      window.addEventListener("resize", checkTabsScroll);
+      return () => {
+        container.removeEventListener("scroll", checkTabsScroll);
+        window.removeEventListener("resize", checkTabsScroll);
+      };
+    }
+  }, [visibleTabs]);
 
   const allowedMenus = useMemo(() => {
     if (!session) return [];
@@ -89,7 +137,7 @@ function AppShell() {
   useEffect(() => {
     if (!session) return;
     setActiveTab(defaultTab);
-  }, [session?.idCode, defaultTab]);
+  }, [session, defaultTab]);
 
   useEffect(() => {
     if (!allowedSet.has(activeTab)) {
@@ -144,15 +192,40 @@ function AppShell() {
                </div>
             </div>
 
-            {/* Center: Navigation Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-[60vw] pb-1 md:pb-0 px-2">
-              {visibleTabs.map((tab) => {
+            {/* Center: Navigation Tabs with Scroll Indicators */}
+            <div className="flex items-center gap-2">
+              {/* Left scroll indicator */}
+              <button
+                onClick={() => scrollTabs("left")}
+                aria-label="Scroll tabs left"
+                className={`flex-shrink-0 p-1 rounded-lg transition-all ${
+                  canScrollLeft
+                    ? "opacity-100 hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer"
+                    : "opacity-0 pointer-events-none"
+                }`}
+                disabled={!canScrollLeft}
+              >
+                <ChevronLeft size={16} className="text-slate-500 dark:text-slate-400" />
+              </button>
+
+              {/* Tabs container */}
+              <div
+                ref={tabsContainerRef}
+                className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-[60vw] pb-1 md:pb-0 px-2"
+                role="tablist"
+                aria-label="Navigation tabs"
+              >
+                {visibleTabs.map((tab) => {
                 const Icon = tab.Icon;
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-label={tab.label}
+                    aria-current={isActive ? "page" : undefined}
                     className={`
                       group relative flex flex-col items-center justify-center w-[4.5rem] h-[3.75rem] rounded-xl transition-all duration-200 ease-out
                       ${isActive 
@@ -173,6 +246,21 @@ function AppShell() {
                   </button>
                 );
               })}
+              </div>
+
+              {/* Right scroll indicator */}
+              <button
+                onClick={() => scrollTabs("right")}
+                aria-label="Scroll tabs right"
+                className={`flex-shrink-0 p-1 rounded-lg transition-all ${
+                  canScrollRight
+                    ? "opacity-100 hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer"
+                    : "opacity-0 pointer-events-none"
+                }`}
+                disabled={!canScrollRight}
+              >
+                <ChevronRight size={16} className="text-slate-500 dark:text-slate-400" />
+              </button>
             </div>
 
             {/* Right: Tools & Profile */}
@@ -185,6 +273,7 @@ function AppShell() {
               
               <button
                 onClick={lockTerminal}
+                aria-label="Lock Terminal"
                 className="btn-inset w-10 h-10 rounded-full hover:bg-amber-50 dark:hover:bg-amber-900/10 hover:text-amber-500 border-transparent hover:border-amber-200 dark:hover:border-amber-900/30 group mr-1"
                 title="Lock Terminal"
               >
@@ -193,6 +282,7 @@ function AppShell() {
               
               <button
                 onClick={signOut}
+                aria-label="Sign Out"
                 className="btn-inset w-10 h-10 rounded-full hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-500 border-transparent hover:border-red-200 dark:hover:border-red-900/30 group"
                 title="Sign Out"
               >

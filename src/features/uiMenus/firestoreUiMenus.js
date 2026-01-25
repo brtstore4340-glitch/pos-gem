@@ -5,6 +5,9 @@ import { collection, getDocs, limit, orderBy, query, startAfter } from "firebase
  */
 export async function fetchUiMenusPage(db, opts = {}) {
   const pageSize = Number(opts.pageSize || 50);
+  if (!Number.isInteger(pageSize) || pageSize <= 0) {
+    throw new Error("pageSize must be a positive integer");
+  }
   const cursor = opts.cursor || null;
 
   const col = collection(db, "ui_menus");

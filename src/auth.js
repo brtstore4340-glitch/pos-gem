@@ -29,7 +29,7 @@ export async function signInWithGoogle() {
     return { success: true, data: user, error: null };
     
   } catch (error) {
-    console.error("Google sign-in raw errorrror:", error);
+    console.error("Google sign-in raw error:", error);
     console.error("code:", error?.code, "message:", error?.message, "customData:", error?.customData);
     console.error(" GoogleSignIn: Error Details", {
         code: error.code,

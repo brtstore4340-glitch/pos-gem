@@ -1,8 +1,10 @@
 export function isMenuAllowed({ uid, roles, access }) {
-  if (!access) return true;
+  // Deny-by-default policy: if no access control is defined, menu is restricted
+  // (Set access: { defaultRoles: [...], allowedRoles: [...], allowedUsers: [...] } to grant access)
+  if (!access) return false;
 
   const allowedUsers = Array.isArray(access.allowedUsers) ? access.allowedUsers : [];
-  if (uid && allowedUsers.includes(uid)) return true;
+  if (uid != null && allowedUsers.includes(uid)) return true;
 
   const defaultRoles = Array.isArray(access.defaultRoles) ? access.defaultRoles : [];
   const allowedRoles = Array.isArray(access.allowedRoles) ? access.allowedRoles : [];

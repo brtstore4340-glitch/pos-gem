@@ -1,5 +1,5 @@
-```javascript
-import { db, functions } from './firebase';
+
+import { db, functions } from '../lib/firebase';
 import { collection, doc, getDoc, getDocs, setDoc, writeBatch, getCountFromServer, serverTimestamp, query, limit, where/* , orderBy, startAt, endAt */ } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import * as XLSX from 'xlsx';
@@ -8,7 +8,7 @@ import * as XLSX from 'xlsx';
 const generateKeywords = (text) => {
   if (!text) return [];
   const keywords = new Set();
-  const words = text.toUpperCase().split(/[\s\-\/\(\)\.]+/);
+  const words = text.toUpperCase().split(/[\s\-/().]+/);
   words.forEach(word => {
     const cleanWord = word.trim();
     if (cleanWord.length < 2) return;
@@ -374,5 +374,6 @@ export const posService = {
       throw new Error('ไม่พบสินค้า: ' + cleanKey);
     } catch (error) { if (error.message.includes('ไม่พบสินค้า')) throw error; throw new Error('เกิดข้อผิดพลาดในการค้นหา'); }
   },
-  createOrder: async (orderData) => { /*...*/ }
+  createOrder: async () => { /*...*/ }
 };
+

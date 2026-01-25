@@ -18,7 +18,7 @@ export default function FileUploadPage() {
     setStatus(null);
 
     try {
-      let totalProcessed = 0;
+      // let totalProcessed = 0;
       
       for (const file of files) {
         // 1. Parse File
@@ -41,7 +41,8 @@ export default function FileUploadPage() {
            setProgress(p);
         });
         
-        totalProcessed += rows.length;
+        
+        // totalProcessed += rows.length;
       }
 
       setStatus({ type: 'success', message: `Successfully processed ${files.length} file(s).` });

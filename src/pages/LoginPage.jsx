@@ -162,12 +162,13 @@ export default function LoginPage({ onLogin }) {
 
             <form onSubmit={handleLogin} className="space-y-6">
                 <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">User ID / Email</label>
+                    <label htmlFor="login-id" className="text-sm font-semibold text-slate-700 dark:text-slate-300">User ID / Email</label>
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-boots-base transition-colors">
                             <User size={20} />
                         </div>
                         <input
+                            id="login-id"
                             type="text"
                             value={loginId}
                             onChange={(e) => setLoginId(e.target.value)}
@@ -180,13 +181,14 @@ export default function LoginPage({ onLogin }) {
 
                 <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                         <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Password</label>
+                         <label htmlFor="password" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Password</label>
                     </div>
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-boots-base transition-colors">
                             <Lock size={20} />
                         </div>
                         <input
+                            id="password"
                             type={showPassword ? "text" : "password"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}

@@ -51,7 +51,9 @@ export async function scanItemFast(skuOrBarcode) {
       price: Number(p.dealPrice || p.price || p.regPrice || 0),
       badgeText: p.dealPrice ? "DEAL" : ""
     };
-  } catch {}
+  } catch {
+    // ignore
+  }
 
   // 2) Resolve barcode
   const itemCode = await resolveBarcodeToItemCode(code);

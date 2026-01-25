@@ -66,7 +66,8 @@ function StepCard(props: {
             accept=".xlsx,.xls"
             disabled={disabled}
             className="hidden"
-            onChange={(e) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onChange={(e: any) => {
               const f = e.target.files?.[0] ?? null;
               setFile(f);
             }}
@@ -93,7 +94,7 @@ function StepCard(props: {
 }
 
 export default function AdminExcelUploadPage() {
-  const [statusMeta, setStatusMeta] = useState<Record<string, any> | null>(null);
+  const [statusMeta, setStatusMeta] = useState<Record<string, unknown> | null>(null);
 
   const [masterFile, setMasterFile] = useState<File | null>(null);
   const [itemMasterFile, setItemMasterFile] = useState<File | null>(null);
@@ -181,8 +182,8 @@ export default function AdminExcelUploadPage() {
       setStatusMeta(meta);
 
       setProgress({ phase: "done", percent: 100, message: "Upload complete ✅" });
-    } catch (e: any) {
-      setProgress({ phase: "error", percent: 0, message: e?.message || "Upload failed" });
+    } catch (e: unknown) {
+      setProgress({ phase: "error", percent: 0, message: (e as Error)?.message || "Upload failed" });
       throw e;
     } finally {
       setBusy(false);
