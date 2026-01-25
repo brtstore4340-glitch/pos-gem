@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db } from "../firebase";
 import { APP_VERSION, APP_UPDATED } from "../constants/appMeta";
 import { User, Lock, Eye, EyeOff, LogIn, ShieldCheck, Activity, Server, Info } from "lucide-react";
 import { cn } from "../utils/cn";

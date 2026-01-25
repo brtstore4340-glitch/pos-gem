@@ -1,5 +1,5 @@
 ﻿import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { app } from "./lib/firebase";
+import { app } from "./firebase";
 
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
@@ -45,5 +45,4 @@ export async function signInWithGoogle() {
     return { success: false, data: null, error: error.code + ': ' + error.message };
   }
 }
-
 
