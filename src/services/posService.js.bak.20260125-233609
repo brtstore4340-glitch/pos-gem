@@ -35,7 +35,9 @@ async function getProductIdSetCached() {
     return __PRODUCT_ID_CACHE__;
   }
   const ids = new Set();
-  const qs = await getDocs(collection(db, 'products'));
+  // Fetch with query filter to reduce memory and read costs
+  const baseQuery = query(collection(db, 'products'), where('ProductStatus', '>=', '0'));
+  const qs = await getDocs(baseQuery);
   qs.forEach((d) => ids.add(d.id));
   __PRODUCT_ID_CACHE__ = ids;
   __PRODUCT_ID_CACHE_AT__ = now;
@@ -48,8 +50,13 @@ async function getProductDateMapCached() {
     return __PRODUCT_DATE_CACHE__;
   }
   const dates = new Map();
-  const qs = await getDocs(collection(db, 'products'));
-  qs.forEach((d) => dates.set(d.id, d.data().DateLastAmended));
+  // Fetch with query filter to reduce memory and read costs
+  const baseQuery = query(collection(db, 'products'), where('ProductStatus', '>=', '0'));
+  const qs = await getDocs(baseQuery);
+  qs.forEach((d) => {
+    const data = d.data();
+    dates.set(d.id, data.DateLastAmended);
+  });
   __PRODUCT_DATE_CACHE__ = dates;
   __PRODUCT_DATE_CACHE_AT__ = now;
   return dates;
@@ -80,7 +87,13 @@ export const posService = {
       const coll = collection(db, 'products');
       const snapshot = await getCountFromServer(coll);
       return snapshot.data().count > 0;
-    } catch {
+    } catch (error) {
+      console.error('hasMasterData error: Failed to check product count from getCountFromServer', {
+        collection: 'products',
+        db: 'Firestore',
+        operation: 'getCountFromServer',
+        error: error?.message || error
+      });
       return false;
     }
   },
@@ -182,7 +195,15 @@ export const posService = {
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       // Column B is Index 1 (0-based)
-      const itemCode = String(row[1]).trim(); 
+      // Safely extract itemCode, checking for undefined/null before converting to string
+      const rawItemCode = row[1];
+      if (rawItemCode === undefined || rawItemCode === null || rawItemCode === '') {
+        continue; // Skip rows with missing item codes
+      }
+      const itemCode = String(rawItemCode).trim();
+      if (itemCode === 'undefined') {
+        continue; // Skip if conversion resulted in literal "undefined" string
+      }
       
       if (itemCode && existingIds.has(itemCode)) {
         // Apply Mapping Logic
@@ -249,7 +270,7 @@ export const posService = {
     }, onProgress, 'print');
   },
 
-  // 5. Wrapper: ItemMaintananceEvent
+  // 5. Wrapper: ItemMaintenanceEvent
   uploadItemMaintenance: async (file, onProgress) => {
     return posService.uploadExcelUpdate(file, (row) => {
       // Column Mapping (0-based index)
@@ -267,7 +288,7 @@ export const posService = {
         dealQty_maint: row[37],
         limitQty_maint: row[42],
         mpGroup_maint: row[45],
-        _source_maintenance: 'ItemMaintananceEvent'
+        _source_maintenance: 'ItemMaintenanceEvent'
       };
     }, onProgress, 'maint');
   },
@@ -278,8 +299,16 @@ export const posService = {
       const coll = collection(db, 'products');
       const snapshot = await getCountFromServer(coll);
       const uploads = await posService.getUploadMeta();
-      return { count: snapshot.data().count, lastUpdated: new Date(), uploads };
-    } catch { return { count: 0, lastUpdated: null, uploads: {} }; }
+      // Derive lastUpdated from metadata instead of current time
+      const lastUpdated = uploads.master?.lastUploadAt || uploads.print?.lastUploadAt || uploads.maint?.lastUploadAt || null;
+      return { count: snapshot.data().count, lastUpdated, uploads };
+    } catch (error) {
+      console.error('getProductStats error: Failed to retrieve product stats and upload metadata', {
+        operation: 'getProductStats',
+        error: error?.message || error
+      });
+      return { count: 0, lastUpdated: null, uploads: {} };
+    }
   },
 
   getUploadMeta: async () => {
