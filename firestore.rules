@@ -1,28 +1,47 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Products: allow reads to signed-in users only, write restricted to elevated roles.
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() 
+             && request.auth.token.role in ['admin', 'SM-SGM'];
+    }
+    
+    function isActiveProduct() {
+      return resource.data.ProductStatus is string
+             && resource.data.ProductStatus.matches('^0');
+    }
+    
+    // Products collection
     match /products/{productId} {
-      allow read: if request.auth != null && resource.data.ProductStatus is string
-                  && resource.data.ProductStatus.matches('^0');
-      allow write: if request.auth != null
-                   && request.auth.token.role in ['admin', 'SM-SGM'];
+      // Regular users: can read active products only
+      allow get: if isAuthenticated() && isActiveProduct();
+      
+      // Admin users: can list, count, aggregate all products
+      allow list: if isAdmin();
+      
+      // Admin users: can write
+      allow create, update, delete: if isAdmin();
     }
-
-    // Upload metadata for system settings imports.
+    
+    // Upload metadata
     match /upload_meta/{uploadId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.auth.token.role in ['admin', 'SM-SGM'];
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
     }
-
+    
+    // Admin metadata
     match /adminMeta/{docId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.auth.token.role in ['admin', 'SM-SGM'];
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
     }
-
-    // Fallback: deny everything else.
+    
+    // Fallback: deny everything else
     match /{document=**} {
       allow read, write: if false;
     }

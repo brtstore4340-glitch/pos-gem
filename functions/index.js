@@ -859,3 +859,73 @@ exports.abortUpload = functions.region(REGION).https.onCall(async (data, context
 
   return { ok: true };
 });
+
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+exports.setAdminRole = functions
+  .region('asia-southeast1')
+  .https.onCall(async (data, context) => {
+    // Only existing admins can set roles
+    if (!context.auth || !context.auth.token.admin) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'Only admins can set roles'
+      );
+    }
+    
+    const { uid, role } = data;
+    
+    if (!uid || !role) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'uid and role are required'
+      );
+    }
+    
+    try {
+      await admin.auth().setCustomUserClaims(uid, { 
+        role: role,
+        admin: role === 'admin'
+      });
+      
+      return { 
+        success: true, 
+        message: `Role ${role} set for user ${uid}` 
+      };
+    } catch (error) {
+      throw new functions.https.HttpsError(
+        'internal',
+        `Error setting role: ${error.message}`
+      );
+    }
+  });
+
+// First-time setup function (remove after use)
+exports.setFirstAdmin = functions
+  .region('asia-southeast1')
+  .https.onRequest(async (req, res) => {
+    const email = req.query.email;
+    
+    if (!email) {
+      res.status(400).send('Email parameter required');
+      return;
+    }
+    
+    try {
+      const user = await admin.auth().getUserByEmail(email);
+      
+      await admin.auth().setCustomUserClaims(user.uid, { 
+        role: 'admin',
+        admin: true
+      });
+      
+      res.send(`Admin role set for ${email} (${user.uid})`);
+    } catch (error) {
+      res.status(500).send(`Error: ${error.message}`);
+    }
+  });
