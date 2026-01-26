@@ -1,7 +1,7 @@
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase';
 
-function __requireIdCodePin__(payload) {
+function _requireIdCodePin(payload) {
   const idCode = payload?.idCode ?? payload?.id ?? payload?.code;
   const pin = payload?.pin ?? payload?.PIN;
   if (!idCode || !pin) {
@@ -72,3 +72,5 @@ export async function getAuditLogs(payload) {
   const res = await getAuditLogsFn(payload);
   return res.data?.logs || [];
 }
+
+

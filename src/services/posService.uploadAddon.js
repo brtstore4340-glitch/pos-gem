@@ -95,3 +95,6 @@ export async function searchProductsLight(text) {
     return { sku: p.itemCode, name: p.name || p.description, price: Number(p.dealPrice || p.price || 0) };
   });
 }
+
+
+

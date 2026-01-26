@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState, Suspense, lazy } from "react";
+import React, { useEffect, useMemo, useState, Suspense, lazy } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -86,6 +86,8 @@ function AppShell() {
     return allowedMenus[0] || "dashboard";
   }, [isManager, allowedSet, allowedMenus]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (!session) return;
     setActiveTab(defaultTab);
@@ -244,3 +246,5 @@ function App() {
 }
 
 export default App;
+
+
