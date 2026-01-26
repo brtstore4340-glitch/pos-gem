@@ -17,7 +17,7 @@ const cors = require("cors")({
 
 admin.initializeApp();
 const db = admin.firestore();
-const { calculateCartSummary } = require("./src/services/cartService");
+
 
 const REGION = "asia-southeast1";
 const UPLOAD_DOC = db.collection("system_metadata").doc("upload_status");
@@ -693,6 +693,8 @@ exports.getAuditLogs = functions.region(REGION).https.onCall(async (data, contex
 });
 
 exports.calculateOrder = functions.region(REGION).https.onCall(async (data, context) => {
+  // Lazy load cartService only when needed
+  const { calculateCartSummary } = require("./src/services/cartService");
   requireAuth(context);
   const actorIdCode = safeStr(data?.actorIdCode);
   if (!actorIdCode) throw new functions.https.HttpsError("invalid-argument", "actorIdCode required");
@@ -860,8 +862,7 @@ exports.abortUpload = functions.region(REGION).https.onCall(async (data, context
   return { ok: true };
 });
 
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
+
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -929,3 +930,5 @@ exports.setFirstAdmin = functions
       res.status(500).send(`Error: ${error.message}`);
     }
   });
+
+
