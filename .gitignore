@@ -80,6 +80,7 @@ build/
 .firebase/
 *.bak
 *.bak_*
+*.bak.*
 *.tmp
 config.yaml
 secret_config.yaml

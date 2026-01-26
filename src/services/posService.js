@@ -301,7 +301,7 @@ export const posService = {
     const MAX_BATCHES = 500;
     let totalDeleted = 0;
     let batches = 0;
-    while (true) // eslint-disable-line no-constant-condition // eslint-disable-line no-constant-condition {
+    while (true) {
       const q = query(collection(db, 'products'), limit(BATCH_SIZE));
       const snapshot = await getDocs(q);
       if (snapshot.empty) break;
@@ -376,6 +376,7 @@ export const posService = {
   },
   createOrder: async (orderData) => { /*...*/ }
 };
+
 
 
 
