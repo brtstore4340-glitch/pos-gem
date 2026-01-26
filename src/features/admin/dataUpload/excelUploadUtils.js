@@ -16,27 +16,21 @@ import {
  * - chunk upload with progress callback
  */
 
-export type UploadKind = "master" | "itemmaster" | "itemevent";
+/** @typedef {"master" | "itemmaster" | "itemevent"} UploadKind */
 
-export type ProgressState = {
-  phase:
-    | "idle"
-    | "reading"
-    | "parsing"
-    | "filtering"
-    | "uploading"
-    | "saving_meta"
-    | "done"
-    | "error";
-  message?: string;
-  percent: number; // 0-100
-  uploaded?: number;
-  total?: number;
-};
+/**
+ * @typedef {Object} ProgressState
+ * @property {"idle" | "reading" | "parsing" | "filtering" | "uploading" | "saving_meta" | "done" | "error"} phase
+ * @property {string=} message
+ * @property {number} percent
+ * @property {number=} uploaded
+ * @property {number=} total
+ */
 
 const DEFAULT_CHUNK_SIZE = 400;
 
-export function normalizeKey(k: string): string {
+/** @param {string} k */
+export function normalizeKey(k) {
   return (k ?? "")
     .toString()
     .trim()
@@ -47,12 +41,14 @@ export function normalizeKey(k: string): string {
     .replace(/^_+|_+$/g, "");
 }
 
-function s(v: unknown): string {
+/** @param {unknown} v */
+function s(v) {
   if (v === null || v === undefined) return "";
   return String(v).trim();
 }
 
-export function detectKeyField(sample: Record<string, any>): string | null {
+/** @param {Record<string, any>} sample */
+export function detectKeyField(sample) {
   const keys = Object.keys(sample || {});
   const candidates = [
     "itemcode",
@@ -72,7 +68,8 @@ export function detectKeyField(sample: Record<string, any>): string | null {
   return keys.length ? keys[0] : null;
 }
 
-export function detectStatusField(sample: Record<string, any>): string | null {
+/** @param {Record<string, any>} sample */
+export function detectStatusField(sample) {
   const keys = Object.keys(sample || {});
   const candidates = ["status", "st", "active_status"];
   for (const c of candidates) {
@@ -82,15 +79,20 @@ export function detectStatusField(sample: Record<string, any>): string | null {
   return null;
 }
 
-export async function readExcelFile(file: File): Promise<Record<string, any>[]> {
+/**
+ * @param {File} file
+ * @returns {Promise<Record<string, any>[]>}
+ */
+export async function readExcelFile(file) {
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
   const sheetName = wb.SheetNames[0];
   const ws = wb.Sheets[sheetName];
-  const json = XLSX.utils.sheet_to_json(ws, { defval: "" }) as Record<string, any>[];
+  const json = /** @type {Record<string, any>[]} */ (XLSX.utils.sheet_to_json(ws, { defval: "" }));
 
   return json.map((row) => {
-    const out: Record<string, any> = {};
+    /** @type {Record<string, any>} */
+    const out = {};
     for (const [k, v] of Object.entries(row)) {
       out[normalizeKey(k)] = v;
     }
@@ -98,8 +100,12 @@ export async function readExcelFile(file: File): Promise<Record<string, any>[]> 
   });
 }
 
-export function buildKeySet(rows: Record<string, any>[], keyField: string): Set<string> {
-  const set = new Set<string>();
+/**
+ * @param {Record<string, any>[]} rows
+ * @param {string} keyField
+ */
+export function buildKeySet(rows, keyField) {
+  const set = new Set();
   for (const r of rows) {
     const key = s(r[keyField]);
     if (key) set.add(key);
@@ -107,12 +113,15 @@ export function buildKeySet(rows: Record<string, any>[], keyField: string): Set<
   return set;
 }
 
-export function filterMasterStatus0(
-  rows: Record<string, any>[],
-  keyField: string,
-  statusField: string | null
-): { filtered: Record<string, any>[]; keySet: Set<string> } {
-  const filtered: Record<string, any>[] = [];
+/**
+ * @param {Record<string, any>[]} rows
+ * @param {string} keyField
+ * @param {string | null} statusField
+ * @returns {{ filtered: Record<string, any>[]; keySet: Set<string> }}
+ */
+export function filterMasterStatus0(rows, keyField, statusField) {
+  /** @type {Record<string, any>[]} */
+  const filtered = [];
   for (const r of rows) {
     const key = s(r[keyField]);
     if (!key) continue;
@@ -132,31 +141,41 @@ export function filterMasterStatus0(
   return { filtered, keySet: buildKeySet(filtered, keyField) };
 }
 
-export function filterByKeySet(
-  rows: Record<string, any>[],
-  keyField: string,
-  allowedKeys: Set<string>
-): Record<string, any>[] {
+/**
+ * @param {Record<string, any>[]} rows
+ * @param {string} keyField
+ * @param {Set<string>} allowedKeys
+ */
+export function filterByKeySet(rows, keyField, allowedKeys) {
   return rows.filter((r) => {
     const key = s(r[keyField]);
     return key && allowedKeys.has(key);
   });
 }
 
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
+/**
+ * @template T
+ * @param {T[]} arr
+ * @param {number} size
+ * @returns {T[][]}
+ */
+function chunk(arr, size) {
+  const out = [];
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
   return out;
 }
 
-export async function uploadRowsChunked(params: {
-  kind: UploadKind;
-  rows: Record<string, any>[];
-  keyField: string;
-  collectionName: string;
-  chunkSize?: number;
-  onProgress?: (p: ProgressState) => void;
-}) {
+/**
+ * @param {{
+ *   kind: UploadKind;
+ *   rows: Record<string, any>[];
+ *   keyField: string;
+ *   collectionName: string;
+ *   chunkSize?: number;
+ *   onProgress?: (p: ProgressState) => void;
+ * }} params
+ */
+export async function uploadRowsChunked(params) {
   const db = getFirestore();
   const {
     kind,
@@ -219,7 +238,7 @@ export async function uploadRowsChunked(params: {
 
   const metaRef = doc(collection(db, "adminMeta"), "uploadStatus");
   const metaSnap = await getDoc(metaRef);
-  const old = metaSnap.exists() ? (metaSnap.data() as any) : {};
+  const old = metaSnap.exists() ? metaSnap.data() : {};
 
   const nowIso = new Date().toISOString();
   const next = {
@@ -236,12 +255,4 @@ export async function uploadRowsChunked(params: {
   await setDoc(metaRef, next, { merge: true });
 
   onProgress?.({ phase: "done", percent: 100, message: "Done!", uploaded, total });
-}
-
-export async function getUploadStatus(): Promise<Record<string, any> | null> {
-  const db = getFirestore();
-  const ref = doc(collection(db, "adminMeta"), "uploadStatus");
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return null;
-  return snap.data() as any;
 }

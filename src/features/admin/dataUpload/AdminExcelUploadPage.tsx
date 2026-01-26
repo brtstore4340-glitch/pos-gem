@@ -7,8 +7,23 @@ import {
   filterByKeySet,
   uploadRowsChunked,
   getUploadStatus,
-  type ProgressState,
 } from "./excelUploadUtils";
+
+type ProgressState = {
+  phase:
+    | "idle"
+    | "reading"
+    | "parsing"
+    | "filtering"
+    | "uploading"
+    | "saving_meta"
+    | "done"
+    | "error";
+  message?: string;
+  percent: number;
+  uploaded?: number;
+  total?: number;
+};
 
 function fmtIso(iso?: string) {
   if (!iso) return "-";
