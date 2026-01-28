@@ -312,3 +312,140 @@ PS>git
 PS>git add .
 
 ]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>git commit -a
+
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm run dev
+
+  VITE v5.4.21  ready in 23436 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+Terminate batch job (Y/N)? y
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+]633;D]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>Set-ExecutionPolicy -Scope Process Bypass -Force
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>pwsh patch-react-not-defined.ps1
+Line |
+  25 |  …    ($s -match '(?m)^\s*import\s+React\s+from\s+[\'"]react[\'"]\s*;?\s …
+     |                                                      ~~~~~~~~~~~
+     | Unexpected token '"]react[\'"' in expression or statement.
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+]633;D]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>y
+>> TerminatingError(): "The term 'y' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again."
+The term 'y' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+y: The term 'y' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+]633;D]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+]633;D]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+]633;D]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>Set-ExecutionPolicy -Scope Process Bypass -Force
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>pwsh patch-react-not-defined.ps1
+
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+]633;D]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>Remove-Item .\patch-react-not-defined.ps1 -Force
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>pwsh .\patch-react-not-defined.ps1
+
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm ci
+
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm run dev
+
+  VITE v5.4.21  ready in 1021 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+Terminate batch job (Y/N)? y
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+]633;D]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>pwsh .\patch-react-not-defined.ps1
+[17:08:23] Backup: D:\01 Main Work\Boots\Boots-POS Gemini\ai-backups\patch_25690128_170823\main.jsx.bak
+[17:08:23] React import already present. No change.
+[17:08:23] Log saved: D:\01 Main Work\Boots\Boots-POS Gemini\patch-log_25690128_170823.txt
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm ci
+  run `npm fund` for details
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm run dev
+
+  VITE v5.4.21  ready in 1325 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+Terminate batch job (Y/N)? y
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+]633;D]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm run dev:strict
+npm error Missing script: "dev:strict"
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error A complete log of this run can be found in: C:\Users\User\AppData\Local\npm-cache\_logs\2026-01-28T10_15_02_989Z-debug-0.log
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>netstat -ano | findstr :5173
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>taskkill /PID <PID> /F
+At line:1 char:15
++ taskkill /PID <PID> /F
++               ~
+The '<' operator is reserved for future use.
+ParserError: 
+Line |
+   1 |  taskkill /PID <PID> /F
+     |                ~
+     | The '<' operator is reserved for future use.
+
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>taskkill /PID <PID> /F
+At line:1 char:15
++ taskkill /PID <PID> /F
++               ~
+The '<' operator is reserved for future use.
+ParserError: 
+Line |
+   1 |  taskkill /PID <PID> /F
+     |                ~
+     | The '<' operator is reserved for future use.
+
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+]633;D]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>pwsh .\patch-vite-dev-strict.ps1
+
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm ci
+
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm run dev:strict
+
+  VITE v5.4.21  ready in 860 ms
+
+  ➜  Local:   http://127.0.0.1:5173/
+  ➜  press h + enter to show help
+Terminate batch job (Y/N)? ั
+Terminate batch job (Y/N)? y
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>pwsh .\patch-vite-dev-strict.ps1
+[18:13:50] Backup: D:\01 Main Work\Boots\Boots-POS Gemini\ai-backups\patch_25690128_181350\package.json.bak
+[18:13:50] dev:strict already exists. No change.
+[18:13:50] Log saved: D:\01 Main Work\Boots\Boots-POS Gemini\patch-log_25690128_181350.txt
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B

@@ -1,0 +1,28 @@
+**********************
+PowerShell transcript start
+Start time: 20260128183035
+Username: MARCUZ\User
+RunAs User: MARCUZ\User
+Configuration Name: 
+Machine: MARCUZ (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll .\patch-pr-ready-build.ps1
+Process ID: 15244
+PSVersion: 7.5.4
+PSEdition: Core
+GitCommitId: 7.5.4
+OS: Microsoft Windows 10.0.19045
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+[18:30:35] Backup dir: D:\01 Main Work\Boots\Boots-POS Gemini\ai-backups\patch_25690128_183035
+[18:30:35] ---- Project root candidate: D:\01 Main Work\Boots\Boots-POS Gemini
+[18:30:35] Skip: D:\01 Main Work\Boots\Boots-POS Gemini\src\main.jsx (no React.* without import)
+PS>TerminatingError(): "Error formatting a string: Input string was not in a correct format. Failure to parse near offset 14. Expected an ASCII digit.."
+[18:30:35] ERROR: Error formatting a string: Input string was not in a correct format. Failure to parse near offset 14. Expected an ASCII digit..
+**********************
+PowerShell transcript end
+End time: 20260128183035
+**********************
