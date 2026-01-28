@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import PosUI from './components/DemoUI';
 import AdminSettings from './components/AdminSettings';
 import ProductSearchPage from './pages/ProductSearchPage';
@@ -89,3 +89,4 @@ function App() {
 }
 
 export default App;
+

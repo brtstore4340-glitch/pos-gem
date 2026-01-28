@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -51,3 +51,4 @@ const CheckoutPage = () => {
 };
 
 export default CheckoutPage;
+

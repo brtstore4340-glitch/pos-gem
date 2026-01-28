@@ -1,0 +1,694 @@
+
+> boots-pos-gemini@0.0.0 lint
+> eslint .
+
+(node:15056) ESLintIgnoreWarning: The ".eslintignore" file is no longer supported. Switch to using the "ignores" property in "eslint.config.js": https://eslint.org/docs/latest/use/configure/migration-guide#ignoring-files
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+D:\01 Main Work\Boots\Boots-POS Gemini\.backup-eslint-fix2-25690127-002626\1536594268\useCart.js
+  8:5  error  Parsing error: Unexpected token ?
+
+D:\01 Main Work\Boots\Boots-POS Gemini\.backup-eslint-fix2-25690127-002626\409793123\content.js
+  13:3  error  Parsing error: Unexpected token const
+
+D:\01 Main Work\Boots\Boots-POS Gemini\.backup-eslint-fix2-25690127-002626\649635181\PosUI.jsx
+    1:8    warning  'React' is defined but never used. Allowed unused vars must match /^_/u                                        no-unused-vars
+    1:38   warning  'useRef' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:10   warning  'ShoppingCart' is defined but never used. Allowed unused vars must match /^_/u                                 no-unused-vars
+    2:24   warning  'Search' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:32   warning  'Menu' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:38   warning  'ScanBarcode' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+    2:51   warning  'User' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:57   warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:65   warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u                                      no-unused-vars
+    2:74   warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+    2:87   warning  'X' is defined but never used. Allowed unused vars must match /^_/u                                            no-unused-vars
+    2:90   warning  'Tag' is defined but never used. Allowed unused vars must match /^_/u                                          no-unused-vars
+    2:95   warning  'Package' is defined but never used. Allowed unused vars must match /^_/u                                      no-unused-vars
+    2:104  warning  'Box' is defined but never used. Allowed unused vars must match /^_/u                                          no-unused-vars
+    2:109  warning  'MinusCircle' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+    2:122  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u                                     no-unused-vars
+    2:132  warning  'Settings' is defined but never used. Allowed unused vars must match /^_/u                                     no-unused-vars
+    2:142  warning  'Hash' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:148  warning  'Percent' is defined but never used. Allowed unused vars must match /^_/u                                      no-unused-vars
+    2:157  warning  'Ticket' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:165  warning  'Gift' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:171  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+    6:8    warning  'ReceiptModal' is defined but never used. Allowed unused vars must match /^_/u                                 no-unused-vars
+    7:8    warning  'ProductLookupModal' is defined but never used. Allowed unused vars must match /^_/u                           no-unused-vars
+    8:8    warning  'DailyReportModal' is defined but never used. Allowed unused vars must match /^_/u                             no-unused-vars
+   16:9    warning  'sidePanelW' is assigned a value but never used. Allowed unused vars must match /^_/u                          no-unused-vars
+   51:13   error    Empty block statement                                                                                          no-empty
+  195:6    warning  React Hook useEffect has a missing dependency: 'inputRef'. Either include it or remove the dependency array    react-hooks/exhaustive-deps
+  242:6    warning  React Hook useEffect has a missing dependency: 'searchHits'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\01 Main Work\Boots\Boots-POS Gemini\.backup-eslint-parsing-25690127-002136\1154890372\PosUI.jsx
+    1:8    warning  'React' is defined but never used. Allowed unused vars must match /^_/u                                        no-unused-vars
+    1:38   warning  'useRef' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:10   warning  'ShoppingCart' is defined but never used. Allowed unused vars must match /^_/u                                 no-unused-vars
+    2:24   warning  'Search' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:32   warning  'Menu' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:38   warning  'ScanBarcode' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+    2:51   warning  'User' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:57   warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:65   warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u                                      no-unused-vars
+    2:74   warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+    2:87   warning  'X' is defined but never used. Allowed unused vars must match /^_/u                                            no-unused-vars
+    2:90   warning  'Tag' is defined but never used. Allowed unused vars must match /^_/u                                          no-unused-vars
+    2:95   warning  'Package' is defined but never used. Allowed unused vars must match /^_/u                                      no-unused-vars
+    2:104  warning  'Box' is defined but never used. Allowed unused vars must match /^_/u                                          no-unused-vars
+    2:109  warning  'MinusCircle' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+    2:122  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u                                     no-unused-vars
+    2:132  warning  'Settings' is defined but never used. Allowed unused vars must match /^_/u                                     no-unused-vars
+    2:142  warning  'Hash' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:148  warning  'Percent' is defined but never used. Allowed unused vars must match /^_/u                                      no-unused-vars
+    2:157  warning  'Ticket' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:165  warning  'Gift' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:171  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+    6:8    warning  'ReceiptModal' is defined but never used. Allowed unused vars must match /^_/u                                 no-unused-vars
+    7:8    warning  'ProductLookupModal' is defined but never used. Allowed unused vars must match /^_/u                           no-unused-vars
+    8:8    warning  'DailyReportModal' is defined but never used. Allowed unused vars must match /^_/u                             no-unused-vars
+   16:9    warning  'sidePanelW' is assigned a value but never used. Allowed unused vars must match /^_/u                          no-unused-vars
+   51:13   error    Empty block statement                                                                                          no-empty
+  195:6    warning  React Hook useEffect has a missing dependency: 'inputRef'. Either include it or remove the dependency array    react-hooks/exhaustive-deps
+  242:6    warning  React Hook useEffect has a missing dependency: 'searchHits'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\01 Main Work\Boots\Boots-POS Gemini\.backup-eslint-parsing-25690127-002136\1201009357\popup.js
+  35:7  error  Parsing error: Identifier '$' has already been declared
+
+D:\01 Main Work\Boots\Boots-POS Gemini\.backup-eslint-parsing-25690127-002136\438470693\index.js
+  864:7  error  Parsing error: Identifier 'admin' has already been declared
+
+D:\01 Main Work\Boots\Boots-POS Gemini\boots-grab-print\extension\src\content.js
+  12:1  error  Parsing error: Unexpected token var
+
+D:\01 Main Work\Boots\Boots-POS Gemini\functions\.eslintrc.cjs
+  10:3  error  Parsing error: Unexpected token overrides
+
+D:\01 Main Work\Boots\Boots-POS Gemini\functions\index.js
+   54:16  warning  'isAdmin' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+  380:13  warning  'pinHash' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  380:22  warning  'pinSalt' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  380:31  warning  'pinAlgo' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  660:13  warning  'pinHash' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  660:22  warning  'pinSalt' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  660:31  warning  'pinAlgo' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  669:13  warning  'pinHash' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  669:22  warning  'pinSalt' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  669:31  warning  'pinAlgo' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\functions\src\controllers\posController.js
+  59:11  warning  'cart' is assigned a value but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  59:17  warning  'summary' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\functions\tests\module1.cartsummary.selftest.js
+   7:10  warning  'e1' is defined but never used  no-unused-vars
+  10:10  warning  'e2' is defined but never used  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\functions\tests\module1.method8.selftest.js
+   7:10  warning  'e1' is defined but never used  no-unused-vars
+  10:10  warning  'e2' is defined but never used  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\pos-gem\functions\src\controllers\posController.js
+   6:82  warning  'context' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  20:82  warning  'context' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\pos-gem\src\App.jsx
+   1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+   2:8   warning  'PosUI' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+   3:8   warning  'AdminSettings' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+   4:8   warning  'ProductSearchPage' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   6:3   warning  'LayoutDashboard' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+   7:3   warning  'Monitor' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+   8:3   warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+   9:13  warning  'SearchIcon' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  10:3   warning  'Settings' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+  11:3   warning  'UploadCloud' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  12:3   warning  'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\pos-gem\src\components\AdminSettings.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  2:10  warning  'Upload' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:18  warning  'X' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:21  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  2:34  warning  'AlertTriangle' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  2:49  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  2:59  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:68  warning  'Database' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\pos-gem\src\components\DailyReportModal.jsx
+   1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u                                      no-unused-vars
+   2:10  warning  'X' is defined but never used. Allowed unused vars must match /^_/u                                          no-unused-vars
+   2:13  warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u                                   no-unused-vars
+   2:23  warning  'Printer' is defined but never used. Allowed unused vars must match /^_/u                                    no-unused-vars
+   2:32  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u                                     no-unused-vars
+   2:40  warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u                                     no-unused-vars
+   2:48  warning  'ChevronDown' is defined but never used. Allowed unused vars must match /^_/u                                no-unused-vars
+   2:61  warning  'ChevronUp' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+  24:36  warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\01 Main Work\Boots\Boots-POS Gemini\pos-gem\src\components\DemoUI.jsx
+  1:8    warning  'React' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+  1:38   warning  'useRef' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:10   warning  'ShoppingCart' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:24   warning  'Search' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:32   warning  'Menu' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+  2:38   warning  'ScanBarcode' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:51   warning  'User' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+  2:57   warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:65   warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:74   warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:87   warning  'X' is defined but never used. Allowed unused vars must match /^_/u                   no-unused-vars
+  2:90   warning  'Tag' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+  2:95   warning  'Package' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:104  warning  'Box' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+  2:109  warning  'MinusCircle' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:122  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:132  warning  'Settings' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:142  warning  'Hash' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+  2:148  warning  'Percent' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:157  warning  'Ticket' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:165  warning  'Gift' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+  2:171  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  6:8    warning  'ReceiptModal' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  7:8    warning  'ProductLookupModal' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  8:8    warning  'DailyReportModal' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\pos-gem\src\components\PosUI.jsx
+    1:8    warning  'React' is defined but never used. Allowed unused vars must match /^_/u                                        no-unused-vars
+    1:38   warning  'useRef' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:10   warning  'ShoppingCart' is defined but never used. Allowed unused vars must match /^_/u                                 no-unused-vars
+    2:24   warning  'Search' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:32   warning  'Menu' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:38   warning  'ScanBarcode' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+    2:51   warning  'User' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:57   warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:65   warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u                                      no-unused-vars
+    2:74   warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+    2:87   warning  'X' is defined but never used. Allowed unused vars must match /^_/u                                            no-unused-vars
+    2:90   warning  'Tag' is defined but never used. Allowed unused vars must match /^_/u                                          no-unused-vars
+    2:95   warning  'Package' is defined but never used. Allowed unused vars must match /^_/u                                      no-unused-vars
+    2:104  warning  'Box' is defined but never used. Allowed unused vars must match /^_/u                                          no-unused-vars
+    2:109  warning  'MinusCircle' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+    2:122  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u                                     no-unused-vars
+    2:132  warning  'Settings' is defined but never used. Allowed unused vars must match /^_/u                                     no-unused-vars
+    2:142  warning  'Hash' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:148  warning  'Percent' is defined but never used. Allowed unused vars must match /^_/u                                      no-unused-vars
+    2:157  warning  'Ticket' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:165  warning  'Gift' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:171  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+    6:8    warning  'ReceiptModal' is defined but never used. Allowed unused vars must match /^_/u                                 no-unused-vars
+    7:8    warning  'ProductLookupModal' is defined but never used. Allowed unused vars must match /^_/u                           no-unused-vars
+    8:8    warning  'DailyReportModal' is defined but never used. Allowed unused vars must match /^_/u                             no-unused-vars
+   16:9    warning  'sidePanelW' is assigned a value but never used. Allowed unused vars must match /^_/u                          no-unused-vars
+   51:13   error    Empty block statement                                                                                          no-empty
+  195:6    warning  React Hook useEffect has a missing dependency: 'inputRef'. Either include it or remove the dependency array    react-hooks/exhaustive-deps
+  242:6    warning  React Hook useEffect has a missing dependency: 'searchHits'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\01 Main Work\Boots\Boots-POS Gemini\pos-gem\src\components\ProductLookupModal.jsx
+    1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u                                          no-unused-vars
+    2:10  warning  'X' is defined but never used. Allowed unused vars must match /^_/u                                              no-unused-vars
+    2:13  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:21  warning  'Package' is defined but never used. Allowed unused vars must match /^_/u                                        no-unused-vars
+    2:30  warning  'Database' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:40  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+    2:50  warning  'Layers' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    2:58  warning  'Box' is defined but never used. Allowed unused vars must match /^_/u                                            no-unused-vars
+   37:6   warning  React Hook useEffect has a missing dependency: 'selectedItem'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  237:10  warning  'DetailItem' is defined but never used. Allowed unused vars must match /^_/u                                     no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\pos-gem\src\components\ReceiptModal.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:10  warning  'X' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:13  warning  'Printer' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  2:22  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\pos-gem\src\hooks\useCart.js
+  8:5  error  Parsing error: Unexpected token ?
+
+D:\01 Main Work\Boots\Boots-POS Gemini\pos-gem\src\main.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:8  warning  'App' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\pos-gem\src\pages\ProductSearchPage.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+  2:8  warning  'ProductLookupModal' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\pos-gem\src\services\posService.js
+  2:55  warning  'addDoc' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:75  warning  'getCountFromServer' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\App.jsx
+  1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  2:10  warning  'AppRouter' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\AppAuth.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:8  warning  'ExistingApp' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\AdminSettings.jsx
+    1:8    warning  'React' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+    3:10   warning  'Upload' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+    3:18   warning  'Database' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+    3:28   warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+    3:38   warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+    3:51   warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+    3:64   warning  'RefreshCw' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+    3:75   warning  'ArrowLeft' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+    3:86   warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+    3:94   warning  'Lock' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+    3:100  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+    3:108  warning  'HelpCircle' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  257:10   warning  'UploadCard' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\ClockWidget.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\DailyReportModal.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:10  warning  'X' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:13  warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  2:23  warning  'Printer' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  2:32  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  2:40  warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  2:48  warning  'ChevronDown' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  2:61  warning  'ChevronUp' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\DemoUI.jsx
+  1:8    warning  'React' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+  2:10   warning  'ShoppingCart' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:24   warning  'Search' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:32   warning  'ScanBarcode' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:45   warning  'User' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+  2:51   warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:59   warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:68   warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:81   warning  'X' is defined but never used. Allowed unused vars must match /^_/u                   no-unused-vars
+  2:84   warning  'Tag' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+  2:89   warning  'Package' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:98   warning  'Box' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+  2:103  warning  'MinusCircle' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:116  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:126  warning  'Settings' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:136  warning  'Hash' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+  2:142  warning  'Percent' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:151  warning  'Ticket' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:159  warning  'Gift' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+  2:165  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  6:8    warning  'ReceiptModal' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  7:8    warning  'ProductLookupModal' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  8:8    warning  'DailyReportModal' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\LoadingSpinner.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\NeuClock.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\PosTabContent.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+  2:8  warning  'ReceiptModal' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:8  warning  'ProductLookupModal' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  4:8  warning  'DailyReportModal' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\PosUI.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+  2:10  warning  'ShoppingCart' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:24  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:32  warning  'ScanBarcode' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:45  warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:53  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:62  warning  'Tag' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+  2:67  warning  'Package' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:99  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  6:8   warning  'ReceiptModal' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  7:8   warning  'ProductLookupModal' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  8:8   warning  'DailyReportModal' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  9:8   warning  'PosUploadModal' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\PosUploadModal.jsx
+   1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+   2:10  warning  'UploadCloud' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   2:23  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+   2:32  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   2:45  warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   2:58  warning  'X' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  10:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\ProductLookupModal.jsx
+    1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+    2:10  warning  'X' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+    2:13  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+    2:21  warning  'Package' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+    2:30  warning  'Database' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+    2:40  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+    2:50  warning  'Layers' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+    2:58  warning  'Box' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  217:10  warning  'DetailItem' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\ReceiptModal.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:10  warning  'X' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:13  warning  'Printer' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  2:22  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\ThemeToggle.jsx
+  1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  2:10  warning  'Moon' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  2:16  warning  'Sun' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  3:10  warning  'Button' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\auth\AccessDenied.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\auth\AuthGate.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+  3:8  warning  'GoogleSignIn' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  4:8  warning  'IdPinLogin' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  5:8  warning  'PinReset' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  6:8  warning  'LoadingSpinner' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\auth\GoogleSignIn.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  3:10  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:19  warning  'Sun' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+  3:24  warning  'Moon' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  3:30  warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\auth\IdPinLogin.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:10  warning  'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  2:23  warning  'LogOut' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  2:31  warning  'KeySquare' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  2:42  warning  'User' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:48  warning  'Moon' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:54  warning  'Sun' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  2:59  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\auth\PinReset.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\layout\AppShell.jsx
+   1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+   2:10  warning  'NavLink' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+   2:19  warning  'Outlet' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+   3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+   3:18  warning  'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   4:10  warning  'Container' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+   5:10  warning  'ThemeToggle' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  15:10  warning  'NavItem' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\skeletons\TabSkeleton.jsx
+  1:8  warning  'LoadingSpinner' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\toaster.jsx
+  1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  2:21  warning  'SonnerToaster' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\ui\badge.jsx
+  1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\ui\button.jsx
+  40:9  warning  'Comp' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\ui\dialog.jsx
+  4:10  warning  'X' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\ui\grid.jsx
+  1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\components\ui\table.jsx
+  1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\context\AuthContext.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\context\CartContext.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\context\ThemeContext.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\features\orders\services\orderService.js
+  2:22  warning  'storeId' is assigned a value but never used. Allowed unused args must match /^_/u   no-unused-vars
+  2:31  warning  'dateFrom' is assigned a value but never used. Allowed unused args must match /^_/u  no-unused-vars
+  2:41  warning  'dateTo' is assigned a value but never used. Allowed unused args must match /^_/u    no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\features\pos\components\ProductLookupModal.jsx
+  2:10  warning  'Dialog' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:18  warning  'DialogTrigger' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  2:33  warning  'DialogContent' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  2:48  warning  'DialogHeader' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  2:62  warning  'DialogTitle' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:75  warning  'DialogDescription' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  2:94  warning  'DialogFooter' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:10  warning  'Button' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  4:10  warning  'Input' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  5:10  warning  'Badge' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  6:10  warning  'Table' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  6:17  warning  'TableRoot' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  6:28  warning  'TableHeader' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  6:41  warning  'TableBody' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  6:52  warning  'TableRow' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+  6:62  warning  'TableHead' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  6:73  warning  'TableCell' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\features\pos\components\ReceiptDialog.jsx
+  1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:10  warning  'Dialog' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:18  warning  'DialogContent' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  2:33  warning  'DialogHeader' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  2:47  warning  'DialogTitle' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:60  warning  'DialogDescription' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  2:79  warning  'DialogFooter' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:10  warning  'Button' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  4:10  warning  'Table' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  4:17  warning  'TableRoot' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  4:28  warning  'TableHeader' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  4:41  warning  'TableBody' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  4:52  warning  'TableRow' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+  4:62  warning  'TableHead' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  4:73  warning  'TableCell' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  5:10  warning  'Badge' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\legacy\PosUI.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+  2:10  warning  'ShoppingCart' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:24  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:32  warning  'ScanBarcode' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:45  warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:53  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:62  warning  'Tag' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+  2:67  warning  'Package' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:99  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  6:8   warning  'ReceiptModal' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  7:8   warning  'ProductLookupModal' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  8:8   warning  'DailyReportModal' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  9:8   warning  'PosUploadModal' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\main.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  4:8   warning  'App' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  7:10  warning  'ThemeProvider' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  8:10  warning  'Toaster' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\AdminSettingsPage.jsx
+    1:8    warning  'React' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+    3:10   warning  'Upload' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+    3:18   warning  'Database' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+    3:28   warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+    3:38   warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+    3:51   warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+    3:64   warning  'RefreshCw' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+    3:75   warning  'ArrowLeft' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+    3:86   warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+    3:94   warning  'Lock' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+    3:100  warning  'HelpCircle' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+    3:112  warning  'Server' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+    3:120  warning  'Settings' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+    3:130  warning  'Save' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+    3:136  warning  'HardDrive' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+    6:8    warning  'LoadingSpinner' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  387:10   warning  'UploadCard' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\CheckoutPage.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+  3:8  warning  'LoadingSpinner' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\DashboardPage.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  2:44  warning  'Activity' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\FileUploadPage.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:10  warning  'UploadCloud' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  2:23  warning  'File' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:29  warning  'X' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:32  warning  'HardDrive' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\HomePage.jsx
+  1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:10  warning  'Container' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  3:16  warning  'CardHeader' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:28  warning  'CardTitle' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:39  warning  'CardDescription' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:56  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  4:10  warning  'Button' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\InventoryPage.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  2:10  warning  'Package' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  2:19  warning  'Plus' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  2:25  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  2:33  warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\LoginPage.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:10  warning  'Toaster' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  6:10  warning  'User' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  6:16  warning  'Lock' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  6:22  warning  'Eye' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  6:27  warning  'EyeOff' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  6:35  warning  'LogIn' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  6:42  warning  'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  6:55  warning  'Activity' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  6:65  warning  'Server' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  6:73  warning  'Info' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\MainPage.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\ManagementConsole.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  4:8   warning  'AccessDenied' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  5:10  warning  'Shield' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  5:18  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  5:26  warning  'UserPlus' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  5:36  warning  'Edit' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  5:42  warning  'Key' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+  5:47  warning  'History' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  5:56  warning  'Save' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  5:62  warning  'RefreshCw' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  5:73  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  5:86  warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\NotFoundPage.jsx
+  1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:10  warning  'Container' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  3:16  warning  'CardHeader' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:28  warning  'CardTitle' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:39  warning  'CardDescription' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:56  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  4:10  warning  'Button' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\OrdersPage.jsx
+  1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:10  warning  'Container' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  3:16  warning  'CardHeader' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:28  warning  'CardTitle' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:39  warning  'CardDescription' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:56  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\PosPage.jsx
+   4:10  warning  'Container' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+   5:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+   5:16  warning  'CardHeader' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+   5:28  warning  'CardTitle' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+   5:39  warning  'CardDescription' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+   5:56  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+   6:10  warning  'Button' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+   7:10  warning  'Badge' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+   8:10  warning  'Input' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+   9:10  warning  'Table' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+   9:17  warning  'TableRoot' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+   9:28  warning  'TableHeader' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+   9:41  warning  'TableBody' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+   9:52  warning  'TableRow' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+   9:62  warning  'TableHead' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+   9:73  warning  'TableCell' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+  10:10  warning  'Dialog' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  10:18  warning  'DialogTrigger' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  10:33  warning  'DialogContent' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  10:48  warning  'DialogHeader' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  10:62  warning  'DialogTitle' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  10:75  warning  'DialogDescription' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  10:94  warning  'DialogFooter' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  15:10  warning  'ProductLookupModal' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  16:10  warning  'ReceiptDialog' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\PosUI.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+  2:10  warning  'ShoppingCart' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  2:24  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:32  warning  'ScanBarcode' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  2:45  warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  2:53  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:62  warning  'Tag' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+  2:67  warning  'Package' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  2:99  warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+  6:8   warning  'ReceiptModal' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  7:8   warning  'ProductLookupModal' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  8:8   warning  'DailyReportModal' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  9:8   warning  'PosUploadModal' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\ProductSearchPage.jsx
+    1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+    2:10  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  193:10  warning  'InfoCard' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  193:27  warning  'Icon' is defined but never used. Allowed unused args must match /^_/u      no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\ProductsPage.jsx
+  2:10  warning  'Container' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  3:16  warning  'CardHeader' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:28  warning  'CardTitle' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:39  warning  'CardDescription' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:56  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  4:10  warning  'Button' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\ReportPage.jsx
+  1:8   warning  'React' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  2:10  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  2:20  warning  'BarChart3' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\ReportsPage.jsx
+  1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:10  warning  'Container' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  3:16  warning  'CardHeader' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:28  warning  'CardTitle' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:39  warning  'CardDescription' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:56  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\SettingsPage.jsx
+  1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  2:10  warning  'Container' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:10  warning  'Card' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  3:16  warning  'CardHeader' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:28  warning  'CardTitle' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:39  warning  'CardDescription' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:56  warning  'CardContent' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\pages\UserManagementPage.jsx
+  1:8  warning  'React' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\router\AppRouter.jsx
+   1:13  warning  'React' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+   2:31  warning  'RouterProvider' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   3:10  warning  'AppShell' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+   5:10  warning  'HomePage' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+   6:10  warning  'PosPage' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+   7:10  warning  'ProductsPage' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+   8:10  warning  'OrdersPage' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+   9:10  warning  'ReportsPage' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  10:10  warning  'SettingsPage' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  11:10  warning  'NotFoundPage' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+
+D:\01 Main Work\Boots\Boots-POS Gemini\src\services\posService.js
+  377:23  warning  'orderData' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+โ– 525 problems (10 errors, 515 warnings)
+

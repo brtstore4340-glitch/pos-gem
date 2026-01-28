@@ -1,0 +1,173 @@
+**********************
+PowerShell transcript start
+Start time: 20260128041214
+Username: MARCUZ\User
+RunAs User: MARCUZ\User
+Configuration Name: 
+Machine: MARCUZ (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -noexit -command try { . "c:\Users\User\AppData\Local\Programs\Microsoft VS Code\resources\app\out\vs\workbench\contrib\terminal\common\scripts\shellIntegration.ps1" } catch {}
+Process ID: 15212
+PSVersion: 7.5.4
+PSEdition: Core
+GitCommitId: 7.5.4
+OS: Microsoft Windows 10.0.19045
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>try {
+  Log "Repo root: $root"
+
+  $viteConfig = Join-Path $root "vite.config.js"
+  $pkgJson    = Join-Path $root "package.json"
+
+  if (!(Test-Path $viteConfig)) { throw "Missing vite.config.js at repo root. Cannot patch safely." }
+  if (!(Test-Path $pkgJson))    { throw "Missing package.json at repo root. Cannot patch safely." }
+
+  # Heuristic: GitHub Pages project site usually "/<repo-name>/"
+  $repoName = Split-Path $root -Leaf
+  $expectedBase = "/$repoName/"
+  # User repo is pos-gem; keep deterministic even if folder name differs
+  if ($repoName -ne "pos-gem") {
+    Log "Note: folder name '$repoName' != 'pos-gem'. Using base '$expectedBase'. If repo name is pos-gem, run script from that folder."
+  } else {
+    $expectedBase = "/pos-gem/"
+  }
+
+  # Backups
+  $bkDir = Join-Path $root ("ai-backups\patch_{0}" -f $stamp)
+  New-Item -ItemType Directory -Force -Path $bkDir | Out-Null
+  Copy-Item $viteConfig (Join-Path $bkDir "vite.config.js.bak") -Force
+  Copy-Item $pkgJson    (Join-Path $bkDir "package.json.bak") -Force
+  Log "Backups created at: $bkDir"
+
+  # --- Patch vite.config.js ---
+  $vc = Get-Content -Raw -Encoding UTF8 $viteConfig
+
+  $hasBase = $vc -match "(?m)\bbase\s*:\s*['""]\/.*?\/['""]\s*,?"
+  $usesDefineConfig = $vc -match "defineConfig\s*\("
+
+  if (-not $usesDefineConfig) {
+    Log "vite.config.js does not appear to use defineConfig(). Patch will be conservative."
+  }
+
+  if ($hasBase) {
+    # Replace existing base value
+    $vc2 = [regex]::Replace(
+      $vc,
+      "(?m)\bbase\s*:\s*['""]\/.*?\/['""]\s*,?",
+      ("base: '{0}'," -f $expectedBase),
+      1
+    )
+    if ($vc2 -ne $vc) {
+      Set-Content -Path $viteConfig -Value $vc2 -Encoding UTF8
+      Log "Patched existing base -> $expectedBase"
+    } else {
+      Log "Found base but could not replace (unexpected format). No change."
+    }
+  } else {
+    # Insert base into object literal passed to defineConfig(...)
+    # Try pattern: defineConfig({ ... })
+    if ($vc -match "defineConfig\s*\(\s*\{") {
+      $vc2 = [regex]::Replace(
+        $vc,
+        "defineConfig\s*\(\s*\{",
+        ("defineConfig({`n  base: '{0}'," -f $expectedBase),
+        1
+      )
+      Set-Content -Path $viteConfig -Value $vc2 -Encoding UTF8
+      Log "Inserted base -> $expectedBase"
+    } else {
+      Log "Could not confidently insert base into vite.config.js. Manual edit required: set export default defineConfig({ base: '$expectedBase', ... })"
+    }
+  }
+
+  # --- Patch package.json scripts ---
+  $pj = Get-Content -Raw -Encoding UTF8 $pkgJson
+
+  # Add build:ghpages script if missing.
+  # Use cross-platform env injection pattern via "vite build --base=..." is simplest.
+  if ($pj -notmatch '"build:ghpages"\s*:') {
+    if ($pj -match '"scripts"\s*:\s*\{') {
+      $insert = '"build:ghpages": "vite build --base=' + $expectedBase.Replace('"','\"') + '",'
+      $pj2 = [regex]::Replace($pj, '"scripts"\s*:\s*\{', ('"scripts": {' + "`n    $insert"), 1)
+      Set-Content -Path $pkgJson -Value $pj2 -Encoding UTF8
+      Log 'Added npm script: build:ghpages'
+    } else {
+      Log 'Could not find scripts block in package.json. No change.'
+    }
+  } else {
+    Log "build:ghpages already exists. No change."
+  }
+
+  Log "Patch complete."
+  Log "Next: run commands in section F and share outputs if still slow."
+}
+catch {
+  Log ("ERROR: " + $_.Exception.Message)
+  throw
+}
+[04:12:14] Repo root: D:\01 Main Work\Boots\Boots-POS Gemini
+[04:12:14] Note: folder name 'Boots-POS Gemini' != 'pos-gem'. Using base '/Boots-POS Gemini/'. If repo name is pos-gem, run script from that folder.
+[04:12:14] Backups created at: D:\01 Main Work\Boots\Boots-POS Gemini\ai-backups\patch_25690128_041214
+[04:12:14] ERROR: Error formatting a string: Input string was not in a correct format. Failure to parse near offset 14. Expected an ASCII digit..
+PS>TerminatingError(): "Error formatting a string: Input string was not in a correct format. Failure to parse near offset 14. Expected an ASCII digit.."
+Error formatting a string: Input string was not in a correct format. Failure to parse near offset 14. Expected an ASCII digit..
+InvalidOperation: 
+Line |
+  55 |        $vc2 = [regex]::Replace(
+     |        ~~~~~~~~~~~~~~~~~~~~~~~~
+     | Error formatting a string: Input string was not in a correct format. Failure to parse near offset 14. Expected an ASCII digit..
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>finally {
+  Stop-Transcript | Out-Null
+  Log "Log saved: $logPath"
+}
+>> TerminatingError(): "The term 'finally' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again."
+The term 'finally' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+finally: The term 'finally' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+]633;D]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm ci
+
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm run build:ghpages
+
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS># หรือถ้า deploy pipeline ใช้ npm run build ปกติ ให้เปลี่ยนไปใช้ build:ghpages ใน workflow/deploy
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+]633;D]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm ci
+
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm run build:ghpages
+
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS># หรือถ้า deploy pipeline ใช้ npm run build ปกติ ให้เปลี่ยนไปใช้ build:ghpages ใน workflow/deploy
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm run build
+
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm ci
+
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>npm run build:ghpages
+
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS># หรือถ้า deploy pipeline ใช้ npm run build ปกติ ให้เปลี่ยนไปใช้ build:ghpages ใน workflow/deploy
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>git pull
+
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>git  
+
+]633;D;1]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B
+PS>git add .
+
+]633;D;0]633;A]633;P;Cwd=D:\x5c01 Main Work\x5cBoots\x5cBoots-POS GeminiPS D:\01 Main Work\Boots\Boots-POS Gemini> ]633;B

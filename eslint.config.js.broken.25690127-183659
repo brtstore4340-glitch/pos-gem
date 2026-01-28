@@ -1,0 +1,52 @@
+// eslint.config.js (ESLint v9 - Flat Config, ESM)
+
+import globals from "globals";
+import react from "eslint-plugin-react";
+import reactHooks from "eslint-plugin-react-hooks";
+
+export default [
+  // 1) Ignore folders that are NOT part of the Vite app
+  {
+    ignores: [
+      "**/.backup-eslint-*/**",
+      "**/functions/**",
+      "**/boots-grab-print/**",
+      "**/pos-gem/functions/**"
+    ]
+  },
+
+  // 2) Base config for app source
+  {
+    files: ["**/*.js", "**/*.jsx"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      globals: {
+        ...globals.browser,
+        ...globals.node
+      }
+    },
+    plugins: {
+      react,
+      "react-hooks": reactHooks
+    },
+    rules: {
+      // React 18: no need to import React
+      "react/react-in-jsx-scope": "off",
+
+      // Hooks rules
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+
+      // Keep warnings (Phase 2)
+      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+      "no-empty": ["error", { "allowEmptyCatch": true }]
+    },
+    settings: {
+      react: {
+        version: "detect"
+      }
+    }
+  }
+];
+// End of eslint.config.js

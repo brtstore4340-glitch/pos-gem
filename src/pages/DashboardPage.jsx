@@ -1,4 +1,3 @@
-import React from 'react';
 import { TrendingUp, ShoppingBag, Package, Activity } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -61,3 +60,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

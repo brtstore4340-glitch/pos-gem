@@ -1,4 +1,4 @@
-﻿import { db } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { collection, doc, getDoc, getDocs, updateDoc, addDoc, writeBatch, getCountFromServer, serverTimestamp, query, limit, where, orderBy, startAt, endAt, Timestamp } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
 
@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx';
 const generateKeywords = (text) => {
   if (!text) return [];
   const keywords = new Set();
-  const words = text.toUpperCase().split(/[\s\-\/\(\)\.\,]+/);
+  const words = text.toUpperCase().split(/[\s\-/().,]+/);
   words.forEach(word => {
     const cleanWord = word.trim();
     if (cleanWord.length < 2) return;
@@ -287,3 +287,4 @@ export const posService = {
   // --- LEGACY ---
   createOrder: async (orderData) => { const { addDoc, collection, serverTimestamp } = await import('firebase/firestore'); const docRef = await addDoc(collection(db, 'invoices'), { ...orderData, createdAt: serverTimestamp(), status: 'paid' }); return docRef.id; }
 };
+

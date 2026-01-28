@@ -79,7 +79,7 @@ const getPromotionBadge = (rawItem) => {
 const calculateLine = (rawItem) => {
   const item = normalizeItem(rawItem);
 // BEGIN: THAM:APPLY_FIELD_MAP_TO_LINE_V2
-const __thamMapped = (typeof thamMapFields === 'function') ? thamMapFields(rawItem || {}) : null;
+const __thamMapped = (typeof thamMapFields === 'function') ? thamMapFields(rawItem || { /* noop */ }) : null;
 if (__thamMapped) {
 const __n = String(__thamMapped.name ?? '').trim();
 if ((!item.name || String(item.name).trim() === '') && __n) item.name = __n;
@@ -100,7 +100,7 @@ if ((__baseMethod === '' || __baseMethod === '0') && __mappedMethod !== '' && __
 }
 // END:   THAM:APPLY_FIELD_MAP_TO_LINE_V2
 // BEGIN: THAM:APPLY_FIELD_MAP_TO_LINE_V1
-const mapped = thamMapFields(rawItem || {});
+const mapped = thamMapFields(rawItem || { /* noop */ });
 if (mapped) {
 const mappedName = String(mapped.name ?? '').trim();
 if ((!item.name || String(item.name).trim() === '') && mappedName) item.name = mappedName;
@@ -273,7 +273,7 @@ const payableQty = Math.max(0, q - freeItems);
 return { freeItems, payableQty };
 }
 
-exports.THAM = exports.THAM || {};
+exports.THAM = exports.THAM || { /* noop */ };
 exports.THAM.calcMethod8_A = tham_calcMethod8_A;
 exports.THAM.calcMethod8_B = tham_calcMethod8_B;
 // END:   THAM:METHOD8_HELPERS_V1
@@ -296,8 +296,9 @@ if (typeof gt === 'number' && Number.isFinite(gt)) {
 res.summary.netTotal = gt; // payable amount (inclusive VAT)
 }
 }
-} catch (_) {}
+} catch (_) { /* handled */ console.warn(_); }
 return res;
 };
 })();
 /* END:   THAM:WRAP_CARTSUMMARY_NETTOTAL_V1 */
+

@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function AccessDenied({ message }) {
   return (
     <div className="h-full w-full flex items-center justify-center">
@@ -10,3 +8,4 @@ export default function AccessDenied({ message }) {
     </div>
   );
 }
+

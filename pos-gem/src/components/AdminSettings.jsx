@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Upload, X, CheckCircle, AlertTriangle, FileText, Loader2, Database } from 'lucide-react';
 import { posService } from '../services/posService';
 import { cn } from '../utils/cn';
@@ -129,3 +129,4 @@ export default function AdminSettings({ onClose }) {
     </div>
   );
 }
+

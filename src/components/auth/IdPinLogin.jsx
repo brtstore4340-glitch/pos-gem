@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ShieldCheck, LogOut, KeySquare, User, Moon, Sun, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { bootstrapAdmin } from '../../services/rbacService';
@@ -290,3 +290,4 @@ export default function IdPinLogin() {
     </div>
   );
 }
+

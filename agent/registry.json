@@ -1,0 +1,30 @@
+{
+  "core_architecture": "Agent + Skills + Computer",
+  "default_shell": "pwsh",
+  "skills": [
+    {
+      "id": "bug-fix",
+      "name": "Bug Fix (Full-stack)",
+      "entry": "skills/bug-fix/SKILL.md",
+      "tags": ["react", "vite", "eslint", "typescript", "firebase", "node"]
+    },
+    {
+      "id": "ci-cd-review",
+      "name": "CI/CD & PR Review",
+      "entry": "skills/ci-cd-review/SKILL.md",
+      "tags": ["github-actions", "lint", "build", "deploy", "checklist"]
+    },
+    {
+      "id": "firebase-secure",
+      "name": "Firebase Secure Implementation",
+      "entry": "skills/firebase-secure/SKILL.md",
+      "tags": ["auth", "firestore", "functions", "rules", "env"]
+    },
+    {
+      "id": "docops",
+      "name": "Docs / Reports (HR/Operations)",
+      "entry": "skills/docops/SKILL.md",
+      "tags": ["pdf", "docx", "report", "formal-english"]
+    }
+  ]
+}

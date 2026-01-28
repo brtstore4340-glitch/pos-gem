@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import GoogleSignIn from './GoogleSignIn';
 import IdPinLogin from './IdPinLogin';
@@ -30,3 +29,4 @@ export default function AuthGate({ children }) {
 
   return children;
 }
+

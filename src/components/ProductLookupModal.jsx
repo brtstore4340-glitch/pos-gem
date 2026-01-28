@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Search, Package, Database, FileText, Layers, Box } from 'lucide-react';
 import { posService } from '../services/posService';
 import { cn } from '../utils/cn';
@@ -225,3 +225,4 @@ function DetailItem({ label, value, sub, highlight, fullWidth }) {
     </div>
   );
 }
+

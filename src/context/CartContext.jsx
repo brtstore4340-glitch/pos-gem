@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useMemo, useCallback } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useMemo, useCallback } from 'react';
 import { useCart as useCartLogic } from '../hooks/useCart';
 
 // Context wrapper that exposes the rich cart state from hooks/useCart
@@ -28,3 +29,4 @@ export const CartProvider = ({ children }) => {
 };
 
 export default CartContext;
+

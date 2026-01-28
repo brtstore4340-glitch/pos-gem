@@ -860,9 +860,7 @@ exports.abortUpload = functions.region(REGION).https.onCall(async (data, context
   return { ok: true };
 });
 
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
-
+const functions2 = require('firebase-functions');
 if (!admin.apps.length) {
   admin.initializeApp();
 }
@@ -872,7 +870,7 @@ exports.setAdminRole = functions
   .https.onCall(async (data, context) => {
     // Only existing admins can set roles
     if (!context.auth || !context.auth.token.admin) {
-      throw new functions.https.HttpsError(
+      throw new functions2.https.HttpsError(
         'permission-denied',
         'Only admins can set roles'
       );
@@ -881,7 +879,7 @@ exports.setAdminRole = functions
     const { uid, role } = data;
     
     if (!uid || !role) {
-      throw new functions.https.HttpsError(
+      throw new functions2.https.HttpsError(
         'invalid-argument',
         'uid and role are required'
       );
@@ -898,7 +896,7 @@ exports.setAdminRole = functions
         message: `Role ${role} set for user ${uid}` 
       };
     } catch (error) {
-      throw new functions.https.HttpsError(
+      throw new functions2.https.HttpsError(
         'internal',
         `Error setting role: ${error.message}`
       );
@@ -929,3 +927,4 @@ exports.setFirstAdmin = functions
       res.status(500).send(`Error: ${error.message}`);
     }
   });
+

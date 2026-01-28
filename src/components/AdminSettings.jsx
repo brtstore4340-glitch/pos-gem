@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { Upload, Database, FileText, CheckCircle, AlertCircle, RefreshCw, ArrowLeft, Trash2, Lock, Search, HelpCircle } from 'lucide-react';
 import { posService } from '../services/posService';
@@ -302,3 +302,4 @@ function UploadCard({ title, desc, accept, status, onChange, icon, active, requi
     </div>
   );
 }
+

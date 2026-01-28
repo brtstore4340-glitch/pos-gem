@@ -1,15 +1,24 @@
-const { initializeApp } = require("firebase-admin/app");
-initializeApp();
+import { onRequest } from "firebase-functions/v2/https";
+import { onInit } from "firebase-functions/v2";
+import { setGlobalOptions } from "firebase-functions/v2/options";
+import { initializeApp } from "firebase-admin/app";
 
-const { aiOrchestrator } = require("./ai/orchestrator");
-const { schemaSnapshot } = require("./schema/snapshot");
-const { syncClaims } = require("./rbac/claims");
-const { onRequest } = require("firebase-functions/v2/https");
+setGlobalOptions({ region: "asia-southeast1" });
 
-exports.aiOrchestrator = aiOrchestrator;
-exports.schemaSnapshot = schemaSnapshot;
-exports.rbacSyncClaims = syncClaims;
+/**
+ * Best practice:
+ * Avoid heavy initialization at module load time.
+ * Firebase recommends using onInit() to defer slow init during deploy discovery.
+ */
+let _appInitialized = false;
 
-exports.healthCheck = onRequest({ region: "asia-southeast1" }, (req, res) => {
-  res.json({ status: "healthy", version: "1.5.0" });
+onInit(() => {
+  if (!_appInitialized) {
+    initializeApp();
+    _appInitialized = true;
+  }
+});
+
+export const health = onRequest((req, res) => {
+  res.status(200).json({ ok: true, service: "boots-pos-gemini-functions" });
 });

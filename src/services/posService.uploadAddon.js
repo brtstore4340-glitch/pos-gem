@@ -51,7 +51,7 @@ export async function scanItemFast(skuOrBarcode) {
       price: Number(p.dealPrice || p.price || p.regPrice || 0),
       badgeText: p.dealPrice ? "DEAL" : ""
     };
-  } catch {}
+  } catch { /* noop */ }
 
   // 2) Resolve barcode
   const itemCode = await resolveBarcodeToItemCode(code);
@@ -95,6 +95,7 @@ export async function searchProductsLight(text) {
     return { sku: p.itemCode, name: p.name || p.description, price: Number(p.dealPrice || p.price || 0) };
   });
 }
+
 
 
 

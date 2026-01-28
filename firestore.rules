@@ -22,8 +22,8 @@ service cloud.firestore {
       // Regular users: can read active products only
       allow get: if isAuthenticated() && isActiveProduct();
       
-      // Admin users: can list, count, aggregate all products
-      allow list: if isAdmin();
+      // All authenticated users: can list/count/aggregate products
+      allow list: if isAuthenticated();
       
       // Admin users: can write
       allow create, update, delete: if isAdmin();

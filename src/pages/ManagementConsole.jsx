@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { createId, getAuditLogs, resetPin, searchIds, updateId } from '../services/rbacService';
 import AccessDenied from '../components/auth/AccessDenied';
@@ -368,3 +368,4 @@ export default function ManagementConsole() {
     </div>
   );
 }
+

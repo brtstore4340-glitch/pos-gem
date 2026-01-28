@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ShoppingCart, Search, ScanBarcode, Trash2, Loader2, Tag, Package, Percent, Ticket, Gift, CheckCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useCart } from '../hooks/useCart';
@@ -634,3 +634,4 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
     </div>
   );
 }
+

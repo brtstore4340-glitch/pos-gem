@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ShoppingCart, Search, Menu, ScanBarcode, User, Trash2, Loader2, AlertCircle, X, Tag, Package, Box, MinusCircle, FileText, Settings, Hash, Percent, Ticket, Gift, CheckCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useCart } from '../hooks/useCart';
@@ -600,3 +600,4 @@ export default function PosUI({ onAdminSettings, onSearch }) {
     </div>
   );
 }
+

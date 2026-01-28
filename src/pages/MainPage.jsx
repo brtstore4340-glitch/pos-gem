@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function MainPage() {
   return (
     <div className="p-6">
@@ -10,3 +8,4 @@ export default function MainPage() {
     </div>
   );
 }
+
