@@ -1,0 +1,71 @@
+name: Firebase Deploy (Live)
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.repository }}-live-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install (locked)
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Typecheck
+        run: npm run typecheck --if-present
+
+      - name: Test
+        run: npm test --if-present
+
+      - name: Build
+        run: npm run build
+
+
+      - name: Install functions deps (if functions exists)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d "functions" ]; then
+            cd functions
+            npm ci
+          fi
+      - name: Auth to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools
+
+      - name: Deploy (Hosting + Firestore + Functions if present)
+        shell: bash
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          ONLY="hosting,firestore"
+          if [ -d "functions" ]; then
+            ONLY="hosting,firestore,functions"
+          fi
+          firebase --version
+          firebase deploy --project "$FIREBASE_PROJECT_ID" --only "$ONLY"
+
