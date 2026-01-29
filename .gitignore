@@ -98,3 +98,7 @@ secrets_*/
 .config/
 .cache/
 .backup-eslint-*/
+ai-backups/
+ai-backups/*
+.vscode/
+.idea/

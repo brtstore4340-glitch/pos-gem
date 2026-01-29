@@ -905,26 +905,7 @@ exports.setAdminRole = functions
 
 // First-time setup function (remove after use)
 exports.setFirstAdmin = functions
-  .region('asia-southeast1')
-  .https.onRequest(async (req, res) => {
-    const email = req.query.email;
-    
-    if (!email) {
-      res.status(400).send('Email parameter required');
-      return;
-    }
-    
-    try {
-      const user = await admin.auth().getUserByEmail(email);
-      
-      await admin.auth().setCustomUserClaims(user.uid, { 
-        role: 'admin',
-        admin: true
-      });
-      
-      res.send(`Admin role set for ${email} (${user.uid})`);
-    } catch (error) {
-      res.status(500).send(`Error: ${error.message}`);
-    }
+  .region("asia-southeast1")
+  .https.onRequest((req, res) => {
+    res.status(410).send("setFirstAdmin disabled");
   });
-
