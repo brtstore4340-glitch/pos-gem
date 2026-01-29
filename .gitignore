@@ -102,3 +102,8 @@ ai-backups/
 ai-backups/*
 .vscode/
 .idea/
+
+
+ai-backups/
+tools/*.ps1
+!tools/preflight-firebase-deploy.ps1
