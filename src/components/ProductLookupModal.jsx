@@ -3,12 +3,13 @@ import { X, Search, Package, Database, FileText, Layers, Box } from 'lucide-reac
 import { posService } from '../services/posService';
 import { cn } from '../utils/cn';
 
-export default function ProductLookupModal({ onClose }) {
+export default function ProductLookupModal({ onClose, variant = 'modal' }) {
   const [keyword, setKeyword] = useState('');
   const [results, setResults] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
+  const isPage = variant === 'page';
 
   useEffect(() => {
     if (inputRef.current) inputRef.current.focus();
@@ -33,13 +34,24 @@ export default function ProductLookupModal({ onClose }) {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [keyword, selectedItem]);
+  }, [keyword]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      
-      <div className="bg-white w-[95vw] h-[90vh] max-w-7xl rounded-2xl shadow-2xl overflow-hidden flex flex-row relative ring-1 ring-white/20">
-        
+    <div
+      className={cn(
+        'animate-in fade-in duration-200',
+        isPage
+          ? 'min-h-screen bg-slate-50 flex items-center justify-center p-4'
+          : 'fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4'
+      )}
+    >
+      <div
+        className={cn(
+          'bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-row relative ring-1 ring-white/20',
+          isPage ? 'w-full h-[90vh] max-w-7xl' : 'w-[95vw] h-[90vh] max-w-7xl'
+        )}
+      >
+
         {/* --- LEFT PANEL --- */}
         <div className="w-[350px] flex flex-col border-r border-slate-200 bg-white shrink-0">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
@@ -73,15 +85,15 @@ export default function ProductLookupModal({ onClose }) {
                   key={item.sku}
                   onClick={() => setSelectedItem(item)}
                   className={cn(
-                    "p-3 rounded-lg cursor-pointer border transition-all relative overflow-hidden group",
+                    'p-3 rounded-lg cursor-pointer border transition-all relative overflow-hidden group',
                     selectedItem?.sku === item.sku 
-                      ? "bg-white border-boots-base shadow-md ring-1 ring-boots-base/20" 
-                      : "bg-white border-slate-200 hover:border-boots-base/50 hover:shadow-sm"
+                      ? 'bg-white border-boots-base shadow-md ring-1 ring-boots-base/20' 
+                      : 'bg-white border-slate-200 hover:border-boots-base/50 hover:shadow-sm'
                   )}
                 >
                   {selectedItem?.sku === item.sku && <div className="absolute left-0 top-0 bottom-0 w-1 bg-boots-base"></div>}
                   <div className="pl-2">
-                    <div className={cn("font-bold text-sm line-clamp-1", selectedItem?.sku === item.sku ? "text-boots-base" : "text-slate-700")}>
+                    <div className={cn('font-bold text-sm line-clamp-1', selectedItem?.sku === item.sku ? 'text-boots-base' : 'text-slate-700')}>
                       {item.ProductDesc}
                     </div>
                     <div className="flex justify-between items-end mt-1">
@@ -100,8 +112,15 @@ export default function ProductLookupModal({ onClose }) {
 
         {/* --- RIGHT PANEL (DETAILS) --- */}
         <div className="flex-1 flex flex-col bg-slate-50/30 overflow-hidden relative">
-          
-          <button onClick={onClose} className="absolute top-4 right-4 z-20 p-2 bg-white hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full shadow-sm border border-slate-100 transition-all hover:rotate-90"><X size={24} /></button>
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 z-20 p-2 bg-white hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full shadow-sm border border-slate-100 transition-all hover:rotate-90"
+            >
+              <X size={24} />
+            </button>
+          )}
 
           {selectedItem ? (
             <div className="flex-1 overflow-y-auto p-6 lg:p-8">
@@ -114,7 +133,7 @@ export default function ProductLookupModal({ onClose }) {
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="bg-boots-base text-white text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase">Master Product</span>
-                        <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-bold", selectedItem.ProductStatus?.startsWith('0') ? "text-green-600 border-green-200 bg-green-50" : "text-red-600 border-red-200 bg-red-50")}>{selectedItem.ProductStatus || 'Unknown'}</span>
+                        <span className={cn('text-[10px] px-2 py-0.5 rounded-full border font-bold', selectedItem.ProductStatus?.startsWith('0') ? 'text-green-600 border-green-200 bg-green-50' : 'text-red-600 border-red-200 bg-red-50')}>{selectedItem.ProductStatus || 'Unknown'}</span>
                       </div>
                       <h1 className="text-2xl md:text-3xl font-bold text-slate-800 leading-tight mb-2">{selectedItem.ProductDesc}</h1>
                       <div className="flex flex-wrap gap-4 text-sm text-slate-500 font-mono mt-2">
@@ -146,23 +165,23 @@ export default function ProductLookupModal({ onClose }) {
                   <div className="p-6">
                     {/* Description Print */}
                     <div className="mb-4 pb-4 border-b border-slate-50">
-                       <DetailItem label="Description (Print)" value={selectedItem.description_print} fullWidth />
+                      <DetailItem label="Description (Print)" value={selectedItem.description_print} fullWidth />
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
                       <DetailItem label="Dept" value={selectedItem.dept} />
                       <DetailItem label="Class" value={selectedItem.class} />
                       <DetailItem label="Brand" value={selectedItem.brand_print} />
                       <DetailItem label="Merchandise" value={selectedItem.merchandise} />
-                      
+
                       <DetailItem label="Reg Price" value={selectedItem.regPrice_print} />
                       <DetailItem label="Unit Price" value={selectedItem.unitPrice_print} />
                       <DetailItem label="Tax Code" value={selectedItem.tax_print} />
                       <DetailItem label="Method" value={selectedItem.method_print} />
-                      
+
                       <div className="col-span-2 bg-yellow-50 p-3 rounded-lg border border-yellow-100 flex justify-between items-center">
-                         <DetailItem label="Deal Price" value={selectedItem.dealPrice_print} highlight />
-                         <DetailItem label="Deal Qty" value={selectedItem.dealQty_print} highlight />
-                         <DetailItem label="Limit" value={selectedItem.limit_print} />
+                        <DetailItem label="Deal Price" value={selectedItem.dealPrice_print} highlight />
+                        <DetailItem label="Deal Qty" value={selectedItem.dealQty_print} highlight />
+                        <DetailItem label="Limit" value={selectedItem.limit_print} />
                       </div>
                       <DetailItem label="MPG" value={selectedItem.mpg_print} />
                     </div>
@@ -176,30 +195,29 @@ export default function ProductLookupModal({ onClose }) {
                     <h3 className="font-bold text-slate-800">ข้อมูล Maintenance Event (ครบทุกฟิลด์)</h3>
                   </div>
                   <div className="p-6">
-                     {/* Description Maint */}
+                    {/* Description Maint */}
                     <div className="mb-4 pb-4 border-b border-slate-50">
-                       <DetailItem label="Description (Maint)" value={selectedItem.description_maint} fullWidth />
+                      <DetailItem label="Description (Maint)" value={selectedItem.description_maint} fullWidth />
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
                       <DetailItem label="Event Type" value={selectedItem.type_maint} />
                       <DetailItem label="Dept" value={selectedItem.dept_maint} />
                       <DetailItem label="Class" value={selectedItem.class_maint} />
                       <DetailItem label="MP Group" value={selectedItem.mpGroup_maint} />
-                      
+
                       <DetailItem label="Reg Price" value={selectedItem.regPrice_maint} />
                       <DetailItem label="Unit Price" value={selectedItem.unitPrice_maint} />
                       <DetailItem label="Method" value={selectedItem.method_maint} />
-                      <div className="hidden md:block"></div> {/* Spacer */}
+                      <div className="hidden md:block"></div>
 
                       <div className="col-span-2 bg-orange-50 p-3 rounded-lg border border-orange-100 flex justify-between items-center">
-                         <DetailItem label="Deal Price" value={selectedItem.dealPrice_maint} highlight />
-                         <DetailItem label="Deal Qty" value={selectedItem.dealQty_maint} highlight />
-                         <DetailItem label="Limit Qty" value={selectedItem.limitQty_maint} />
+                        <DetailItem label="Deal Price" value={selectedItem.dealPrice_maint} highlight />
+                        <DetailItem label="Deal Qty" value={selectedItem.dealQty_maint} highlight />
+                        <DetailItem label="Limit Qty" value={selectedItem.limitQty_maint} />
                       </div>
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
           ) : (
@@ -216,13 +234,10 @@ export default function ProductLookupModal({ onClose }) {
 
 function DetailItem({ label, value, sub, highlight, fullWidth }) {
   return (
-    <div className={cn("min-w-0", fullWidth && "w-full")}>
+    <div className={cn('min-w-0', fullWidth && 'w-full')}>
       <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{label}</div>
-      <div className={cn("font-medium truncate", highlight ? "text-slate-800 font-bold text-lg" : "text-slate-700", !value && "text-slate-300 italic")}>
-        {value || '-'}
-      </div>
-      {sub && <div className="text-[10px] text-slate-400 truncate" title={sub}>{sub}</div>}
+      <div className={cn('text-sm font-bold truncate', highlight ? 'text-orange-600' : 'text-slate-800')}>{value || '-'}</div>
+      {sub && <div className="text-xs text-slate-400 truncate">{sub}</div>}
     </div>
   );
 }
-

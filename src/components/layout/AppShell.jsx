@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { to: "/", label: "Dashboard" },
   { to: "/pos", label: "POS Terminal" },
+  { to: "/item-search", label: "Item Search" },
   { to: "/reports", label: "Daily" },
   { to: "/settings", label: "Setting" },
 ];
