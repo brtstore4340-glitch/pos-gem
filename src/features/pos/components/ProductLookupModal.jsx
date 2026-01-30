@@ -46,7 +46,7 @@ export function ProductLookupModal({ onPick, triggerLabel = "Add Product" }) {
 
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Product Lookup</DialogTitle>
+          <DialogTitle>Item Search</DialogTitle>
           <DialogDescription>Search and add products to cart.</DialogDescription>
         </DialogHeader>
 
