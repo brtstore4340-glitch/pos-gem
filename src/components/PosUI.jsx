@@ -1,37 +1,36 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Search, ScanBarcode, Trash2, Loader2, Tag, Package, Percent, Ticket, Gift, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Search, ScanBarcode, User, Trash2, Loader2, AlertCircle, X, Tag, Package, Box, MinusCircle, FileText, Settings, Hash, Percent, Ticket, Gift, CheckCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useCart } from '../hooks/useCart';
 import { useScanListener } from '../hooks/useScanListener';
 import ReceiptModal from './ReceiptModal';
 import ProductLookupModal from './ProductLookupModal';
 import DailyReportModal from './DailyReportModal';
-import PosUploadModal from "./PosUploadModal"; 
 import { posService } from '../services/posService';
-import { useTheme } from '../context/ThemeContext';
 
-export default function PosUI({ isDarkMode: externalDarkMode }) {
-  // BEGIN: FUNCTION ZONE (DO NOT TOUCH)
-  const theme = useTheme();
+// Version Control
+const APP_VERSION = "1.2.0";
+const APP_UPDATED = "2025-12-26";
+
+export default function PosUI({ onAdminSettings, onSearch }) {
   const { 
     cartItems, addToCart: originalAddToCart, decreaseItem, removeFromCart, clearCart, 
-    summary, lastScanned, isLoading,
+    summary, lastScanned, isLoading, error,
     setManualItemDiscount, updateBillDiscount, billDiscount,
-    addCoupon, coupons, allowance, topup
+    addCoupon, removeCoupon, coupons,
+    updateAllowance, allowance,
+    topup
   } = useCart();
 
   const [lastOrder, setLastOrder] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isVoidMode, setIsVoidMode] = useState(false);
   const [nextQty, setNextQty] = useState(1);
-  
-  // Theme State
-  const isDarkMode = externalDarkMode ?? theme?.isDark ?? false;
 
   // Modal States
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
-
+  
   // --- Search UX Enhancements (Arrow select + Enter pick + Search Hits) ---
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
   const [searchHits, setSearchHits] = useState(() => {
@@ -47,27 +46,67 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
       next[key] = (next[key] || 0) + 1;
       setSearchHits(next);
       localStorage.setItem("pos_search_hits", JSON.stringify(next));
-    } catch (err) {
-      console.debug("persist search hit failed", err);
-    }
+    } catch { /* noop */ }
   };
 
+  const handleInputKeyDownWrapper = async (e) => {
+    // When dropdown is open: arrow up/down move highlight; Enter picks highlighted item.
+    if (showDropdown && suggestions.length > 0 && !isVoidMode && !showDiscountModal) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedSuggestionIndex(i => Math.min(i + 1, suggestions.length - 1));
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedSuggestionIndex(i => Math.max(i - 1, 0));
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const sel = suggestions[selectedSuggestionIndex];
+        if (sel?.sku) {
+          bumpSearchHit(sel.sku);
+          await handleSelectSuggestion(sel.sku);
+          setInputValue("");
+          setShowDropdown(false);
+        }
+        return;
+      }
+    }
+
+    // fallback to original handler
+    handleInputKeyDown(e);
+  };
   const [showProductLookup, setShowProductLookup] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
 
   // Discount Modal Inner State
   const [activeTab, setActiveTab] = useState('discount'); 
   const [discountSubTab, setDiscountSubTab] = useState('bill'); 
   const [discountCheckedItems, setDiscountCheckedItems] = useState(new Set());
   
+  // DB Status State
+  const [dbLastUpdate, setDbLastUpdate] = useState(null);
+
   // Coupon Input State
   const [couponInput, setCouponInput] = useState({ type: '', value: '', code: '' });
   const [showCouponInput, setShowCouponInput] = useState(false); 
 
+  // Helper for Button Animation
+  const btnEffect = "active:scale-95 transition-transform duration-100 ease-in-out shadow-sm hover:shadow-md active:shadow-none select-none";
+
   const lastItemDetail = lastScanned ? cartItems.find(i => (i.sku === lastScanned || i.id === lastScanned)) : null;
-  const totalDiscountDisplay = Math.abs((summary?.discount || 0) + (summary?.billDiscountAmount || 0) + (summary?.couponTotal || 0) + (summary?.allowance || 0));
+
+  // [CRITICAL FIX] Safe DB Update Check
+  useEffect(() => {
+    if (posService && posService.getLastDBUpdate) {
+        posService.getLastDBUpdate()
+            .then(setDbLastUpdate)
+            .catch(err => console.warn("DB Update Check Failed:", err));
+    }
+  }, []);
 
   // --- Handlers ---
   const toggleDiscountCheck = (id) => {
@@ -84,6 +123,7 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
         setCouponInput(prev => ({ ...prev, code: typeof skuOrItem === 'string' ? skuOrItem : skuOrItem.sku }));
         return;
     }
+    
     const quantityToApply = nextQty;
     
     if (isVoidMode) {
@@ -115,7 +155,12 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
         summary: summary, 
         cashier: 'Staff #01', 
         device: 'POS-Web',
-        adjustments: { billDiscount, coupons, allowance, topup }
+        adjustments: {
+            billDiscount,
+            coupons,
+            allowance,
+            topup 
+        }
     };
     setIsSaving(true);
     try {
@@ -126,41 +171,41 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
     finally { setIsSaving(false); }
   };
 
-  const scanEnabled = !showDiscountModal && !showCouponInput && !showProductLookup && !showReport && !showUploadModal && !lastOrder;
-
-  const { inputRef, inputValue, setInputValue, handleInputKeyDown, handleInputChange } = useScanListener(
-    handleScanAction,
-    scanEnabled ? handleCheckout : undefined,
-    () => setShowProductLookup(true),
-    { enabled: scanEnabled }
-  );
-
-  const handleInputKeyDownWrapper = async (e) => {
-    if (scanEnabled && showDropdown && suggestions.length > 0 && !isVoidMode) {
-      if (e.key === "ArrowDown") { e.preventDefault(); setSelectedSuggestionIndex(i => Math.min(i + 1, suggestions.length - 1)); return; }
-      if (e.key === "ArrowUp")   { e.preventDefault(); setSelectedSuggestionIndex(i => Math.max(i - 1, 0)); return; }
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const sel = suggestions[selectedSuggestionIndex];
-        if (sel?.sku) {
-          bumpSearchHit(sel.sku);
-          await handleSelectSuggestion(sel.sku);
-        }
-        return;
-      }
+  const handleAdminSettings = () => {
+    if (onAdminSettings) {
+      onAdminSettings();
+    } else {
+      alert('Admin Settings: Feature coming soon');
     }
-    handleInputKeyDown(e);
   };
 
+  const { inputRef, inputValue, setInputValue, handleInputKeyDown, handleInputChange } = useScanListener(handleScanAction, !lastOrder ? handleCheckout : undefined);
+
+  // --- Focus Guard: only auto-focus scan input when POS is in "scan-ready" state ---
+  const canFocusScanInput = !lastOrder && !isSaving && !showDiscountModal && !showProductLookup && !showReport && !showCouponInput;
+
+  useEffect(() => {
+    if (!canFocusScanInput) return;
+    // light auto-focus when returning to POS
+    const t = setTimeout(() => inputRef.current?.focus(), 0);
+    return () => clearTimeout(t);
+  }, [canFocusScanInput]);
   const onInputChangeWrapper = (e) => {
     const val = e.target.value;
     if (val.endsWith('*')) {
       const numberPart = val.slice(0, -1);
       if (/^\d+$/.test(numberPart)) {
         const qty = parseInt(numberPart, 10);
-        if (qty > 0) { setNextQty(qty); setInputValue(''); } 
-        else { alert('จำนวนต้องมากกว่า 0'); setInputValue(''); }
-      } else { setInputValue(''); }
+        if (qty > 0) {
+           setNextQty(qty);
+           setInputValue(''); 
+        } else {
+           alert('จำนวนต้องมากกว่า 0');
+           setInputValue('');
+        }
+      } else {
+        setInputValue(''); 
+      }
       return; 
     }
     handleInputChange(e);
@@ -168,39 +213,41 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
 
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (inputValue.length >= 2 && scanEnabled && !isVoidMode) { 
-        const results = await posService.searchProducts(inputValue);
-        const hits = (() => {
-          try { return JSON.parse(localStorage.getItem("pos_search_hits") || "{}"); } catch { return {}; }
-        })();
-        const sorted = [...(results || [])].sort((a, b) => {
-          const ak = (a?.sku || a?.id || "").toString();
-          const bk = (b?.sku || b?.id || "").toString();
-          const ah = hits?.[ak] || 0;
-          const bh = hits?.[bk] || 0;
-          if (bh !== ah) return bh - ah;
-          const an = (a?.name || "").toString();
-          const bn = (b?.name || "").toString();
-          return an.localeCompare(bn, undefined, { sensitivity: "base" });
+      if (inputValue.length >= 2 && !isVoidMode && !showDiscountModal) { 
+        let results = await posService.searchProducts(inputValue);
+
+        // sort by hit (desc) then name (asc)
+        const hits = searchHits || {};
+        results = [...results].sort((a, b) => {
+          const ha = hits[(a?.sku || "").toString()] || 0;
+          const hb = hits[(b?.sku || "").toString()] || 0;
+          if (hb !== ha) return hb - ha;
+          const na = (a?.name || "").toString().toLowerCase();
+          const nb = (b?.name || "").toString().toLowerCase();
+          return na.localeCompare(nb);
         });
-        setSuggestions(sorted);
-        setSelectedSuggestionIndex(0);
-        setShowDropdown(sorted.length > 0);
-      } else { setSuggestions([]); setShowDropdown(false); }
+
+        setSuggestions(results);
+        setShowDropdown(results.length > 0);
+        if (results.length > 0) setSelectedSuggestionIndex(0);
+      } else {
+        setSuggestions([]);
+        setShowDropdown(false);
+      }
     }, 300);
     return () => clearTimeout(timer);
-  }, [inputValue, isVoidMode, scanEnabled]);
+  }, [inputValue, isVoidMode, showDiscountModal]);
 
   const handleSelectSuggestion = async (sku) => {
-    if (!sku) return;
-    setInputValue('');
+    const item = await posService.scanItem(sku);
+    await handleScanAction(item);
+    setInputValue("");
     setShowDropdown(false);
-    try {
-      const item = await posService.scanItem(sku);
-      await handleScanAction(item);
-    } catch (e) {
-      console.error(e);
-    }
+  };
+
+  const openCouponInput = (type) => {
+      setCouponInput({ type, value: '', code: '' });
+      setShowCouponInput(true);
   };
 
   const handleSaveCoupon = () => {
@@ -216,422 +263,478 @@ export default function PosUI({ isDarkMode: externalDarkMode }) {
       addCoupon({ couponType: couponInput.type, couponValue: finalValue, couponCode: finalCode });
       setShowCouponInput(false);
   };
-  // END:   FUNCTION ZONE (DO NOT TOUCH)
 
-  // Unity Theme UI
   return (
-    <div className={cn(
-        "h-full min-h-0 w-full font-sans flex gap-4 p-4 overflow-visible relative transition-colors duration-300",
-        isDarkMode ? "bg-[#0f1014] text-slate-100" : "bg-[#f8fafc] text-slate-800"
-    )} onClick={() => setShowDropdown(false)}>
-
-      {/* --- LEFT SIDE: SCANNER & FOOTAGE --- */}
-      <div className="w-[35%] max-w-[450px] flex flex-col gap-4 min-h-0">
-        
-        {/* 1. SCAN PRODUCT BOX (Glass Card) */}
-        <div className={cn("glass-panel p-5 relative transition-all duration-300 z-20", 
-             isVoidMode && "border-red-500/50 bg-red-500/5"
-        )}>
-            <div className="flex justify-between items-center mb-4">
-               <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/10">
-                     <ScanBarcode size={18} />
-                  </div>
-                  <span className="text-[11px] font-bold tracking-widest uppercase">Scanner</span>
-               </div>
-               
-               {isVoidMode && <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-1 rounded shadow-sm shadow-red-500/20">VOID MODE</span>}
-               
-                <button 
-                   onClick={() => { setIsVoidMode(!isVoidMode); if (scanEnabled) inputRef.current?.focus(); }}
-                   className={cn("px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border", 
-                      isVoidMode 
-                        ? "bg-white/10 text-red-500 border-red-500/30 hover:bg-red-500 hover:text-white" 
-                        : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
-                   )}
-                >
-                   {isVoidMode ? 'CANCEL VOID' : 'VOID ITEM'}
-                </button>
-            </div>
-            
-            <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-blue-500 transition-colors" size={20} />
-              <input 
-                  ref={inputRef}
-                  value={inputValue}
-                  onChange={onInputChangeWrapper}
-                  onKeyDown={handleInputKeyDownWrapper}
-                  disabled={isLoading || lastOrder || isSaving || showDiscountModal || showCouponInput || showProductLookup || showReport || showUploadModal}
-                  type="text" 
-                  placeholder={isVoidMode ? "Scan to remove..." : "Scan barcode..."}
-                  autoComplete="off"
-                  aria-label="Scan or search product"
-                  className={cn(
-                    "glass-input pl-12 pr-12 text-lg font-bold placeholder:font-medium placeholder:text-base", 
-                    isVoidMode && "border-red-500/50 text-red-600 focus:border-red-500 focus:ring-red-500/30"
-                  )}
-              />
-              {/* Qty Badge */}
-              {nextQty > 1 && (
-                    <div className="absolute top-1/2 -translate-y-1/2 right-3 bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400 text-xs font-bold px-2 py-1 rounded-md shadow-sm animate-in zoom-in">
-                       x{nextQty}
-                    </div>
-              )}
-            </div>
-
-            {/* Hint */}
-            <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500">
-               <span className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-1.5 py-0.5 rounded border border-yellow-500/20">Tip</span> Enter number + * for quantity (e.g. 5*)
-            </div>
-            
-            {/* Search Dropdown (Glass) */}
-            {showDropdown && !isVoidMode && (
-              <div
-                className="absolute top-full left-0 right-0 mt-2 mx-1 rounded-2xl shadow-2xl overflow-hidden z-[80] max-h-[300px] overflow-y-auto bg-white/90 dark:bg-[#1e2025]/95 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 pointer-events-auto"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {suggestions.map((item, idx) => (
-                  <div
-                    key={item.sku}
-                    onMouseEnter={() => setSelectedSuggestionIndex(idx)}
-                    onClick={() => { bumpSearchHit(item.sku); handleSelectSuggestion(item.sku); }}
-                    className={cn(
-                      "p-3 border-b border-slate-100 dark:border-white/5 cursor-pointer flex justify-between items-center transition-colors",
-                      idx === selectedSuggestionIndex
-                        ? "bg-blue-50 dark:bg-white/5"
-                        : "hover:bg-slate-50 dark:hover:bg-white/5"
-                    )}
-                  >
-                    <div><div className="font-bold text-slate-800 dark:text-slate-200 text-sm">{item.name}</div><div className="text-[10px] font-mono text-slate-400">{item.sku}</div></div>
-                    <div className="text-blue-600 dark:text-blue-400 font-bold text-sm">฿{item.price}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-        </div>
-
-        {/* 2. LAST SCANNED (Glass Card) */}
-        <div className="glass-panel flex-1 min-h-0 relative overflow-hidden flex flex-col items-center justify-center p-6 bg-gradient-to-b from-white/60 to-white/40 dark:from-white/5 dark:to-transparent">
-             <div className="absolute top-4 left-4 flex items-center gap-2 text-slate-400/80">
-                <Package size={16} />
-                <span className="text-[10px] font-bold tracking-widest uppercase">Review</span>
-             </div>
-
-            {lastItemDetail ? (
-               <div className="text-center w-full animate-in slide-in-from-bottom-4 fade-in duration-300 relative z-10">
-                  <div className="mb-6 relative inline-block">
-                     <div className={cn("w-28 h-28 rounded-3xl flex items-center justify-center shadow-xl mx-auto border border-white/20 dark:border-white/5", 
-                        isVoidMode ? "bg-red-500/10 text-red-500" : "bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-600 dark:text-blue-400"
-                     )}>
-                        <Package size={56} strokeWidth={1.5} />
-                     </div>
-                     <div className="absolute -bottom-3 -right-3 bg-slate-800 dark:bg-white text-white dark:text-slate-900 text-sm font-bold w-8 h-8 flex items-center justify-center rounded-xl shadow-lg border-2 border-slate-50 dark:border-[#0f1014]">
-                        {lastItemDetail.qty}
-                     </div>
-                  </div>
-                  
-                  <h3 className="text-lg font-bold leading-tight mb-2 line-clamp-2 px-2 text-slate-800 dark:text-white">
-                     {lastItemDetail.name}
-                  </h3>
-                  
-                  <div className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-slate-800 to-slate-600 dark:from-white dark:to-slate-400 tracking-tight mt-2">
-                     ฿{((lastItemDetail.calculatedTotal !== undefined ? lastItemDetail.calculatedTotal : (lastItemDetail.price * lastItemDetail.qty))).toLocaleString()}
-                  </div>
-                  <div className="text-xs font-mono text-slate-400 mt-2 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-md inline-block">
-                     {lastItemDetail.sku}
-                  </div>
-               </div>
-            ) : (
-               <div className="flex flex-col items-center justify-center opacity-30 select-none">
-                  <div className="w-20 h-20 rounded-full border-2 border-dashed border-slate-400 flex items-center justify-center mb-4">
-                     <ScanBarcode size={32} />
-                  </div>
-                  <span className="text-sm font-bold uppercase tracking-widest">Ready to Scan</span>
-               </div>
-            )}
-         </div>
-      </div>
-
-      {/* --- RIGHT SIDE: CART (Glass Panel) --- */}
-      <div className="glass-panel flex-1 flex flex-col min-h-0 overflow-hidden shadow-2xl relative">
-         
-         {/* CART HEADER */}
-         <div className="grid grid-cols-12 px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 backdrop-blur-sm z-20">
-             <div className="col-span-1">#</div>
-             <div className="col-span-4">Item</div>
-             <div className="col-span-2 text-right">Unit Price</div>
-             <div className="col-span-1 text-center">Qty</div>
-             <div className="col-span-2 text-center">Discount</div>
-             <div className="col-span-2 text-right">Total</div>
-         </div>
-
-         {/* CART LIST */}
-         <div className="flex-1 overflow-y-auto px-2 py-2">
-            {cartItems.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-700 pb-10 select-none">
-                   <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-6">
-                      <ShoppingCart size={40} className="opacity-50" />
-                   </div>
-                   <p className="font-medium">Cart is empty</p>
-                   <p className="text-xs mt-2 opacity-60">Scan items to start transaction</p>
-                </div>
-            ) : (
-                cartItems.map((item, index) => {
-                    const lineTotal = item.calculatedTotal !== undefined ? item.calculatedTotal : (item.price * item.qty);
-                    const normalTotal = item.normalPrice || (item.price * item.qty);
-                    const discountVal = Math.max(0, normalTotal - lineTotal);
-
-                    return (
-                       <div key={item.id || item.sku} className="grid grid-cols-12 px-4 py-3.5 items-center text-sm group hover:bg-white/40 dark:hover:bg-white/5 rounded-xl transition-colors border-b border-transparent hover:border-slate-200/50 dark:hover:border-white/5">
-                          <div className="col-span-1 text-slate-400 text-xs font-mono">{cartItems.length - index}</div>
-                          
-                          <div className="col-span-4 pr-2">
-                             <div className="font-bold text-slate-800 dark:text-slate-200 truncate">{item.name}</div>
-                             <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[10px] text-slate-400 font-mono">{item.sku}</span>
-                                {item.badgeText && <span className="text-[9px] bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 px-1.5 rounded-sm font-bold uppercase">{item.badgeText}</span>}
-                             </div>
-                          </div>
-                          
-                          <div className="col-span-2 text-right font-medium text-slate-600 dark:text-slate-400 font-mono">
-                             {item.price.toLocaleString()}
-                          </div>
-                          
-                          <div className="col-span-1 flex justify-center">
-                             <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white dark:bg-white/10 border border-slate-200 dark:border-white/5 text-xs font-bold shadow-sm">
-                                {item.qty}
-                             </div>
-                          </div>
-                          
-                          <div className="col-span-2 text-center">
-                              {discountVal > 0 ? (
-                                  <span className="text-[10px] text-red-500 bg-red-100 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 px-2 py-0.5 rounded-full font-bold">
-                                      -{discountVal.toLocaleString()}
-                                  </span>
-                              ) : (
-                                  <span className="text-slate-300 dark:text-slate-700">-</span>
-                              )}
-                          </div>
-
-                          <div className="col-span-2 text-right font-bold text-slate-800 dark:text-white font-mono text-base relative group-hover:pr-8 transition-all">
-                             {lineTotal.toLocaleString()}
-                             
-                             {/* Delete Action (Hover) */}
-                             <button 
-                                onClick={(e) => { e.stopPropagation(); removeFromCart(item.id || item.sku); }}
-                                className="absolute right-0 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-red-50 dark:bg-red-500/10 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                                title="Remove Item"
-                             >
-                                <Trash2 size={14} />
-                             </button>
-                          </div>
-                       </div>
-                    );
-                })
-            )}
-         </div>
-
-         {/* FOOTER (Glass Gradient) */}
-         <div className="relative z-20 bg-white/80 dark:bg-[#15171e]/90 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 p-5 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
-             <div className="flex justify-between items-end mb-5">
-                  <div className="flex flex-col gap-1">
-                      <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total (Items: {summary?.totalItems || 0})</div>
-                      {totalDiscountDisplay > 0 && (
-                         <div className="flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-500/10 px-2 py-1 rounded-md self-start">
-                            <Tag size={12} />
-                            Saved ฿{totalDiscountDisplay.toLocaleString()}
-                         </div>
-                      )}
-                  </div>
-
-                  <div className="flex flex-col items-end">
-                      <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Net Total</div>
-                      <div className="flex items-baseline gap-1 text-slate-800 dark:text-white leading-none">
-                         <span className="text-2xl font-bold">฿</span>
-                         <span className="text-5xl font-extrabold tracking-tighter">
-                            {Number(summary?.netTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                         </span>
-                      </div>
-                  </div>
-             </div>
-
-             <div className="grid grid-cols-[auto_1fr] gap-3">
-                 <button 
-                    onClick={() => setShowDiscountModal(true)}
-                    className="btn-secondary px-4 min-w-[100px]"
-                 >
-                    <Tag size={18} />
-                    <span>Discounts</span>
-                    {totalDiscountDisplay > 0 && <span className="w-2 h-2 rounded-full bg-red-500 ml-1" />}
-                 </button>
-
-                 <button 
-                    onClick={handleCheckout} 
-                    disabled={cartItems.length === 0 || isLoading || isSaving}
-                    className="btn-primary w-full text-lg shadow-blue-500/25"
-                 >
-                    {isSaving ? <Loader2 className="animate-spin" size={24}/> : <ShoppingCart size={24} />}
-                    <span>Checkout</span>
-                    <kbd className="hidden md:inline-flex items-center h-6 px-2 ml-3 text-[10px] font-sans font-medium text-blue-100 bg-blue-500/20 rounded">F12</kbd>
-                 </button>
-             </div>
-         </div>
-      </div>
-
-      {/* --- MODALS --- */}
+    <div className="h-screen w-full bg-slate-100 p-4 font-sans flex gap-4 overflow-hidden items-stretch" onClick={() => setShowDropdown(false)}>
+      
+      {/* Modals */}
       {lastOrder && <ReceiptModal order={lastOrder} onClose={() => setLastOrder(null)} />}
       {showProductLookup && <ProductLookupModal onClose={() => setShowProductLookup(false)} />}
       {showReport && <DailyReportModal onClose={() => setShowReport(false)} />}
-      <PosUploadModal
-        open={showUploadModal}
-        onClose={() => setShowUploadModal(false)}
-        isDarkMode={isDarkMode}
-        pricingReady={true} 
-      />
 
-      {/* Simplified Inline Modal for Discounts (Redesigned) */}
+      {/* --- Discount Menu Modal --- */}
       {showDiscountModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in zoom-in-95 duration-200">
-            <div className="glass-panel w-full max-w-4xl h-[80vh] flex overflow-hidden shadow-2xl relative">
-                
-                {/* Modal Sidebar */}
-                <div className="w-64 p-6 border-r border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-black/20 flex flex-col gap-2">
-                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800 dark:text-white">
-                        <Tag size={20} className="text-blue-500" /> Discounts
-                    </h2>
-                    
-                    {[
-                      { id: 'discount', label: 'General', icon: Percent },
-                      { id: 'coupon', label: 'Coupons', icon: Ticket },
-                      { id: 'allowance', label: 'Allowance', icon: Gift }
-                    ].map(tab => (
-                      <button 
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)} 
-                        className={cn("flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-sm", 
-                           activeTab === tab.id 
-                             ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" 
-                             : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5"
-                        )}
-                      >
-                        <tab.icon size={18}/> {tab.label}
-                      </button>
-                    ))}
-
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in zoom-in-95 duration-200">
+            <div className="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-2xl flex overflow-hidden">
+                {/* Sidebar */}
+                <div className="w-64 bg-slate-100 p-4 border-r border-slate-200 flex flex-col gap-2">
+                    <h2 className="text-xl font-bold text-slate-800 mb-4 px-2">เมนูส่วนลด</h2>
+                    <button onClick={() => setActiveTab('discount')} className={cn("text-left px-4 py-3 rounded-xl font-bold flex items-center gap-3 transition-colors", activeTab === 'discount' ? "bg-white shadow text-boots-base" : "text-slate-500 hover:bg-slate-200")}>
+                        <Percent size={20}/> ส่วนลด (Discount)
+                    </button>
+                    <button onClick={() => setActiveTab('coupon')} className={cn("text-left px-4 py-3 rounded-xl font-bold flex items-center gap-3 transition-colors", activeTab === 'coupon' ? "bg-white shadow text-boots-base" : "text-slate-500 hover:bg-slate-200")}>
+                        <Ticket size={20}/> คูปอง (Coupons)
+                    </button>
+                    <button onClick={() => setActiveTab('allowance')} className={cn("text-left px-4 py-3 rounded-xl font-bold flex items-center gap-3 transition-colors", activeTab === 'allowance' ? "bg-white shadow text-boots-base" : "text-slate-500 hover:bg-slate-200")}>
+                        <Gift size={20}/> Allowance
+                    </button>
                     <div className="mt-auto">
-                        <button onClick={() => setShowDiscountModal(false)} className="w-full py-3 rounded-xl font-bold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/20 transition-colors">
-                           Close
-                        </button>
+                        <button onClick={() => setShowDiscountModal(false)} className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold">ปิดหน้าต่าง</button>
                     </div>
                 </div>
 
-                {/* Modal Content */}
-                <div className="flex-1 p-8 overflow-y-auto bg-white/50 dark:bg-black/20">
+                {/* Content */}
+                <div className="flex-1 p-8 bg-white overflow-y-auto">
+                    {/* --- TAB: DISCOUNT --- */}
                     {activeTab === 'discount' && (
                         <div>
-                            <div className="flex gap-4 mb-8 border-b border-slate-200 dark:border-white/10 pb-6">
-                                <button onClick={() => setDiscountSubTab('bill')} className={cn("px-6 py-2.5 rounded-xl font-bold transition-all text-sm", discountSubTab === 'bill' ? "bg-slate-800 dark:bg-white text-white dark:text-slate-900 shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5")}>Bill Discount</button>
-                                <button onClick={() => setDiscountSubTab('items')} className={cn("px-6 py-2.5 rounded-xl font-bold transition-all text-sm", discountSubTab === 'items' ? "bg-slate-800 dark:bg-white text-white dark:text-slate-900 shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5")}>Item Discount</button>
+                            <div className="flex gap-4 mb-6 border-b border-slate-200 pb-4">
+                                <button onClick={() => setDiscountSubTab('bill')} className={cn("px-6 py-2 rounded-lg font-bold transition-all", discountSubTab === 'bill' ? "bg-boots-base text-white shadow-md" : "bg-slate-100 text-slate-500")}>ลดทั้งบิล</button>
+                                <button onClick={() => setDiscountSubTab('items')} className={cn("px-6 py-2 rounded-lg font-bold transition-all", discountSubTab === 'items' ? "bg-boots-base text-white shadow-md" : "bg-slate-100 text-slate-500")}>ลดบางรายการ</button>
                             </div>
 
                             {discountSubTab === 'bill' && (
-                                <div className="max-w-xs">
-                                    <label className="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wide">Percentage (%)</label>
-                                    <div className="flex gap-4 items-center">
+                                <div className="max-w-sm">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">ส่วนลดทั้งบิล (%)</label>
+                                    <div className="flex gap-4">
                                         <input 
                                             type="number" 
                                             value={billDiscount.percent} 
                                             onChange={(e) => updateBillDiscount(e.target.value)}
-                                            className="glass-input text-4xl font-bold py-4 text-center"
+                                            className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-2xl font-bold focus:border-boots-base outline-none" 
                                             placeholder="0"
                                         />
-                                        <div className="text-2xl font-bold text-slate-400">%</div>
+                                        <div className="flex items-center text-slate-400 font-bold text-xl">%</div>
                                     </div>
+                                    <p className="text-sm text-slate-400 mt-2">* คำนวณจากยอดหลังหักโปรโมชั่นแล้ว</p>
                                 </div>
                             )}
 
                             {discountSubTab === 'items' && (
                                 <div>
-                                    <h3 className="font-bold mb-4 text-sm text-slate-500 uppercase">Select items to discount</h3>
-                                    <div className="space-y-3">
+                                    <h3 className="text-slate-500 font-bold mb-4 text-sm">เลือกสินค้าที่ต้องการลดราคา (Check items to enable discount input in cart)</h3>
+                                    <div className="space-y-2">
                                         {cartItems.map((item, idx) => {
                                             const isChecked = discountCheckedItems.has(item.id || item.sku);
                                             return (
                                                 <div key={idx} 
                                                      onClick={() => toggleDiscountCheck(item.id || item.sku)}
-                                                     className={cn("flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all", 
-                                                        isChecked 
-                                                          ? "border-blue-500 bg-blue-50/50 dark:bg-blue-500/10" 
-                                                          : "border-slate-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-white/20"
-                                                     )}
+                                                     className={cn("flex items-center gap-4 p-3 rounded-xl border cursor-pointer transition-all", isChecked ? "border-boots-base bg-blue-50" : "border-slate-200 hover:bg-slate-50")}
                                                 >
-                                                    <div className={cn("w-6 h-6 rounded border flex items-center justify-center transition-colors", isChecked ? "bg-blue-500 border-blue-500 text-white" : "border-slate-300 dark:border-slate-600")}>
-                                                        {isChecked && <CheckCircle size={14} />}
+                                                    <div className={cn("w-6 h-6 rounded border-2 flex items-center justify-center", isChecked ? "bg-boots-base border-boots-base text-white" : "border-slate-300 bg-white")}>
+                                                        {isChecked && <CheckCircle size={16} />}
                                                     </div>
                                                     <div className="flex-1">
-                                                        <div className="font-bold text-slate-800 dark:text-white">{item.name}</div>
-                                                        <div className="text-xs text-slate-400 font-mono">{item.sku}</div>
+                                                        <div className="font-bold text-slate-800">{item.name}</div>
+                                                        <div className="text-xs text-slate-400">{item.sku}</div>
                                                     </div>
-                                                    <div className="font-bold text-slate-600 dark:text-slate-400">฿{(item.price * item.qty).toLocaleString()}</div>
-                                                    
-                                                    {isChecked && (
-                                                        <div className="animate-in zoom-in ml-4">
-                                                            <input 
-                                                                type="number" autoFocus
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                value={item.manualDiscountPercent || ''}
-                                                                onChange={(e) => setManualItemDiscount(item.id || item.sku, e.target.value)}
-                                                                className="w-16 h-10 rounded-lg border-2 border-orange-400 text-center font-bold outline-none focus:ring-2 focus:ring-orange-200"
-                                                                placeholder="%"
-                                                            />
-                                                        </div>
-                                                    )}
+                                                    <div className="font-bold text-slate-600">฿{(item.price * item.qty).toLocaleString()}</div>
                                                 </div>
                                             );
                                         })}
-                                        {cartItems.length === 0 && <p className="text-slate-400 text-center py-8">Cart is empty</p>}
+                                        {cartItems.length === 0 && <p className="text-slate-400 text-center py-4">ไม่มีสินค้าในตะกร้า</p>}
                                     </div>
                                 </div>
                             )}
                         </div>
                     )}
+
+                    {/* --- TAB: COUPON --- */}
+                    {activeTab === 'coupon' && (
+                        <div>
+                            <h3 className="text-2xl font-bold mb-6 text-slate-800">เลือกประเภทคูปอง</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <button onClick={() => openCouponInput('store')} className={cn("h-40 rounded-2xl flex flex-col items-center justify-center gap-4 text-white text-xl font-bold bg-sky-400 hover:bg-sky-500 shadow-lg", btnEffect)}>
+                                    <Ticket size={40} /> Store Coupon
+                                </button>
+                                <button onClick={() => openCouponInput('vendor')} className={cn("h-40 rounded-2xl flex flex-col items-center justify-center gap-4 text-white text-xl font-bold bg-pink-400 hover:bg-pink-500 shadow-lg", btnEffect)}>
+                                    <Tag size={40} /> Vendor Coupon
+                                </button>
+                                <button onClick={() => openCouponInput('boots')} className={cn("h-40 rounded-2xl flex flex-col items-center justify-center gap-4 text-white text-xl font-bold bg-blue-900 hover:bg-blue-800 shadow-lg", btnEffect)}>
+                                    <CheckCircle size={40} /> Mobile coupon
+                                </button>
+                            </div>
+
+                            <div className="mt-8">
+                                <h4 className="font-bold text-slate-700 mb-4">คูปองที่ใช้ไป ({coupons.length})</h4>
+                                {coupons.length === 0 ? <p className="text-slate-400">ยังไม่มีคูปอง</p> : (
+                                    <div className="flex flex-wrap gap-3">
+                                        {coupons.map((c, i) => (
+                                            <div key={i} className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-lg border border-slate-200">
+                                                <div className="text-sm">
+                                                    <span className="font-bold uppercase text-slate-700">{c.couponType}</span> 
+                                                    <span className="mx-2 text-slate-400">|</span> 
+                                                    Code: {c.couponCode} 
+                                                    <span className="ml-2 font-bold text-red-500">-฿{c.couponValue}</span>
+                                                </div>
+                                                <button onClick={() => removeCoupon(c.couponCode)} className="text-slate-400 hover:text-red-500"><X size={16}/></button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- TAB: ALLOWANCE --- */}
+                    {activeTab === 'allowance' && (
+                        <div className="max-w-sm">
+                            <label className="block text-sm font-bold text-slate-700 mb-2">จำนวนเงิน Allowance</label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">฿</span>
+                                <input 
+                                    type="number" 
+                                    value={allowance}
+                                    onChange={(e) => updateAllowance(e.target.value)}
+                                    className="w-full border-2 border-slate-200 rounded-xl pl-10 pr-4 py-3 text-2xl font-bold focus:border-boots-base outline-none" 
+                                    placeholder="0.00"
+                                />
+                            </div>
+                            <p className="text-sm text-slate-400 mt-2">* ลดจากยอดสุทธิท้ายบิล</p>
+                        </div>
+                    )}
                 </div>
             </div>
-        </div>
-      )}
-      
-      {/* Coupon Input Modal */}
-      {showCouponInput && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="glass-panel w-full max-w-md p-8 animate-in zoom-in-95">
-                <h3 className="text-xl font-bold mb-6 text-slate-800 dark:text-white">Add Coupon ({couponInput.type})</h3>
-                <div className="space-y-4">
-                  <input 
-                    className="glass-input" 
-                    placeholder="Coupon Code" 
-                    value={couponInput.code} 
-                    onChange={e=>setCouponInput({...couponInput, code:e.target.value})} 
-                    autoFocus
-                  />
-                  {couponInput.type !== 'boots' && (
-                     <input 
-                       className="glass-input" 
-                       type="number" 
-                       placeholder="Value" 
-                       value={couponInput.value} 
-                       onChange={e=>setCouponInput({...couponInput, value:e.target.value})} 
-                     />
-                   )}
+
+            {/* --- Coupon Input Sub-Modal --- */}
+            {showCouponInput && (
+                <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/50">
+                    <div className="bg-white p-6 rounded-xl w-96 shadow-2xl animate-in zoom-in-95">
+                        <h3 className="text-lg font-bold mb-4 uppercase text-slate-700">Add {couponInput.type} Coupon</h3>
+                        
+                        {couponInput.type !== 'boots' && (
+                            <div className="mb-4">
+                                <label className="block text-xs font-bold text-slate-500 mb-1">มูลค่าคูปอง (บาท)</label>
+                                <input autoFocus type="number" className="w-full border border-slate-300 rounded-lg px-3 py-2 font-bold text-lg" 
+                                    value={couponInput.value} onChange={e => setCouponInput({...couponInput, value: e.target.value})} />
+                            </div>
+                        )}
+                        
+                        <div className="mb-6">
+                            <label className="block text-xs font-bold text-slate-500 mb-1">รหัสคูปอง / Barcode</label>
+                            <input type="text" className="w-full border border-slate-300 rounded-lg px-3 py-2 font-mono" 
+                                value={couponInput.code} onChange={e => setCouponInput({...couponInput, code: e.target.value})} 
+                                placeholder="Scan or type..."
+                            />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button onClick={() => setShowCouponInput(false)} className="flex-1 py-2 bg-slate-200 rounded-lg font-bold text-slate-600">ยกเลิก</button>
+                            <button onClick={handleSaveCoupon} className="flex-1 py-2 bg-boots-base text-white rounded-lg font-bold">บันทึก</button>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex gap-3 mt-8">
-                     <button onClick={()=>setShowCouponInput(false)} className="btn-secondary flex-1">Cancel</button>
-                     <button onClick={handleSaveCoupon} className="btn-primary flex-1">Apply Coupon</button>
-                </div>
-            </div>
+            )}
         </div>
       )}
 
+      {/* LEFT SIDE */}
+      <div className="w-[35%] flex flex-col gap-4">
+        {/* Input Section */}
+        <div className={cn("p-6 rounded-2xl shadow-sm border-2 relative z-40 transition-colors", isVoidMode ? "bg-red-50 border-red-300" : "bg-white border-slate-200")}>
+           <div className="flex justify-between items-center mb-2">
+             <h2 className={cn("text-sm font-bold uppercase tracking-wider flex items-center gap-2", isVoidMode ? "text-red-600" : "text-slate-400")}>
+               {isVoidMode ? <><MinusCircle size={16}/> VOID MODE (สแกนเพื่อลบ)</> : <><ScanBarcode size={16}/> SCAN PRODUCT</>}
+             </h2>
+             <button 
+               onClick={() => { setIsVoidMode(!isVoidMode); if (canFocusScanInput) inputRef.current?.focus(); }}
+               className={cn("text-xs font-bold px-3 py-1.5 rounded-lg border", btnEffect, isVoidMode ? "bg-red-600 text-white border-red-600 shadow-red-200" : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200")}
+             >
+               {isVoidMode ? 'EXIT VOID MODE' : 'SCAN TO VOID'}
+             </button>
+           </div>
+           
+           <div className="relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors">
+              {isLoading ? <Loader2 size={24} className="animate-spin text-boots-base" /> : ( isVoidMode ? <Trash2 size={24} className="text-red-500"/> : <Search size={24} className="text-slate-400"/> )}
+            </div>
+            
+            <input 
+              ref={inputRef}
+              value={inputValue}
+              onChange={onInputChangeWrapper}
+              onKeyDown={handleInputKeyDownWrapper}
+              disabled={isLoading || lastOrder || isSaving || showDiscountModal || showProductLookup || showReport || showCouponInput}
+              type="text" 
+              placeholder={isVoidMode ? "สแกนสินค้าเพื่อลบออก..." : "สแกนบาร์โค้ด... (พิมพ์ 3* เพื่อระบุจำนวน)"}
+              autoComplete="off"
+              className={cn("w-full pl-12 pr-4 py-4 rounded-xl border-2 outline-none transition-all shadow-inner text-xl font-bold placeholder:font-normal", isVoidMode ? "bg-white border-red-300 text-red-600 placeholder:text-red-200 focus:ring-4 focus:ring-red-500/10 focus:border-red-500" : "bg-slate-50 border-slate-200 text-boots-text placeholder:text-slate-300 focus:ring-4 focus:ring-boots-base/10 focus:border-boots-base")}
+            />
+            {inputValue && <button onClick={() => setInputValue('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"><X size={20} /></button>}
+            
+            {nextQty > 1 && (
+               <div className="absolute -top-3 right-0 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1 animate-in zoom-in">
+                  <Hash size={12} /> Next Qty: {nextQty}
+               </div>
+            )}
+            
+            {showDropdown && !isVoidMode && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-[300px] overflow-y-auto z-50">
+                {suggestions.map((item, idx) => (
+                  <div
+                    key={item.sku}
+                    onMouseEnter={() => setSelectedSuggestionIndex(idx)}
+                    onClick={async () => { bumpSearchHit(item.sku); await handleSelectSuggestion(item.sku); }}
+                    className={cn(
+                      "p-4 border-b border-slate-50 cursor-pointer flex justify-between items-center group transition-colors",
+                      idx === selectedSuggestionIndex ? "bg-boots-light/40" : "hover:bg-boots-light/30"
+                    )}
+                  >
+                    <div><div className="text-slate-800 font-bold">{item.name}</div><div className="text-xs text-slate-400">SKU: {item.sku}</div></div><div className="text-boots-base font-bold">฿{item.price.toLocaleString()}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+           </div>
+           {error && (<div className="mt-4 bg-red-50 text-red-600 px-4 py-3 rounded-xl border border-red-100 flex items-center gap-3 animate-in slide-in-from-top-2"><AlertCircle size={20} /><span className="text-sm font-medium">{error}</span></div>)}
+        </div>
+
+        {/* Monitor Section */}
+        <div className={cn("flex-1 rounded-2xl shadow-sm border p-6 flex flex-col relative overflow-hidden transition-colors", isVoidMode ? "bg-red-50/30 border-red-200" : "bg-white border-slate-200")}>
+           <div className="absolute top-0 right-0 p-6 opacity-5 text-slate-400 pointer-events-none"><Package size={180} /></div>
+           <div className="flex items-center justify-between">
+             <h2 className={cn("text-sm font-bold text-slate-400 uppercase tracking-wider mb-auto flex items-center gap-2", isVoidMode ? "text-red-600" : "text-slate-400")}>
+               <Box size={16} /> {isVoidMode ? 'Void Monitor' : 'Last Scanned'}
+             </h2>
+
+             <button
+               onClick={() => (typeof onSearch === 'function' ? onSearch() : setShowProductLookup(true))}
+               className={cn(
+                 "text-xs font-bold px-3 py-1.5 rounded-lg border flex items-center gap-2 shadow-sm",
+                 btnEffect,
+                 "bg-blue-600 text-white border-blue-500 hover:bg-blue-500 hover:border-blue-400"
+               )}
+               title="ค้นหารายละเอียดสินค้า"
+             >
+               <Search size={14} /> ค้นหารายละเอียดสินค้า
+             </button>
+           </div>
+           
+           {lastItemDetail ? (
+             <div className="mt-4 animate-in slide-in-from-right-4 duration-300 text-center relative z-10">
+                <div className={cn("w-24 h-24 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-inner text-white", isVoidMode ? "bg-red-500" : "bg-boots-light text-boots-base")}>
+                   {isVoidMode ? <MinusCircle size={48}/> : <Package size={48} />}
+                </div>
+                <h3 className="text-2xl font-bold text-slate-800 leading-tight mb-2 line-clamp-2">{lastItemDetail.name}</h3>
+                <div className="text-slate-400 font-mono mb-6">{lastItemDetail.sku}</div>
+                
+                {isVoidMode ? (
+                  <div className="text-red-600 font-bold text-xl animate-pulse">REMOVED -1</div>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <div className="text-6xl font-bold text-boots-base tracking-tighter">
+                        ฿{
+                          ((lastItemDetail.calculatedTotal !== undefined ? lastItemDetail.calculatedTotal : (lastItemDetail.price * lastItemDetail.qty)) / lastItemDetail.qty).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})
+                        }
+                    </div>
+                    <div className="text-sm text-slate-400 mt-1 font-medium">(ราคาปกติ)</div>
+                  </div>
+                )}
+             </div>
+           ) : (
+             <div className="flex-1 flex flex-col items-center justify-center text-slate-300"><ScanBarcode size={64} className="mb-4 opacity-50" /><p className="text-lg font-medium">พร้อมใช้งาน</p></div>
+           )}
+        </div>
+      </div>
+
+      {/* RIGHT SIDE */}
+      <div className="w-[65%] flex flex-col bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden relative">
+        
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+           <div className="flex flex-col">
+              <div className="flex items-center gap-3">
+                 <img src="https://store.boots.co.th/images/boots-logo.png" alt="Boots Logo" className="h-8 w-auto object-contain" />
+                 <div className="h-6 w-px bg-slate-300"></div>
+                 <span className="font-bold text-slate-800 text-2xl">รายการขาย</span>
+              </div>
+              <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-400 font-mono">
+                  <span>v{APP_VERSION} ({APP_UPDATED})</span>
+                  {dbLastUpdate && (
+                      <>
+                        <span>•</span>
+                        <span>DB Update: {dbLastUpdate.toLocaleString('th-TH')}</span>
+                      </>
+                  )}
+              </div>
+           </div>
+           
+           {/* BUTTON GROUP */}
+           <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-sm text-slate-500 bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-sm"><User size={16} /> Staff #01</div>
+              
+              {/* Discount Menu (Moved Here) */}
+              <button 
+                onClick={() => setShowDiscountModal(true)}
+                className={cn("flex items-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm shadow-sm transition-all", btnEffect)}
+              >
+                <Tag size={16} /> เมนูส่วนลด
+              </button>
+
+              {/* Daily Report Button */}
+              <button onClick={() => setShowReport(true)} className={cn("px-4 py-1.5 bg-white text-slate-700 rounded-lg border border-slate-200 text-sm font-bold hover:bg-slate-50 hover:text-boots-base shadow-sm transition-all flex items-center gap-2", btnEffect)} title="Daily Report">
+                 <FileText size={16} /> Daily Report
+              </button>
+
+              <button 
+                  onClick={handleAdminSettings} 
+                  className={cn("flex items-center gap-2 px-3 py-1.5 bg-white text-slate-700 rounded-lg border border-slate-200 text-sm font-bold hover:bg-slate-50 hover:text-boots-base shadow-sm transition-all", btnEffect)}
+                  title="Admin Settings"
+              >
+                  <Settings size={16} />
+                  <span>Setting</span>
+              </button>
+           </div>
+        </div>
+
+        {/* Table Head */}
+        <div className="grid grid-cols-12 gap-2 px-6 py-3 bg-slate-100/50 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+           <div className="col-span-1 text-center">No.</div>
+           <div className="col-span-4">สินค้า</div>
+           <div className="col-span-2 text-right">ราคา/หน่วย</div>
+           <div className="col-span-2 text-center">จำนวน</div>
+           <div className="col-span-1 text-right text-red-600">ส่วนลด</div>
+           <div className="col-span-2 text-right">รวม</div>
+        </div>
+
+        {/* Table Body */}
+        <div className="flex-1 overflow-y-auto px-4 py-2">
+          {cartItems.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-slate-300"><ShoppingCart size={64} className="mb-4 opacity-50" /><p className="text-xl font-medium">ตะกร้าว่างเปล่า</p></div>
+          ) : (
+            cartItems.map((item, index) => {
+              const price = item.price || 0;
+              const qty = item.qty || 0;
+              const normalTotal = price * qty;
+              const lineTotal = item.calculatedTotal !== undefined ? item.calculatedTotal : normalTotal; 
+              const discountVal = normalTotal - lineTotal;
+              const isItemChecked = discountCheckedItems.has(item.id || item.sku);
+
+              return (
+              <div key={item.id || item.sku} className={cn("grid grid-cols-12 gap-2 p-3 border-b border-slate-50 items-center hover:bg-slate-50 transition-colors group relative", lastScanned === item.sku && "bg-blue-50/60")}>
+                 <div className="col-span-1 flex justify-center"><div className="w-6 h-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold">{cartItems.length - index}</div></div>
+                 
+                 <div className="col-span-4">
+                    <div className="font-bold text-slate-800 text-base line-clamp-1">{item.name}</div>
+                    <div className="text-xs text-slate-400 font-mono mb-1">{item.sku}</div>
+                    
+                    {/* Discount Input Injection */}
+                    {isItemChecked && (
+                        <div className="mt-1 flex items-center gap-2 animate-in slide-in-from-left-2">
+                            <span className="text-xs font-bold text-orange-600">ส่วนลด:</span>
+                            <input 
+                                type="number" 
+                                autoFocus
+                                value={item.manualDiscountPercent || ''}
+                                onChange={(e) => setManualItemDiscount(item.id || item.sku, e.target.value)}
+                                className="w-16 border border-orange-300 rounded px-1 py-0.5 text-center font-bold text-sm focus:border-orange-500 outline-none bg-orange-50"
+                                placeholder="0"
+                            />
+                            <span className="text-xs font-bold text-slate-500">%</span>
+                        </div>
+                    )}
+                    
+                    {item.badgeText ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-white px-2 py-0.5 rounded-md font-semibold shadow-sm mt-0.5" style={{ backgroundColor: '#184290' }}>
+                          <Tag size={10} className="text-white" /> {item.badgeText}
+                        </span>
+                    ) : ( item.promoTag && <span className="inline-flex items-center gap-1 text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold mt-0.5"><Tag size={10} /> {item.promoTag}</span> )}
+                 </div>
+
+                 <div className="col-span-2 text-right">
+                    <div className="text-lg font-bold text-slate-600">฿{price.toLocaleString()}</div>
+                 </div>
+
+                 <div className="col-span-2 flex justify-center">
+                    <div className="bg-white border border-slate-200 px-2 py-1 rounded-lg font-bold text-slate-700 shadow-sm min-w-[3.5rem] text-center text-xl">
+                        {qty}
+                    </div>
+                 </div>
+
+                 <div className="col-span-1 text-right">
+                    {discountVal > 0 ? (
+                        <div className="text-sm font-bold text-red-600">-฿{discountVal.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:2})}</div>
+                    ) : (
+                        <div className="text-slate-300">-</div>
+                    )}
+                 </div>
+
+                 <div className="col-span-2 text-right relative pr-8"> 
+                    <div className="text-xl font-bold text-boots-base">฿{lineTotal.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}</div>
+                    <button 
+                        onClick={() => removeFromCart(item.id || item.sku)} 
+                        className={cn("absolute right-0 top-1/2 -translate-y-1/2 p-2 bg-white text-red-500 rounded-full shadow border border-red-100 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50", btnEffect)}
+                    >
+                        <Trash2 size={18} />
+                    </button>
+                 </div>
+              </div>
+            )})
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="bg-slate-900 text-white p-6 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] z-20">
+           {/* Detailed Summary */}
+           <div className="flex justify-between items-end mb-4 border-b border-slate-700 pb-4">
+              <div className="flex gap-8 text-sm">
+                 <div>
+                    <div className="text-slate-400 mb-1">ยอดรวมสินค้า</div>
+                    <div className="font-bold">{summary.subtotal.toLocaleString()}</div>
+                 </div>
+                 {summary.billDiscountAmount < 0 && (
+                     <div>
+                        <div className="text-slate-400 mb-1">ส่วนลดท้ายบิล</div>
+                        <div className="font-bold text-orange-400">{summary.billDiscountAmount.toLocaleString()}</div>
+                     </div>
+                 )}
+                 {summary.couponTotal < 0 && (
+                     <div>
+                        <div className="text-slate-400 mb-1">คูปอง</div>
+                        <div className="font-bold text-orange-400">{summary.couponTotal.toLocaleString()}</div>
+                     </div>
+                 )}
+                 {summary.allowance < 0 && (
+                     <div>
+                        <div className="text-slate-400 mb-1">Allowance</div>
+                        <div className="font-bold text-orange-400">{summary.allowance.toLocaleString()}</div>
+                     </div>
+                 )}
+              </div>
+           </div>
+
+           <div className="flex justify-between items-start mb-6">
+              <div className="flex gap-8">
+                 <div><div className="text-slate-400 text-sm font-medium mb-1">จำนวนชิ้นรวม</div><div className="text-4xl font-bold text-white">{summary.totalItems} <span className="text-lg text-slate-500 font-normal">Items</span></div></div>
+                 {(summary.discount > 0 || summary.billDiscountAmount < 0 || summary.couponTotal < 0 || summary.allowance < 0) && (
+                     <div>
+                        <div className="text-orange-400 text-sm font-medium mb-1">รวมส่วนลดสุทธิ</div>
+                        <div className="text-4xl font-bold text-orange-400">
+                            -฿{(Math.abs(summary.discount + summary.billDiscountAmount + summary.couponTotal + summary.allowance)).toLocaleString()}
+                        </div>
+                     </div>
+                 )}
+              </div>
+              <div className="text-right"><div className="text-slate-400 text-sm font-medium mb-1">ยอดสุทธิ (Net Total)</div><div className="text-7xl font-bold tracking-tighter text-white leading-none">฿{summary.netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div></div>
+           </div>
+           
+           <button onClick={handleCheckout} disabled={cartItems.length === 0 || isLoading || isSaving} className={cn("w-full bg-boots-base hover:bg-blue-600 text-white h-20 rounded-xl text-2xl font-bold flex items-center justify-center gap-4 shadow-lg shadow-boots-base/30 disabled:opacity-50 disabled:cursor-not-allowed", btnEffect)}>
+              {isSaving ? <Loader2 className="animate-spin w-8 h-8" /> : <ShoppingCart className="w-8 h-8" />}
+              <span>ชำระเงิน (Checkout)</span>
+              <span className="bg-white/20 text-white text-sm px-3 py-1 rounded font-normal">F12</span>
+           </button>
+        </div>
+      </div>
     </div>
   );
 }
-

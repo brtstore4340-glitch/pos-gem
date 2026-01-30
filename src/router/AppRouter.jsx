@@ -8,6 +8,7 @@ import { ProductsPage } from "@/pages/ProductsPage";
 import { OrdersPage } from "@/pages/OrdersPage";
 import { ReportsPage } from "@/pages/ReportsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { ItemSearchPage } from "@/pages/ItemSearchPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
 const router = createBrowserRouter([
@@ -17,6 +18,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "pos", element: <PosPage /> },
+      { path: "item-search", element: <ItemSearchPage /> },
       { path: "products", element: <ProductsPage /> },
       { path: "orders", element: <OrdersPage /> },
       { path: "reports", element: <ReportsPage /> },
