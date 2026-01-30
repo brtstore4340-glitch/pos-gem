@@ -1,10 +1,11 @@
-import React from "react";
+﻿import React from "react";
 import ReactDOM from "react-dom/client";
 
 import App from "./App.jsx";
 import "./styles/globals.css";
 
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { AuthProvider } from "@/modules/auth";
 import { AuthProvider } from "@/modules/auth";
 import { Toaster } from "@/components/toaster";
 

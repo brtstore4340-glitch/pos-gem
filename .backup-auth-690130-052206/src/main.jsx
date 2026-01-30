@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import ReactDOM from "react-dom/client";
 
 import App from "./App.jsx";
@@ -11,9 +11,7 @@ import { Toaster } from "@/components/toaster";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ThemeProvider defaultTheme="system" storageKey="theme">
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <App />
       <Toaster />
     </ThemeProvider>
   </React.StrictMode>

@@ -1,14 +1,15 @@
 ﻿import * as React from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
+
+
 import ProtectedRoute from "@/modules/auth/ProtectedRoute";
 import Login from "@/modules/auth/pages/Login";
 import SelectProfile from "@/modules/auth/pages/SelectProfile";
 import EnterPin from "@/modules/auth/pages/EnterPin";
 import ChangePin from "@/modules/auth/pages/ChangePin";
 import UpdateInfo from "@/modules/auth/pages/UpdateInfo";
-import AdminSettings from "@/modules/auth/pages/AdminSettings";
-import { HomePage } from "@/pages/HomePage";
+import AdminSettings from "@/modules/auth/pages/AdminSettings";import { HomePage } from "@/pages/HomePage";
 import { PosPage } from "@/pages/PosPage";
 import { ProductsPage } from "@/pages/ProductsPage";
 import { OrdersPage } from "@/pages/OrdersPage";
