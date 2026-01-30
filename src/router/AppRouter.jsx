@@ -53,7 +53,6 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-<<<<<<< HEAD
       {
         index: true,
         element: (
@@ -110,16 +109,6 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         )
       }
-=======
-      { index: true, element: <HomePage /> },
-      { path: "pos", element: <PosPage /> },
-      { path: "item-search", element: <ItemSearchPage /> },
-      { path: "products", element: <ProductsPage /> },
-      { path: "orders", element: <OrdersPage /> },
-      { path: "reports", element: <ReportsPage /> },
-      { path: "settings", element: <SettingsPage /> },
-      { path: "*", element: <NotFoundPage /> }
->>>>>>> 6e8476dd0ad7b8734d0279bcd53a01dba07d25a5
     ]
   }
 ]);
@@ -127,3 +116,5 @@ const router = createBrowserRouter([
 export function AppRouter() {
   return <RouterProvider router={router} />;
 }
+
+
