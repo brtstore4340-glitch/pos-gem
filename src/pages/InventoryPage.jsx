@@ -1,4 +1,3 @@
-import React from 'react';
 import { Package, Plus, Search, Filter } from 'lucide-react';
 
 export default function InventoryPage() {
@@ -62,3 +61,4 @@ export default function InventoryPage() {
     </div>
   );
 }
+

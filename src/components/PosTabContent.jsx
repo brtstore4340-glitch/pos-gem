@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import ReceiptModal from './ReceiptModal';
 import ProductLookupModal from './ProductLookupModal';
 import DailyReportModal from './DailyReportModal';
@@ -23,3 +23,4 @@ const PosTabContent = () => {
 };
 
 export default PosTabContent;
+

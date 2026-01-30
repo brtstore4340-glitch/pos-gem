@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function NeuClock() {
   const [now, setNow] = useState(new Date());
@@ -17,3 +17,4 @@ export default function NeuClock() {
     </div>
   );
 }
+

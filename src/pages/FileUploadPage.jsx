@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import { useState } from "react";
 import { UploadCloud, File, X, HardDrive } from "lucide-react";
 
 export default function FileUploadPage() {
@@ -81,3 +81,4 @@ export default function FileUploadPage() {
     </div>
   );
 }
+

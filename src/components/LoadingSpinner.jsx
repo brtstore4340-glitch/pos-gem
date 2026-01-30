@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { cn } from "../utils/cn";
 
 export default function LoadingSpinner({ label = "Loading...", size = 180, className }) {
@@ -200,3 +200,4 @@ export default function LoadingSpinner({ label = "Loading...", size = 180, class
     </div>
   );
 }
+

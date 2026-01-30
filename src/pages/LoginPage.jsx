@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
@@ -240,3 +240,4 @@ export default function LoginPage({ onLogin }) {
     </div>
   );
 }
+

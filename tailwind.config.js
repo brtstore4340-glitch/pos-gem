@@ -1,35 +1,60 @@
-﻿/** @type {import('tailwindcss').Config} */
+/** @type {import("tailwindcss").Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  darkMode: 'class', // Enable class-based dark mode
+  content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
+  darkMode: ["class"],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ['Inter', 'Noto Sans Thai', 'sans-serif'],
-      },
       colors: {
-        boots: {
-          base: '#184290',      // Default Primary Blue
-          hover: '#12326b',
-          light: '#eef4ff',
-          text: '#202124',
-          subtext: '#5f6368',
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
-        dark: {
-            bg: '#1a1b1e',      // Main background
-            panel: '#25262b',   // Panel background
-            border: '#2c2e33',  // Borders
-            text: '#c1c2c5',    // Primary text
-            subtext: '#909296', // Secondary text
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        border: "hsl(var(--border))",
+        ring: "hsl(var(--ring))",
+        boots: {
+          base: {
+            DEFAULT: "hsl(var(--boots))",
+            foreground: "hsl(var(--boots-foreground))"
+          },
+          light: "hsl(var(--boots-light))"
+        },
+        discount: {
+          DEFAULT: "hsl(var(--discount))",
+          foreground: "hsl(var(--discount-foreground))"
         }
       },
-      backdropBlur: {
-        xs: '2px',
-      }
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      ringColor: {
+        "boots-base": "hsl(var(--boots))",
+        "boots-light": "hsl(var(--boots-light))",
+        "discount": "hsl(var(--discount))"
+      },
+      fontFamily: {
+        sans: ["Inter", "Noto Sans Thai", "sans-serif"],
+      },
     },
   },
-  plugins: [],
-}
+  plugins: [require("tailwindcss-animate")],
+};

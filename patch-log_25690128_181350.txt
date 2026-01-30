@@ -1,0 +1,25 @@
+**********************
+PowerShell transcript start
+Start time: 20260128181350
+Username: MARCUZ\User
+RunAs User: MARCUZ\User
+Configuration Name: 
+Machine: MARCUZ (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll .\patch-vite-dev-strict.ps1
+Process ID: 21264
+PSVersion: 7.5.4
+PSEdition: Core
+GitCommitId: 7.5.4
+OS: Microsoft Windows 10.0.19045
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+[18:13:50] Backup: D:\01 Main Work\Boots\Boots-POS Gemini\ai-backups\patch_25690128_181350\package.json.bak
+[18:13:50] dev:strict already exists. No change.
+**********************
+PowerShell transcript end
+End time: 20260128181350
+**********************

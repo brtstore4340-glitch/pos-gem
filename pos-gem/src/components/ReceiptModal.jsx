@@ -1,4 +1,3 @@
-﻿import React from 'react';
 import { X, Printer, CheckCircle } from 'lucide-react';
 
 export default function ReceiptModal({ order, onClose }) {
@@ -139,3 +138,4 @@ export default function ReceiptModal({ order, onClose }) {
     </>
   );
 }
+

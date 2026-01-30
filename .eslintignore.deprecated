@@ -1,0 +1,5 @@
+dist/
+ai-backups/
+.backup-eslint-*/
+**/*.min.js
+**/jquery.js

@@ -1,4 +1,5 @@
-import React, {
+/* eslint-disable react-refresh/only-export-components */
+import {
   createContext,
   useCallback,
   useContext,
@@ -232,3 +233,4 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
+

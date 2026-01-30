@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Search, Package, Tag, Barcode, Layers, Archive, Info } from "lucide-react";
 import { posService } from "../services/posService";
 import { cn } from "../utils/cn";
@@ -203,3 +203,4 @@ function InfoCard({ icon: Icon, label, value }) {
     </div>
   );
 }
+

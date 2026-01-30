@@ -1,4 +1,3 @@
-import React from 'react';
 import { FileText, BarChart3 } from 'lucide-react';
 
 export default function ReportPage() {
@@ -34,4 +33,5 @@ export default function ReportPage() {
     </div>
   );
 }
+
 

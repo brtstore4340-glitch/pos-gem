@@ -1,4 +1,3 @@
-﻿import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
@@ -19,3 +18,4 @@ requestAnimationFrame(() => {
     if (el && el.parentNode) el.parentNode.removeChild(el);
   });
 });
+

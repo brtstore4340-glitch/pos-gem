@@ -20,7 +20,10 @@ function waitTabComplete(tabId, timeoutMs) {
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   (async () => {
-    if (msg?.type !== 'OPEN_BG_AND_EXTRACT') return sendResponse({ ok:false });
+    if (msg?.type !== 'OPEN_BG_AND_EXTRACT') {
+      return sendResponse({ ok: false, error: 'unknown_message_type' });
+    }
+    
     const url = (msg.url || '').toString();
     if (!url) throw new Error('missing_url');
 
@@ -34,8 +37,15 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       if (!resp?.job) throw new Error(resp?.error || 'extract_failed');
       sendResponse(resp.job);
     } finally {
-      try { await chrome.tabs.remove(tab.id); } catch {}
+      try { await chrome.tabs.remove(tab.id); } catch { console.warn("Ignored error in background script"); }
     }
-  })().catch(e => sendResponse({ ok:false, error: String(e?.message || e) }));
+  })().catch(e => {
+    try {
+      sendResponse({ ok: false, error: String(e?.message || e) });
+    } catch (ignoreError) {
+      console.error('Failed to send error response:', ignoreError);
+    }
+  });
   return true;
 });
+

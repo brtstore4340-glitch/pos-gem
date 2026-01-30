@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { UploadCloud, Loader2, CheckCircle, AlertCircle, X } from "lucide-react";
 import { cn } from "../utils/cn";
 import { runUploadFlow, abortUploadFlow } from "../services/uploadService";
@@ -209,3 +209,4 @@ export default function PosUploadModal({ open, onClose, isDarkMode = false }) {
     </div>
   );
 }
+

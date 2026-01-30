@@ -1,0 +1,25 @@
+**********************
+PowerShell transcript start
+Start time: 20260128170131
+Username: MARCUZ\User
+RunAs User: MARCUZ\User
+Configuration Name: 
+Machine: MARCUZ (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll .\patch-react-not-defined.ps1
+Process ID: 17624
+PSVersion: 7.5.4
+PSEdition: Core
+GitCommitId: 7.5.4
+OS: Microsoft Windows 10.0.19045
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+[17:01:31] Backup: D:\01 Main Work\Boots\Boots-POS Gemini\ai-backups\patch_25690128_170131\main.jsx.bak
+[17:01:31] Patched src/main.jsx: added `import React from "react";`
+**********************
+PowerShell transcript end
+End time: 20260128170131
+**********************

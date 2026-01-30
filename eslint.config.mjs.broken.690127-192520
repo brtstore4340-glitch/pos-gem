@@ -1,0 +1,61 @@
+import globals from "globals";
+import react from "eslint-plugin-react";
+import reactHooks from "eslint-plugin-react-hooks";
+import babelParser from "@babel/eslint-parser";
+
+export default [
+  // Ignore folders/files that should never be linted
+  {
+    ignores: [
+      "**/.backup-eslint-*/**",
+      "**/ai-backups/**",
+      "**/dist/**",
+      "**/coverage/**",
+      "**/node_modules/**",
+      "**/functions/**",
+      "**/boots-grab-print/**",
+      "**/pos-gem/functions/**",
+      "**/PropTypes-Example.jsx",
+      "**/src/toggle/jquery.js"
+          "**/src/legacy/**",
+          "**/*DemoUI.jsx",
+          "**/pos-gem/**",
+    ]
+  },
+
+  // App source (React JSX)
+  {
+    files: ["**/*.js", "**/*.jsx"],
+    languageOptions: {
+      parser: babelParser,
+      parserOptions: {
+        requireConfigFile: false,
+        babelOptions: {
+          presets: ["@babel/preset-env", "@babel/preset-react"]
+        },
+        ecmaVersion: 2022,
+        sourceType: "module",
+        ecmaFeatures: { jsx: true }
+      },
+      globals: {
+        ...globals.browser,
+        ...globals.node
+      }
+    },
+    plugins: {
+      react,
+      "react-hooks": reactHooks
+    },
+    settings: {
+      react: { version: "detect" }
+    },
+    rules: {
+      "react/react-in-jsx-scope": "off",
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "no-empty": ["error", { allowEmptyCatch: true }]
+    }
+  }
+];
+

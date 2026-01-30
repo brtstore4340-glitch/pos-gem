@@ -121,7 +121,7 @@ exports.createManagedUser = async (data, context) => {
     await batch.commit();
   } catch (e) {
     // Best-effort rollback auth user if Firestore write fails
-    try { await admin.auth().deleteUser(uid); } catch (_) {}
+    try { await admin.auth().deleteUser(uid); } catch (_) { /* handled */ console.warn(_); }
     const msg = e && e.message ? e.message : "Failed to create user profile";
     const err = new Error(msg);
     err.code = "internal";
@@ -171,7 +171,7 @@ exports.updateManagedUser = async (data, context) => {
     }
   }
 
-  const patch = {};
+  const patch = { /* noop */ };
   if (data && typeof data.role === "string" && data.role.trim()) {
     const role = data.role.trim();
     assertRoleAllowed(callerRole, role);

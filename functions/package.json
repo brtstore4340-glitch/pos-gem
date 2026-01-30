@@ -1,24 +1,24 @@
 {
-  "name": "functions",
+  "name": "boots-pos-gemini-functions",
+  "private": true,
+  "main": "index.js",
   "engines": {
     "node": "20"
   },
+  "scripts": {
+    "lint": "eslint \"**/*.{js,cjs}\"",
+    "test": "node -e \"console.log('test: skip (add tests later)')\""
   "main": "index.js",
   "scripts": {
     "build": "node -e \"console.log('No build step for functions')\""
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.2",
-    "@google-cloud/vertexai": "^1.9.0",
-    "firebase-admin": "^13.6.0",
-    "firebase-functions": "^7.0.3",
-    "google-auth-library": "^10.5.0",
-    "openai": "^4.77.0",
-    "zod": "^3.25.76"
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.4.0"
   },
   "devDependencies": {
-    "@types/node": "^25.0.10",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "globals": "^17.2.0"
   }
 }
