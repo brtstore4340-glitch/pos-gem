@@ -5,34 +5,50 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>GRAB PRINT</title>
   <style>
-    body { font-family: system-ui, Arial; margin: 0; padding: 10px; width: 360px; }
+    body { font-family: system-ui, -apple-system, Arial, 'TH Sarabun New', sans-serif; margin: 0; padding: 10px; width: 380px; }
     .row { display:flex; gap:8px; align-items:center; flex-wrap: wrap; }
     button { cursor:pointer; border:0; border-radius:10px; padding:8px 10px; font-weight:700; }
     .btn { background:#111827; color:#fff; }
     .btn2 { background:#e5e7eb; color:#111827; }
-    .list { margin-top: 10px; max-height: 360px; overflow:auto; border: 1px solid #ddd; border-radius: 10px; padding: 6px; }
-    .item { display:flex; gap:8px; padding: 6px; border-bottom: 1px dashed #eee; align-items:flex-start; }
+    .btn-print { background:#10b981; color:#fff; }
+    .btn-print-all { background:#3b82f6; color:#fff; }
+    .list { margin-top: 10px; max-height: 400px; overflow:auto; border: 1px solid #ddd; border-radius: 10px; padding: 6px; }
+    .item { display:flex; gap:8px; padding: 8px; border-bottom: 1px dashed #eee; align-items:flex-start; }
     .item:last-child{ border-bottom:0; }
+    .item.printed { opacity: 0.6; background: #f9fafb; }
+    .item.selected { background: #eff6ff; }
     .meta { font-size: 11px; color: #555; word-break: break-all; }
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+    .badge-new { background: #fef3c7; color: #92400e; }
+    .badge-printed { background: #d1fae5; color: #065f46; }
     .err { color: #b00020; font-size: 12px; margin-top: 6px; white-space: pre-wrap; }
     .ok { color: #0a7; font-size: 12px; margin-top: 6px; white-space: pre-wrap; }
+    .header-row { justify-content:space-between; }
+    .stats { font-size: 12px; color: #666; margin-top: 8px; }
+    .empty-state { text-align: center; padding: 20px; color: #888; }
+    .checkbox-col { padding-top: 4px; }
   </style>
 </head>
 <body>
-  <div class="row" style="justify-content:space-between;">
-    <b>GRAB PRINT</b>
-    <button id="openOptions" class="btn2">Settings</button>
+  <div class="row header-row">
+    <b>📦 GRAB PRINT</b>
+    <div>
+      <button id="refreshBtn" class="btn2" title="Refresh">🔄</button>
+      <button id="openOptions" class="btn2">Settings</button>
+    </div>
   </div>
 
-  <div class="row" style="margin-top:10px;">
-    <button id="btnScan" class="btn">Scan Orders</button>
-    <button id="btnIngestSel" class="btn2">Ingest Selected</button>
+  <div class="row" style="margin-top:10px; gap:6px;">
+    <button id="btnScan" class="btn" style="flex:1;">🔍 Scan Orders</button>
+    <button id="btnPrintAll" class="btn-print-all" style="flex:1;">🖨 Print All</button>
   </div>
+
+  <div class="stats" id="stats"></div>
 
   <div class="list" id="list"></div>
 
-  <div class="err" id="err"></div>
-  <div class="ok" id="ok"></div>
+  <div class="err" id="err"></div class="ok" id="ok">>
+  <div</div>
 
   <script type="module" src="src/popup.js"></script>
 </body>

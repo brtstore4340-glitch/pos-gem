@@ -1,7 +1,15 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore";
+import { 
+  onAuthStateChanged, 
+  signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInAnonymously
+} from "firebase/auth";
+import { doc, onSnapshot, getDoc, setDoc, serverTimestamp, collection, getDocs, query, orderBy } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
 /**
@@ -17,6 +25,9 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [reason, setReason] = useState(null);
   const [selectedProfile, setSelectedProfile] = useState(null);
+  const [ids, setIds] = useState([]);
+  const [lastIdCode, setLastIdCode] = useState("");
+  const [session, setSession] = useState(null);
 
   const idleTimerRef = useRef(null);
   const lastActiveRef = useRef(null);
@@ -28,9 +39,85 @@ export function AuthProvider({ children }) {
     return () => {};
   }, []);
 
+  // Email login function
+  const loginEmail = useCallback(async (email, password) => {
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      return { success: true, user: result.user };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }, []);
+
+  // Email signup function
+  const signupEmail = useCallback(async ({ email, password, displayName }) => {
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      return { success: true, user: result.user };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }, []);
+
+  // Google sign-in function
+  const signInWithGoogle = useCallback(async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      return { success: true, user: result.user };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }, []);
+
+  // Anonymous login function
+  const loginAnonymous = useCallback(async () => {
+    try {
+      const result = await signInAnonymously(auth);
+      return { success: true, user: result.user };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }, []);
+
+  // Load IDs (profiles) for the current user
+  const loadIds = useCallback(async () => {
+    if (!fbUser) return [];
+    try {
+      const col = collection(db, "accounts", fbUser.uid, "profiles");
+      const q = query(col, orderBy("createdAt", "asc"));
+      const snap = await getDocs(q);
+      const profiles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setIds(profiles);
+      return profiles;
+    } catch (error) {
+      console.error("Error loading IDs:", error);
+      return [];
+    }
+  }, [fbUser]);
+
+  // Verify PIN
+  const verifyPin = useCallback(async (idCode, pin) => {
+    if (!fbUser) throw new Error("Not authenticated");
+    
+    const profile = ids.find(p => (p.idCode || p.code || String(p)) === idCode);
+    if (!profile) throw new Error("ID not found");
+    
+    // For demo purposes, accept "1234" as the default PIN
+    // In production, this should verify against stored hash
+    if (pin === "1234") {
+      setSession({ idCode, profile });
+      setLastIdCode(idCode);
+      return;
+    }
+    
+    throw new Error("Invalid PIN");
+  }, [fbUser, ids]);
+
   const logout = useCallback(async (r = "logout") => {
     setReason(r);
     setSelectedProfile(null);
+    setSession(null);
 
     // cleanup listeners/timers
     try {
@@ -88,8 +175,9 @@ export function AuthProvider({ children }) {
           const data = snap?.data?.();
           if (data?.disabled) {
             void setReason("disabled");
-setSelectedProfile(null);
-try { void signOut(auth); } catch (_e) { void _e; }
+            setSelectedProfile(null);
+            setSession(null);
+            try { void signOut(auth); } catch (_e) { void _e; }
           }
         },
         (_err) => {
@@ -130,16 +218,34 @@ try { void signOut(auth); } catch (_e) { void _e; }
 
   const value = useMemo(() => {
     return {
+      // User
+      firebaseUser: fbUser,
       fbUser,
       loading,
       reason,
+      
+      // Session/Profile
+      session,
       selectedProfile,
       setSelectedProfile,
+      ids,
+      loadIds,
+      lastIdCode,
+      
+      // Auth functions
+      loginEmail,
+      signupEmail,
+      signInWithGoogle,
+      loginAnonymous,
+      verifyPin,
+      signOut: logout,
       logout,
       endAllSessions,
+      
+      // Refs
       lastActiveRef,
     };
-  }, [fbUser, loading, reason, selectedProfile, logout, endAllSessions]);
+  }, [fbUser, loading, reason, selectedProfile, session, ids, lastIdCode, loginEmail, signupEmail, signInWithGoogle, loginAnonymous, verifyPin, logout, endAllSessions]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>พิมพ์ใบสั่งซื้อ - Grab Print</title>
+  <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+  <!-- Preview Header (hidden when printing) -->
+  <div class="preview-header" id="previewHeader">
+    <h2>📋 ตัวอย่างการพิมพ์</h2>
+    <div class="preview-actions">
+      <button id="btnPrint" class="btn-primary">🖨️ พิมพ์</button>
+      <button id="btnClose" class="btn-secondary">ปิด</button>
+    </div>
+  </div>
+
+  <!-- Thermal Print Content -->
+  <div class="thermal-print" id="thermalPrint">
+    <!-- Header Section -->
+    <div class="header">
+      <div class="store-name" id="storeName">ร้านของฉัน</div>
+      <div class="order-type">GRAB FOOD</div>
+      <div class="order-number">เลขคำสั่งซื้อ #<span id="orderNumber">-</span></div>
+    </div>
+
+    <!-- Order Info Section -->
+    <div class="order-info">
+      <div class="info-row">
+        <span class="label">วันที่:</span>
+        <span class="value" id="orderDate">-</span>
+      </div>
+      <div class="info-row">
+        <span class="label">เวลา:</span>
+        <span class="value" id="orderTime">-</span>
+      </div>
+      <div class="info-row">
+        <span class="label">คนขับ:</span>
+        <span class="value" id="driverName">-</span>
+      </div>
+      <div class="info-row">
+        <span class="label">โทร:</span>
+        <span class="value" id="driverPhone">-</span>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="divider"></div>
+
+    <!-- Items Section -->
+    <div class="items-section">
+      <div class="items-header">
+        <span class="qty-col">จำนวน</span>
+        <span class="item-col">รายการ</span>
+        <span class="price-col">ราคา</span>
+      </div>
+      <div id="itemsList">
+        <!-- Items will be injected here -->
+        <div class="empty-items">ไม่พบรายการสินค้า</div>
+      </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="order-summary">
+      <div class="summary-row">
+        <span>รวม:</span>
+        <span id="subtotal">฿0.00</span>
+      </div>
+      <div class="summary-row">
+        <span>ค่าจัดส่ง:</span>
+        <span id="deliveryFee">฿0.00</span>
+      </div>
+      <div class="summary-row">
+        <span>ค่าบริการ:</span>
+        <span id="serviceFee">฿0.00</span>
+      </div>
+      <div class="summary-row total">
+        <span>ยอดรวม:</span>
+        <span id="totalAmount">฿0.00</span>
+      </div>
+    </div>
+
+    <!-- Customer Note -->
+    <div class="customer-note" id="customerNoteSection" style="display: none;">
+      <div class="note-label">หมายเหตุลูกค้า:</div>
+      <div class="note-text" id="customerNote"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="thank-you">ขอบคุณที่สั่งซื้อค่ะ 🙏</div>
+      <div class="print-time">พิมพ์เมื่อ: <span id="printTime">-</span></div>
+    </div>
+  </div>
+
+  <!-- Print Status -->
+  <div class="print-status" id="printStatus"></div>
+
+  <script src="src/print-template.js"></script>
+  <script src="src/print-preview.js"></script>
+</body>
+</html>

@@ -1,10 +1,10 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
-import { APP_VERSION, APP_UPDATED } from "../constants/appMeta";
+import { db } from "../../firebase";
+import { APP_VERSION, APP_UPDATED } from "../../constants/appMeta";
 import { User, Lock, Eye, EyeOff, LogIn, ShieldCheck, Activity, Server, Info } from "lucide-react";
-import { cn } from "../utils/cn";
+import { cn } from "../../utils/cn";
 
 export default function LoginPage({ onLogin }) {
   const [showPassword, setShowPassword] = useState(false);

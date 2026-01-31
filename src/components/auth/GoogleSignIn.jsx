@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { Loader2, Sun, Moon, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { Loader2, Sun, Moon, CheckCircle2, Wifi, WifiOff, Loader2 as LoaderIcon } from 'lucide-react';
+import { ServerStatus } from '@/components/ui/ServerStatus';
 
 export default function GoogleSignIn() {
   // BEGIN: FUNCTION ZONE (DO NOT TOUCH)
@@ -94,8 +95,9 @@ export default function GoogleSignIn() {
         <div className="absolute top-[40%] -right-[10%] w-[40%] h-[60%] bg-cyan-400/20 dark:bg-cyan-600/10 rounded-full blur-[100px] animate-float opacity-60" style={{ animationDelay: '2s' }} />
       </div>
 
-      {/* Theme Toggle */}
-      <div className="absolute top-6 right-6 z-50">
+      {/* Theme Toggle & Server Status */}
+      <div className="absolute top-6 right-6 z-50 flex items-center gap-2">
+        <ServerStatus />
         <button 
           onClick={toggleTheme}
           aria-label="Toggle theme"

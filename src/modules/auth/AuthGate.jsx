@@ -1,39 +1,40 @@
- 
-import * as React from "react";
-import { useAuth } from "@/modules/auth/AuthContext";
 
-function Field({ label, children }) {
-  return (
-    <label className="block space-y-1">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      {children}
-    </label>
-  );
-}
+import { useAuth } from "./AuthContext";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import GoogleSignIn from "@/components/auth/GoogleSignIn";
+import IdPinLogin from "@/components/auth/IdPinLogin";
+import PinReset from "@/components/auth/PinReset";
+import { ServerStatus } from "@/components/ui/ServerStatus";
 
-function Button({ children, ...props }) {
-  return (
-    <button
-      {...props}
-      className={
-        "inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium " +
-        "bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none " +
-        (props.className ? " " + props.className : "")
-      }
-    >
-      {children}
-    </button>
-  );
-}
+export function AuthGate({ children }) {
+  const { firebaseUser, session, loading, authLoading } = useAuth();
 
-function Card({ title, subtitle, children }) {
-  return (
-    <div className="w-full max-w-md rounded-xl border bg-background p-6 shadow-sm">
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold">{title}</h1>
-        {subtitle ? <p className="text-sm text-muted-foreground">{subtitle}</p> : null}
+  // Show loading spinner while checking auth state
+  if (loading || authLoading) {
+    return (
+      <div className="min-h-screen grid place-items-center p-6">
+        <LoadingSpinner label="Preparing secure session..." />
       </div>
-      <div className="mt-4">{children}</div>
+    );
+  }
+
+  if (!firebaseUser) {
+    return <GoogleSignIn />;
+  }
+
+  if (!session) {
+    return <IdPinLogin />;
+  }
+
+  if (session.pinResetRequired) {
+    return <PinReset />;
+  }
+
+  return <>{children}</>;
+}
+
+export default AuthGate;
+
     </div>
   );
 }
@@ -84,9 +85,12 @@ function LoginScreen() {
 
   return (
     <div className="min-h-screen grid place-items-center p-6">
+      <div className="absolute top-4 right-4">
+        <ServerStatus />
+      </div>
       <Card
         title="Sign in"
-        subtitle="เน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธเน€เธเธทเนเธญเนเธเนเธเธฒเธ (Google / Email / Anonymous)"
+        subtitle="ลงชื่อเข้าใช้ด้วยรหัสที่คุณได้รับ (Google / Email)"
       >
         <div className="space-y-3">
           <Button type="button" onClick={onGoogle} disabled={busy} className="w-full">
@@ -203,6 +207,9 @@ function UnlockPinScreen() {
 
   return (
     <div className="min-h-screen grid place-items-center p-6">
+      <div className="absolute top-4 right-4">
+        <ServerStatus />
+      </div>
       <Card
         title="Unlock terminal"
         subtitle={firebaseUser?.email ? `Signed in: ${firebaseUser.email}` : "Signed in"}

@@ -6,6 +6,13 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 export default [
   {
     ignores: [
+      "_boot/**",
+      "**/*.min.js",
+      ".diag/**",
+    ],
+  },
+  {
+    ignores: [
       "ai-backups/**",
       ".backup-*/**",
       "tools/logs/**"
