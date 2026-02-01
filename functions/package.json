@@ -7,9 +7,7 @@
   },
   "scripts": {
     "lint": "eslint \"**/*.{js,cjs}\"",
-    "test": "node -e \"console.log('test: skip (add tests later)')\""
-  "main": "index.js",
-  "scripts": {
+    "test": "node -e \"console.log('test: skip (add tests later)')\"",
     "build": "node -e \"console.log('No build step for functions')\""
   },
   "dependencies": {
