@@ -22,7 +22,11 @@ function Backup-File([string]$Source, [string]$BackupDir, [string]$LogFile) {
     Write-Log $LogFile "BACKUP: '$Source' -> '$dest'"
   }
 }
-function Ensure-Git() { $null = Get-Command git -ErrorAction Stop }
+<<<<<<< HEAD
+function Approve-Git() { $null = Get-Command git -ErrorAction Stop }
+=======
+function Approve-Git() { $null = Get-Command git -ErrorAction Stop }
+>>>>>>> main
 function Read-Text([string]$Path) { Get-Content -LiteralPath $Path -Raw }
 function Write-Utf8([string]$Path, [string]$Text) { New-Dir (Split-Path -Parent $Path); Set-Content -LiteralPath $Path -Value $Text -Encoding UTF8 }
 function Find-OldRepoDir([string]$BootDir) {
@@ -164,8 +168,21 @@ export default function PinPage() { return <PinLegacy />; }
 }
 
 # Aliases (catch routers that import other names)
-$aliasLogin = @'import LoginPage from "./LoginPage"; export default LoginPage;'@
-$aliasDash  = @'import DashboardPage from "./DashboardPage"; export default DashboardPage;'@
+<<<<<<< HEAD
+$aliasLogin = @'
+import LoginPage from "./LoginPage"; export default LoginPage;
+'@
+$aliasDash  = @'
+import DashboardPage from "./DashboardPage"; export default DashboardPage;
+'@
+=======
+$aliasLogin = @'
+import LoginPage from "./LoginPage"; export default LoginPage;
+'@
+$aliasDash  = @'
+import DashboardPage from "./DashboardPage"; export default DashboardPage;
+'@
+>>>>>>> main
 Write-Utf8 (Join-Path $curPages "Login.jsx") $aliasLogin
 Write-Utf8 (Join-Path $curPages "Index.jsx") $aliasDash
 Write-Utf8 (Join-Path $curPages "Home.jsx") $aliasDash

@@ -1,0 +1,12 @@
+# Ignore build outputs, backups, and vendor bundles
+node_modules/
+dist/
+_boot/
+ai-backups/
+*.min.js
+**/jquery.js
+**/vendor/**
+**/pos-gem/functions/**
+**/ai-backups/**
+**/.backup-*/**
+**/*.patched.preview

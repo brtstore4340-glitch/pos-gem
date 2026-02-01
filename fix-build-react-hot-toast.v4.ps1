@@ -32,8 +32,13 @@ $ErrorActionPreference = "Stop"
 try { $global:PSNativeCommandUseErrorActionPreference = $false } catch {}
 
 function New-Timestamp { (Get-Date -Format "yyyyMMdd-HHmmss") }
-function Ensure-Dir([string]$Path) { if (!(Test-Path $Path)) { New-Item -ItemType Directory -Force -Path $Path | Out-Null } }
-function Safe-FileName([string]$s) { ($s -replace '[^a-zA-Z0-9\-_\.]+','_') }
+<<<<<<< HEAD
+function New-Directory([string]$Path) { if (!(Test-Path $Path)) { New-Item -ItemType Directory -Force -Path $Path | Out-Null } }
+function Get-SafeFileName([string]$s) { ($s -replace '[^a-zA-Z0-9\-_\.]+','_') }
+=======
+function New-Directory([string]$Path) { if (!(Test-Path $Path)) { New-Item -ItemType Directory -Force -Path $Path | Out-Null } }
+function Get-SafeFileName([string]$s) { ($s -replace '[^a-zA-Z0-9\-_\.]+','_') }
+>>>>>>> main
 
 $ts = New-Timestamp
 $bootDir   = Join-Path $RepoRoot "_boot"
@@ -61,7 +66,11 @@ function Backup-File([string]$path) {
   }
 }
 
-function Quarantine-Dir([string]$path) {
+<<<<<<< HEAD
+function Move-DirectoryToQuarantine([string]$path) {
+=======
+function Move-DirectoryToQuarantine([string]$path) {
+>>>>>>> main
   if (!(Test-Path $path)) { return $null }
   $name = Split-Path $path -Leaf
   $dest = Join-Path $trashRun $name
@@ -80,7 +89,11 @@ function Read-Tail([string]$file, [int]$n=200) {
   @(Get-Content -LiteralPath $file -ErrorAction SilentlyContinue | Select-Object -Last $n)
 }
 
-function Detect-NpmUsage([string]$outFile) {
+<<<<<<< HEAD
+function Get-NpmUsage([string]$outFile) {
+=======
+function Get-NpmUsage([string]$outFile) {
+>>>>>>> main
   if (!(Test-Path $outFile)) { return $false }
   $patterns = @(
     '^npm <command>$',
@@ -94,7 +107,11 @@ function Detect-NpmUsage([string]$outFile) {
   return $false
 }
 
-function Detect-MissingImports([string]$outFile) {
+<<<<<<< HEAD
+function Get-MissingImports([string]$outFile) {
+=======
+function Get-MissingImports([string]$outFile) {
+>>>>>>> main
   if (!(Test-Path $outFile)) { return @() }
   $pattern = 'failed to resolve import "([^"]+)" from "([^"]+)"'
   $hits = @()
@@ -108,7 +125,11 @@ function Detect-MissingImports([string]$outFile) {
 }
 
 # Robust runner: captures remaining args correctly (no accidental dropping)
-function Run-Native {
+<<<<<<< HEAD
+function Invoke-Native {
+=======
+function Invoke-Native {
+>>>>>>> main
   param(
     [string]$Label,
     [string]$Exe,
@@ -133,7 +154,11 @@ function Run-Native {
   return [pscustomobject]@{ Ok=($exit -eq 0); ExitCode=$exit; OutFile=$outFile }
 }
 
-function Require-Npm-Working() {
+<<<<<<< HEAD
+function Confirm-NpmIsWorking() {
+=======
+function Confirm-NpmIsWorking() {
+>>>>>>> main
   Log "===== OPTION 0: Verify npm works with args ====="
   $r = Run-Native "npm --version" npm --version
   if (-not $r.Ok -or (Detect-NpmUsage $r.OutFile)) {
@@ -146,7 +171,11 @@ function Require-Npm-Working() {
   return $true
 }
 
-function Ensure-Package() {
+<<<<<<< HEAD
+function Confirm-Package() {
+=======
+function Confirm-Package() {
+>>>>>>> main
   Log "===== Ensure dependency: $PkgName@$PkgVersion ====="
   $ls = Run-Native "npm ls $PkgName depth0" npm ls $PkgName --depth=0
   if ($ls.Ok) {

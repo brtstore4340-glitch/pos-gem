@@ -1,3 +1,4 @@
+/* global chrome */
 /**
  * Grab Print - Options Script
  * Handles settings page interactions
