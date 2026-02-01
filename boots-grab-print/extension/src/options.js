@@ -1,3 +1,4 @@
+/* global chrome */
 /**
  * Options page script (Chrome Extension)
  * - Lint-safe: no undefined globals, no empty blocks, no unused vars.

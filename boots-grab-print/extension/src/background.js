@@ -1,3 +1,4 @@
+/* global chrome */
 function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
 function waitTabComplete(tabId, timeoutMs) {

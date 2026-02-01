@@ -1,3 +1,4 @@
+/* global chrome */
 function uniq(arr) {
 var s = new Set(); const out = [];
   for (const x of arr) { if (!s.has(x)) { s.add(x); out.push(x); } }

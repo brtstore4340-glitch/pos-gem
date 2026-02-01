@@ -30,8 +30,7 @@ function openOptions() {
   const url = chrome?.runtime?.getURL ? chrome.runtime.getURL("options.html") : "options.html";
   window.open(url, "_blank");
 }
-
-import { getSettings } from './storage.js';
+/* global chrome */import { getSettings } from './storage.js';
 const _$ = (id) => document.getElementById(id);
 
 function renderList(orders) {
