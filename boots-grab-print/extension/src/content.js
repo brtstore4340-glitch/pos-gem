@@ -9,14 +9,14 @@ function listOrderHistoryLinks() {
 var anchors = Array.from(document.querySelectorAll('a[href]'));
 var links = anchors
     .map(a => a.getAttribute('href') || '')
-    .filter(h => //order/.+/history/.test(h));
+    .filter(h => /order\/[^/]+\/history/.test(h));
 var abs = links.map(h => {
     try { return new URL(h, location.origin).toString(); } catch { return ''; }
   }).filter(Boolean);
 var orders = uniq(abs).slice(0, 80).map(url => {
-var m = url.match(//order/([^/]+)/history/);
-    return { id: m ? m[1] : url, url };
-  });
+  var m = url.match(/order\/([^/]+)\/history/);
+  return { id: m ? m[1] : url, url };
+});
 
   return orders;
 }
