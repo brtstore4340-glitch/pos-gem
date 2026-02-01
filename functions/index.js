@@ -1,5 +1,5 @@
 /* functions/index.js */
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
 const ALLOWED_ORIGINS = (process.env.ALLOWED_CORS_ORIGINS || "http://localhost:5173,http://localhost:3000")
@@ -909,3 +909,4 @@ exports.setFirstAdmin = functions
   .https.onRequest((req, res) => {
     res.status(410).send("setFirstAdmin disabled");
   });
+
