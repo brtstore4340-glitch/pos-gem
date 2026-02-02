@@ -102,6 +102,14 @@ const router = createBrowserRouter([
         )
       },
       {
+        path: "item-search",
+        element: (
+          <ProtectedRoute allowRoles={["admin", "supervisor", "staff"]}>
+            <ItemSearchPage />
+          </ProtectedRoute>
+        )
+      },
+      {
         path: "*",
         element: (
           <ProtectedRoute allowRoles={["admin", "supervisor", "staff"]}>
