@@ -1,3 +1,4 @@
+/* global XLSX */
 document.getElementById("excelFiles").addEventListener("change", handleFiles, false);
 
 async function handleFiles(event) {
