@@ -8,15 +8,11 @@
   "scripts": {
     "lint": "eslint \"**/*.{js,cjs}\"",
     "test": "node -e \"console.log('test: skip (add tests later)')\"",
-<<<<<<< HEAD
     "build": "node -e \"console.log('No build step for functions')\"",
     "shell": "firebase functions:shell",
     "serve": "firebase emulators:start --only functions",
     "logs": "firebase functions:log",
     "deploy": "firebase deploy --only functions"
-=======
-    "build": "node -e \"console.log('No build step for functions')\""
->>>>>>> main
   },
   "dependencies": {
     "cors": "^2.8.5",
