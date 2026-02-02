@@ -58,11 +58,7 @@ function Show-ContextByLine([string]$Raw, [int]$Line1Based, [int]$Radius, [strin
   Write-Log $LogFile "---------------------------"
 }
 
-<<<<<<< HEAD
 function Convert-LinePosFromPsError([string]$Msg, [ref]$Line, [ref]$Pos) {
-=======
-function Convert-LinePosFromPsError([string]$Msg, [ref]$Line, [ref]$Pos) {
->>>>>>> main
   # common: "line 12, position 34"
   if ($Msg -match 'line\s+(\d+),\s*position\s+(\d+)') {
     $Line.Value = [int]$Matches[1]
@@ -70,7 +66,7 @@ function Convert-LinePosFromPsError([string]$Msg, [ref]$Line, [ref]$Pos) {
     return $true
   }
   return $false
-}
+} 
 
 # ---- Main ----
 $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path

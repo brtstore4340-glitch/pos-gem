@@ -22,11 +22,7 @@ function Backup-File([string]$Source, [string]$BackupDir, [string]$LogFile, [str
   }
 }
 
-<<<<<<< HEAD
-function Invoke-Cmd([string]$CmdLine, [string]$WorkingDir, [string]$LogFile, [string]$Prefix) {
-=======
-function Invoke-Cmd([string]$CmdLine, [string]$WorkingDir, [string]$LogFile, [string]$Prefix) {
->>>>>>> main
+function Run-Cmd([string]$CmdLine, [string]$WorkingDir, [string]$LogFile, [string]$Prefix) {
   # /d disables AutoRun, /s handles quotes, /c runs then exits
   $psi = New-Object System.Diagnostics.ProcessStartInfo
   $psi.FileName = "cmd.exe"
@@ -51,21 +47,13 @@ function Invoke-Cmd([string]$CmdLine, [string]$WorkingDir, [string]$LogFile, [st
   return @{ exit = $p.ExitCode; out = ($stdout + "`n" + $stderr) }
 }
 
-<<<<<<< HEAD
-function Get-MissingImport([string]$Text) {
-=======
-function Get-MissingImport([string]$Text) {
->>>>>>> main
+function Extract-MissingImport([string]$Text) {
   # vite/rollup: failed to resolve import "X" from "Y"
   $m = [regex]::Match($Text, 'failed to resolve import\s+"([^"]+)"\s+from\s+"([^"]+)"', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
   if ($m.Success) { return @{ dep = $m.Groups[1].Value; from = $m.Groups[2].Value } }
   return $null
 }
-<<<<<<< HEAD
-function Test-BareModule([string]$Spec) {
-=======
-function Test-BareModule([string]$Spec) {
->>>>>>> main
+function Is-BareModule([string]$Spec) {
   if ([string]::IsNullOrWhiteSpace($Spec)) { return $false }
   return -not ($Spec.StartsWith(".") -or $Spec.StartsWith("/") -or $Spec.StartsWith(".."))
 }
