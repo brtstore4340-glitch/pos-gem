@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ShieldCheck, LogOut, KeySquare, User, Moon, Sun, Loader2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { bootstrapAdmin } from '../../services/rbacService';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { bootstrapAdmin } from '@/services/rbacService';
+import { ServerStatus } from '@/components/ui/ServerStatus';
 
 export default function IdPinLogin() {
   // BEGIN: FUNCTION ZONE (DO NOT TOUCH)
-  const { firebaseUser, ids, lastIdCode, setLastIdCode, loadIds, verifyPin, signOut } = useAuth();
+  const { firebaseUser, ids, lastIdCode, setSelectedProfile, loadIds, verifyPin, signOut } = useAuth();
   const [selectedId, setSelectedId] = useState(lastIdCode || '');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
@@ -65,7 +66,7 @@ export default function IdPinLogin() {
     setLoading(true);
     try {
       await verifyPin(selectedId, pin);
-      setLastIdCode(selectedId);
+      setSelectedProfile({ idCode: selectedId });
       setPin('');
     } catch (err) {
       setError(err?.message || 'Invalid PIN');
@@ -103,8 +104,9 @@ export default function IdPinLogin() {
         <div className="absolute top-[10%] left-[20%] w-[60%] h-[60%] bg-blue-500/10 dark:bg-blue-600/10 rounded-full blur-[120px] animate-float opacity-70" />
       </div>
 
-       {/* Theme Toggle */}
-       <div className="absolute top-6 right-6 z-50">
+      {/* Theme Toggle & Server Status */}
+      <div className="absolute top-6 right-6 z-50 flex items-center gap-2">
+        <ServerStatus />
         <button 
           onClick={toggleTheme}
           aria-label="Toggle theme"
@@ -290,4 +292,3 @@ export default function IdPinLogin() {
     </div>
   );
 }
-

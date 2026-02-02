@@ -1,0 +1,357 @@
+/**
+ * Grab Print - Thermal Printer CSS
+ * Optimized for 58mm and 80mm thermal printers
+ */
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Courier New', 'TH Sarabun New', monospace;
+  margin: 0;
+  padding: 20px;
+  background: #f5f5f5;
+  color: #000;
+}
+
+/* Preview Header (hidden when printing) */
+.preview-header {
+  background: #fff;
+  padding: 16px 20px;
+  border-bottom: 2px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.preview-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #111827;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-primary {
+  background: #111827;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: #1f2937;
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #111827;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #d1d5db;
+}
+
+/* Print Status */
+.print-status {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  display: none;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.print-status.success {
+  display: block;
+  background: #10b981;
+  color: white;
+}
+
+.print-status.error {
+  display: block;
+  background: #ef4444;
+  color: white;
+}
+
+.print-status.info {
+  display: block;
+  background: #3b82f6;
+  color: white;
+}
+
+/* Thermal Print Container */
+.thermal-print {
+  width: 58mm;
+  max-width: 58mm;
+  margin: 0 auto;
+  padding: 6px;
+  font-size: 10pt;
+  line-height: 1.25;
+  color: #000;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* 80mm Width Variant */
+.thermal-print.printer-width-80 {
+  width: 80mm;
+  max-width: 80mm;
+}
+
+/* Header Section */
+.thermal-print .header {
+  text-align: center;
+  border-bottom: 1px dashed #000;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.thermal-print .store-name {
+  font-size: 13pt;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.thermal-print .order-type {
+  font-size: 9pt;
+  margin-bottom: 2px;
+  color: #555;
+}
+
+.thermal-print .order-number {
+  font-size: 10pt;
+  font-weight: bold;
+}
+
+/* Order Info Section */
+.thermal-print .order-info {
+  margin-bottom: 6px;
+}
+
+.thermal-print .info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.thermal-print .info-row .label {
+  font-weight: normal;
+  color: #555;
+}
+
+.thermal-print .info-row .value {
+  text-align: right;
+}
+
+/* Divider */
+.thermal-print .divider {
+  border-top: 1px dashed #000;
+  margin: 6px 0;
+}
+
+/* Items Section */
+.thermal-print .items-section {
+  border-top: 1px dashed #000;
+  border-bottom: 1px dashed #000;
+  padding: 4px 0;
+  margin: 6px 0;
+}
+
+.thermal-print .items-header {
+  display: flex;
+  font-weight: bold;
+  border-bottom: 1px solid #000;
+  padding-bottom: 2px;
+  margin-bottom: 4px;
+  font-size: 9pt;
+}
+
+.thermal-print .qty-col {
+  width: 12mm;
+  text-align: center;
+}
+
+.thermal-print.printer-width-80 .qty-col {
+  width: 15mm;
+}
+
+.thermal-print .item-col {
+  flex: 1;
+  text-align: left;
+  padding-left: 4px;
+}
+
+.thermal-print .price-col {
+  width: 18mm;
+  text-align: right;
+}
+
+.thermal-print.printer-width-80 .price-col {
+  width: 22mm;
+}
+
+.thermal-print .item {
+  display: flex;
+  margin-bottom: 2px;
+  font-size: 9pt;
+}
+
+.thermal-print .item .qty-col {
+  text-align: center;
+}
+
+.thermal-print .item .item-col {
+  padding-left: 4px;
+  word-break: break-word;
+}
+
+.thermal-print .item .price-col {
+  text-align: right;
+}
+
+.thermal-print .item-modifiers {
+  font-size: 8pt;
+  color: #555;
+  padding-left: 12mm;
+  margin-bottom: 2px;
+}
+
+.thermal-print .empty-items {
+  text-align: center;
+  color: #888;
+  padding: 8px 0;
+}
+
+/* Order Summary */
+.thermal-print .order-summary {
+  margin-top: 6px;
+}
+
+.thermal-print .summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+  font-size: 9pt;
+}
+
+.thermal-print .summary-row.total {
+  font-weight: bold;
+  font-size: 11pt;
+  border-top: 1px dashed #000;
+  padding-top: 4px;
+  margin-top: 4px;
+}
+
+/* Customer Note */
+.thermal-print .customer-note {
+  margin-top: 6px;
+  padding: 4px;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.thermal-print .note-label {
+  font-weight: bold;
+  margin-bottom: 2px;
+  font-size: 9pt;
+}
+
+.thermal-print .note-text {
+  font-size: 9pt;
+  color: #555;
+}
+
+/* Footer */
+.thermal-print .footer {
+  margin-top: 8px;
+  text-align: center;
+  border-top: 1px dashed #000;
+  padding-top: 6px;
+}
+
+.thermal-print .thank-you {
+  font-size: 11pt;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.thermal-print .print-time {
+  font-size: 8pt;
+  color: #666;
+}
+
+/* Print Media Query */
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+  
+  .preview-header {
+    display: none !important;
+  }
+  
+  .print-status {
+    display: none !important;
+  }
+  
+  .thermal-print {
+    width: 100%;
+    max-width: none;
+    box-shadow: none;
+    border-radius: 0;
+    margin: 0;
+  }
+  
+  @page {
+    size: auto;
+    margin: 0;
+  }
+  
+  /* Hide any non-print elements */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 400px) {
+  .preview-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .preview-actions {
+    width: 100%;
+    justify-content: center;
+  }
+}

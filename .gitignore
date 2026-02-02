@@ -91,6 +91,7 @@ build/
 *.bak.*
 *.tmp
 config.yaml
+/backup*
 secret_config.yaml
 secret_config_*.yaml
 secrets/

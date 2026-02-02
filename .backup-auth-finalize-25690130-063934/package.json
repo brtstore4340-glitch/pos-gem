@@ -1,0 +1,50 @@
+{
+  "name": "boots-pos-gemini",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev:strict": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . -c eslint.config.mjs",
+    "typecheck": "node -e \"console.log('typecheck: skip (JS project)')\"",
+    "test": "node -e \"console.log('test: skip (no tests configured yet)')\"",
+    "lint:fix": "eslint . --fix -c eslint.config.mjs",
+    "guard:build": "npm run lint || echo \"lint failed (soft-guard): fix gradually\" && npm run build",
+    "guard:build:strict": "npm run lint && npm run build"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-slot": "^1.2.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "firebase": "^12.8.0",
+    "framer-motion": "^12.29.0",
+    "lucide-react": "^0.542.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.13.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^2.5.2"
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.28.6",
+    "@babel/preset-env": "^7.28.6",
+    "@babel/preset-react": "^7.28.5",
+    "@eslint/js": "^9.39.2",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "globals": "^17.1.0",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.10",
+    "tailwindcss-animate": "^1.0.7",
+    "vite": "^5.4.2"
+  }
+}
