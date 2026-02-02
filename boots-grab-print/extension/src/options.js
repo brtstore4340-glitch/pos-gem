@@ -1,109 +1,111 @@
 /* global chrome */
 /**
- * Options page script (Chrome Extension)
- * - Lint-safe: no undefined globals, no empty blocks, no unused vars.
- * - Robust: works even if some DOM nodes are missing.
+ * Grab Print - Options Script
+ * Handles settings page interactions
  */
 
-const qs = (sel) => document.querySelector(sel);
+import { getSettings, setSettings } from './storage.js';
 
-const branchIdEl = qs("#branchId");
-const tokenEl = qs("#token");
-const baseUrlEl = qs("#baseUrl");
+// DOM Elements
+const $ = (sel) => document.querySelector(sel);
+const errEl = $('#err');
+const okEl = $('#ok');
+const btnSave = $('#save');
 
-const saveBtn = qs("#btnSave");
-const statusOkEl = qs("#statusOk");
-const statusErrEl = qs("#statusErr");
+// Fields
+const fBranchId = $('#branchId');
+const fToken = $('#token');
+const fBaseUrl = $('#baseUrl');
+const fPollingInterval = $('#pollingInterval');
+const fEnableNotifications = $('#enableNotifications');
+const fStoreName = $('#storeName');
+const fPrinterWidth = $('#printerWidth');
+const fAutoPrint = $('#autoPrint');
 
-function setText(el, text) {
-  if (!el) return;
-  el.textContent = text || "";
-}
-
-function showOk(msg) {
-  setText(statusOkEl, msg);
-  setText(statusErrEl, "");
-}
-
-function showErr(msg) {
-  setText(statusErrEl, msg);
-  setText(statusOkEl, "");
-}
-
-function readForm() {
-  return {
-    branchId: branchIdEl ? String(branchIdEl.value || "").trim() : "",
-    token: tokenEl ? String(tokenEl.value || "").trim() : "",
-    baseUrl: baseUrlEl ? String(baseUrlEl.value || "").trim() : "",
-  };
-}
-
-function validate(values) {
-  if (!values.branchId) return "Branch ID is required.";
-  if (!values.token) return "Token is required.";
-  if (!values.baseUrl) return "Base URL is required.";
-  try {
-    // Ensure valid absolute URL
-     
-    new URL(values.baseUrl);
-  } catch {
-    return "Base URL must be a valid URL (e.g. https://example.com).";
+// Initialize
+async function init() {
+  // Load settings
+  await loadSettings();
+  
+  // Set up save button
+  if (btnSave) {
+    btnSave.addEventListener('click', saveSettings);
   }
-  return null;
-}
-
-async function loadOptions() {
-  try {
-    const data = await chrome.storage.sync.get(["branchId", "token", "baseUrl"]);
-    const branchId = data.branchId || "";
-    const token = data.token || "";
-    const baseUrl = data.baseUrl || "";
-
-    if (branchIdEl) branchIdEl.value = branchId;
-    if (tokenEl) tokenEl.value = token;
-    if (baseUrlEl) baseUrlEl.value = baseUrl;
-
-    showOk("Loaded.");
-  } catch (e) {
-    showErr(e?.message || String(e));
-  }
-}
-
-async function saveOptions() {
-  try {
-    const values = readForm();
-    const errMsg = validate(values);
-    if (errMsg) {
-      showErr(errMsg);
-      return;
+  
+  // Enter key to save
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'Enter') {
+        saveSettings();
+      }
     }
-
-    await chrome.storage.sync.set(values);
-    showOk("Saved.");
-  } catch (e) {
-    showErr(e?.message || String(e));
-  }
-}
-
-function wireEvents() {
-  if (saveBtn) {
-    saveBtn.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      void saveOptions();
-    });
-  }
-
-  // Optional: Ctrl/Cmd+S to save
-  document.addEventListener("keydown", (ev) => {
-    const isSaveCombo = (ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "s";
-    if (!isSaveCombo) return;
-    ev.preventDefault();
-    void saveOptions();
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  wireEvents();
-  void loadOptions();
-});
+async function loadSettings() {
+  try {
+    const settings = await getSettings();
+    
+    if (fBranchId) fBranchId.value = settings.branchId || '';
+    if (fToken) fToken.value = settings.token || '';
+    if (fBaseUrl) fBaseUrl.value = settings.baseUrl || '';
+    if (fPollingInterval) fPollingInterval.value = settings.pollingInterval || 15;
+    if (fEnableNotifications) fEnableNotifications.checked = settings.enableNotifications;
+    if (fStoreName) fStoreName.value = settings.storeName || '';
+    if (fPrinterWidth) fPrinterWidth.value = settings.printerWidth || '58mm';
+    if (fAutoPrint) fAutoPrint.checked = settings.autoPrint;
+    
+  } catch (e) {
+    showError('ไม่สามารถโหลดการตั้งค่า: ' + e.message);
+  }
+}
 
+async function saveSettings() {
+  try {
+    showError('');
+    showOk('');
+    
+    const pollingInterval = parseInt(fPollingInterval?.value) || 15;
+    if (pollingInterval < 5 || pollingInterval > 60) {
+      throw new Error('ช่วงเวลาต้องอยู่ระหว่าง 5-60 วินาที');
+    }
+    
+    await setSettings({
+      branchId: fBranchId?.value || '',
+      token: fToken?.value || '',
+      baseUrl: fBaseUrl?.value || '',
+      pollingInterval: pollingInterval,
+      enableNotifications: fEnableNotifications?.checked ?? true,
+      storeName: fStoreName?.value || '',
+      printerWidth: fPrinterWidth?.value || '58mm',
+      autoPrint: fAutoPrint?.checked ?? false
+    });
+    
+    showOk('✅ บันทึกสำเร็จ!');
+    
+    // Restart polling if enabled
+    try {
+      await chrome.runtime.sendMessage({ type: 'START_POLLING' });
+    } catch (e) {
+      // Extension context invalidated, ignore
+    }
+    
+  } catch (e) {
+    showError('เกิดข้อผิดพลาด: ' + (e?.message || e));
+  }
+}
+
+function showError(msg) {
+  if (errEl) errEl.textContent = msg || '';
+}
+
+function showOk(msg) {
+  if (okEl) okEl.textContent = msg || '';
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}

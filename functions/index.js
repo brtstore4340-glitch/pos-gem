@@ -909,3 +909,4 @@ exports.setFirstAdmin = functions
   .https.onRequest((req, res) => {
     res.status(410).send("setFirstAdmin disabled");
   });
+

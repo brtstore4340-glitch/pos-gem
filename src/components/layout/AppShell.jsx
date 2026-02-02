@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Container } from "@/components/ui/grid";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ServerStatus } from "@/components/ui/ServerStatus";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -49,6 +50,7 @@ export function AppShell() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
+            <ServerStatus />
             <ThemeToggle />
           </div>
         </Container>
