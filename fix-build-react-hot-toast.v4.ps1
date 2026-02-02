@@ -133,11 +133,7 @@ function Run-Native {
   return [pscustomobject]@{ Ok=($exit -eq 0); ExitCode=$exit; OutFile=$outFile }
 } 
 
-<<<<<<< HEAD
 function Confirm-NpmIsWorking() {
-=======
-function Confirm-NpmIsWorking() {
->>>>>>> main
   Log "===== OPTION 0: Verify npm works with args ====="
   $r = Run-Native "npm --version" npm --version
   if (-not $r.Ok -or (Get-NpmUsage $r.OutFile)) {
@@ -150,11 +146,7 @@ function Confirm-NpmIsWorking() {
   return $true
 }
 
-<<<<<<< HEAD
 function Confirm-Package() {
-=======
-function Confirm-Package() {
->>>>>>> main
   Log "===== Ensure dependency: $PkgName@$PkgVersion ====="
   $ls = Run-Native "npm ls $PkgName depth0" npm ls $PkgName --depth=0
   if ($ls.Ok) {
@@ -171,11 +163,11 @@ function Build() {
   $b = Run-Native "npm run build" npm run build
   if ($b.Ok) { return $b }
 
-  if (Detect-NpmUsage $b.OutFile) {
+  if (Get-NpmUsage $b.OutFile) {
     Log "DIAG: Build output looks like npm usage/help, not Vite output."
   }
 
-  $missing = @(Detect-MissingImports $b.OutFile)
+  $missing = @(Get-MissingImports $b.OutFile)
   if ($missing.Count -gt 0) {
     Log "Detected missing import(s):"
     foreach ($m in $missing) { Log (" - missing: {0} | from: {1}" -f $m.Module, $m.From) }
