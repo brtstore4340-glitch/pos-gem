@@ -32,13 +32,8 @@ $ErrorActionPreference = "Stop"
 try { $global:PSNativeCommandUseErrorActionPreference = $false } catch {}
 
 function New-Timestamp { (Get-Date -Format "yyyyMMdd-HHmmss") }
-<<<<<<< HEAD
 function New-Directory([string]$Path) { if (!(Test-Path $Path)) { New-Item -ItemType Directory -Force -Path $Path | Out-Null } }
 function Get-SafeFileName([string]$s) { ($s -replace '[^a-zA-Z0-9\-_\.]+','_') }
-=======
-function New-Directory([string]$Path) { if (!(Test-Path $Path)) { New-Item -ItemType Directory -Force -Path $Path | Out-Null } }
-function Get-SafeFileName([string]$s) { ($s -replace '[^a-zA-Z0-9\-_\.]+','_') }
->>>>>>> main
 
 $ts = New-Timestamp
 $bootDir   = Join-Path $RepoRoot "_boot"
@@ -66,11 +61,7 @@ function Backup-File([string]$path) {
   }
 }
 
-<<<<<<< HEAD
 function Move-DirectoryToQuarantine([string]$path) {
-=======
-function Move-DirectoryToQuarantine([string]$path) {
->>>>>>> main
   if (!(Test-Path $path)) { return $null }
   $name = Split-Path $path -Leaf
   $dest = Join-Path $trashRun $name
@@ -78,7 +69,7 @@ function Move-DirectoryToQuarantine([string]$path) {
   Move-Item -LiteralPath $path -Destination $dest -Force
   Log "Quarantined: $path => $dest"
   return $dest
-}
+} 
 
 function Read-Head([string]$file, [int]$n=60) {
   if (!(Test-Path $file)) { return @() }
@@ -89,11 +80,7 @@ function Read-Tail([string]$file, [int]$n=200) {
   @(Get-Content -LiteralPath $file -ErrorAction SilentlyContinue | Select-Object -Last $n)
 }
 
-<<<<<<< HEAD
 function Get-NpmUsage([string]$outFile) {
-=======
-function Get-NpmUsage([string]$outFile) {
->>>>>>> main
   if (!(Test-Path $outFile)) { return $false }
   $patterns = @(
     '^npm <command>$',
@@ -105,13 +92,9 @@ function Get-NpmUsage([string]$outFile) {
     if (Select-String -LiteralPath $outFile -Pattern $p -Quiet -ErrorAction SilentlyContinue) { return $true }
   }
   return $false
-}
+} 
 
-<<<<<<< HEAD
 function Get-MissingImports([string]$outFile) {
-=======
-function Get-MissingImports([string]$outFile) {
->>>>>>> main
   if (!(Test-Path $outFile)) { return @() }
   $pattern = 'failed to resolve import "([^"]+)" from "([^"]+)"'
   $hits = @()
@@ -122,14 +105,10 @@ function Get-MissingImports([string]$outFile) {
     }
   }
   return @($hits)
-}
+} 
 
 # Robust runner: captures remaining args correctly (no accidental dropping)
-<<<<<<< HEAD
-function Invoke-Native {
-=======
-function Invoke-Native {
->>>>>>> main
+function Run-Native {
   param(
     [string]$Label,
     [string]$Exe,
@@ -137,7 +116,7 @@ function Invoke-Native {
     [string[]]$Rest
   )
 
-  $outFile = Join-Path $trashRun ("{0}.out.txt" -f (Safe-FileName $Label))
+  $outFile = Join-Path $trashRun ("{0}.out.txt" -f (Get-SafeFileName $Label))
   Log "---- $Label ----"
   Log ("CMD: {0} {1}" -f $Exe, ($Rest -join " "))
 
@@ -152,16 +131,12 @@ function Invoke-Native {
 
   Log "EXITCODE: $exit"
   return [pscustomobject]@{ Ok=($exit -eq 0); ExitCode=$exit; OutFile=$outFile }
-}
+} 
 
-<<<<<<< HEAD
 function Confirm-NpmIsWorking() {
-=======
-function Confirm-NpmIsWorking() {
->>>>>>> main
   Log "===== OPTION 0: Verify npm works with args ====="
   $r = Run-Native "npm --version" npm --version
-  if (-not $r.Ok -or (Detect-NpmUsage $r.OutFile)) {
+  if (-not $r.Ok -or (Get-NpmUsage $r.OutFile)) {
     Log "CRITICAL: npm did not accept args correctly (or returned usage)."
     Log "Next actions (evidence-based):"
     Log " - Run in your terminal: `npm --version` and paste output."
@@ -171,11 +146,7 @@ function Confirm-NpmIsWorking() {
   return $true
 }
 
-<<<<<<< HEAD
 function Confirm-Package() {
-=======
-function Confirm-Package() {
->>>>>>> main
   Log "===== Ensure dependency: $PkgName@$PkgVersion ====="
   $ls = Run-Native "npm ls $PkgName depth0" npm ls $PkgName --depth=0
   if ($ls.Ok) {
@@ -192,11 +163,11 @@ function Build() {
   $b = Run-Native "npm run build" npm run build
   if ($b.Ok) { return $b }
 
-  if (Detect-NpmUsage $b.OutFile) {
+  if (Get-NpmUsage $b.OutFile) {
     Log "DIAG: Build output looks like npm usage/help, not Vite output."
   }
 
-  $missing = @(Detect-MissingImports $b.OutFile)
+  $missing = @(Get-MissingImports $b.OutFile)
   if ($missing.Count -gt 0) {
     Log "Detected missing import(s):"
     foreach ($m in $missing) { Log (" - missing: {0} | from: {1}" -f $m.Module, $m.From) }
@@ -227,11 +198,11 @@ try {
   if (Test-Path $pkgLock) { Backup-File $pkgLock }
 
   # OPTION 0
-  Require-Npm-Working | Out-Null
+  Confirm-NpmIsWorking | Out-Null
 
   # OPTION 1
   Log "===== OPTION 1: Install missing dependency + build ====="
-  Ensure-Package | Out-Null
+  Confirm-Package | Out-Null
   $b1 = Build
   if ($b1.Ok) {
     Log "SUCCESS: Build passed after Option 1."
