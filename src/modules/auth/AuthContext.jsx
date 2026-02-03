@@ -66,7 +66,14 @@ export function AuthProvider({ children }) {
       const result = await signInWithPopup(auth, provider);
       return { success: true, user: result.user };
     } catch (error) {
-      return { success: false, error: error.message };
+      const code = error?.code || "";
+      if (code === "auth/operation-not-allowed") {
+        return {
+          success: false,
+          error: "Google sign-in is disabled for this Firebase project. Enable the Google provider in Firebase Console → Authentication → Sign-in method.",
+        };
+      }
+      return { success: false, error: error?.message || "Google sign-in failed." };
     }
   }, []);
 
