@@ -2,7 +2,9 @@ param(
   [string]$Root = "",
   [switch]$Apply,
   [switch]$DeployAll,
-  [switch]$ValidateBuild
+  [switch]$ValidateBuild,
+  [string]$ExpectedProjectId = "boots-4340-project",
+  [switch]$ForceOverride
 )
 
 Set-StrictMode -Version Latest
@@ -53,7 +55,9 @@ function Get-FirebaseProjectId([string]$repo) {
         $first = $j.projects.PSObject.Properties | Select-Object -First 1
         if ($first) { return [string]$first.Value }
       }
-    } catch {}
+    } catch {
+      Write-WARN "Failed to parse .firebaserc at '$rc': $($_.Exception.Message)"
+    }
   }
   return ""
 }
@@ -68,7 +72,9 @@ function Get-RulesPaths([string]$repo) {
       $cfg = (Read-Text $firebaseJsonPath) | ConvertFrom-Json
       if ($cfg.firestore -and $cfg.firestore.rules) { $firestoreRules = Join-Path $repo $cfg.firestore.rules }
       if ($cfg.storage -and $cfg.storage.rules) { $storageRules = Join-Path $repo $cfg.storage.rules }
-    } catch {}
+    } catch {
+      Write-WARN "Failed to parse firebase.json at '$firebaseJsonPath': $($_.Exception.Message)"
+    }
   }
 
   return @{ firestore=$firestoreRules; storage=$storageRules; firebaseJson=$firebaseJsonPath }
@@ -91,6 +97,7 @@ function Replace-FirstMatch([string]$text, [string]$pattern, [string]$replacemen
 }
 
 function Patch-LoginFlushTop([string]$loginPath) {
+  $TargetVersion = "2.0.0"
   $t0 = Read-Text $loginPath
   if (-not $t0) { return @{Changed=$false; Reason="Login file empty/not found."} }
 
@@ -98,20 +105,21 @@ function Patch-LoginFlushTop([string]$loginPath) {
   $t = $t0
 
   # Version + Date
-  $t = [regex]::Replace($t, '(?m)^\s*const\s+version\s*=\s*["''][^"'']+["'']\s*;\s*$', "  const version = `"2.0.0`";")
+  $t = [regex]::Replace($t, '(?m)^\s*const\s+version\s*=\s*["''][^"'']+["'']\s*;\s*$', "  const version = `"$TargetVersion`";")
   $t = [regex]::Replace($t, '(?m)^\s*const\s+patchDate\s*=\s*["'']\d{4}-\d{2}-\d{2}["'']\s*;\s*$', "  const patchDate = `"$today`";")
   $t = $t.Replace("Patch:", "Data update:")
-  $t = $t.Replace("v2.1.4", "2.0.0").Replace("2.1.4", "2.0.0")
+  $t = $t.Replace("v2.1.4", $TargetVersion).Replace("2.1.4", $TargetVersion)
 
   # Force outer wrapper flush-top: first p-* -> p-0
   $t2 = Replace-FirstMatch $t '(<div\s+className="[^"]*)(?<!\S)p-(\d+)(?!\S)([^"]*")' '$1p-0$3'
 
-  if ($t2 -ne $t0) {
+  if (($t -ne $t0) -or ($t2 -ne $t)) {
+    $finalContent = $t2
     $bak = Backup-File $loginPath
-    Write-Text $loginPath $t2
+    Write-Text $loginPath $finalContent
     return @{Changed=$true; Reason="Login flush-top + version/date updated. Backup=$bak"}
   }
-  return @{Changed=$false; Reason="No outer padding token found on first wrapper."}
+  return @{Changed=$false; Reason="No version or padding tokens needed updating."}
 }
 
 function Patch-AppNavbarNoVerticalPadding([string]$appPath) {
@@ -229,8 +237,15 @@ $ProjectId = Get-FirebaseProjectId $Repo
 Write-INFO "Repo: $Repo"
 if ($ProjectId) {
   Write-INFO "Firebase project (from .firebaserc): $ProjectId"
-  if ($ProjectId -ne "boots-4340-project") {
-    Write-WARN "ProjectId is NOT boots-4340-project. You may be deploying to the wrong project."
+  if ($ProjectId -ne $ExpectedProjectId) {
+    Write-WARN "Expected project '$ExpectedProjectId' but found '$ProjectId'."
+    if (-not $ForceOverride) {
+      $confirm = Read-Host "Deploy to '$ProjectId' anyway? (y/N)"
+      if ($confirm -ne 'y') {
+        Write-FAIL "Deployment aborted by user."
+        exit 1
+      }
+    }
   }
 } else {
   Write-WARN "No .firebaserc project detected."
@@ -246,7 +261,7 @@ $src = Join-Path $Repo "src"
 if (-not (Test-Path -LiteralPath $src)) { throw "src/ not found. Wrong folder?" }
 
 $loginPath = Find-FileByNames $src @("Login.jsx","LoginPage.jsx")
-if (-not $loginPath) { $loginPath = Join-Path $Repo "src\pages\Login.jsx" }
+if (-not $loginPath) { $loginPath = Join-Path $Repo 'src' 'pages' 'Login.jsx' }
 
 $appPath = Find-FileByNames $src @("App.jsx","App.tsx")
 if (-not $appPath) { throw "App.jsx/App.tsx not found under src/." }

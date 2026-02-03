@@ -6,7 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 firebase-debug.log*
 firebase-debug.*.log*
-
+env.v2.local
 # Firebase cache
 .firebase/
 
@@ -103,7 +103,7 @@ ai-backups/
 ai-backups/*
 .vscode/
 .idea/
-
+service-account.json
 
 ai-backups/
 tools/*.ps1

@@ -294,22 +294,20 @@ exports.bootstrapAdmin = functions.region(REGION).https.onCall(async (data, cont
   const pin = safeStr(data?.pin);
   if (!idCode || !pin) throw new functions.https.HttpsError("invalid-argument", "idCode and pin required");
 
-  // Prefer collection group lookup; if unsupported, fall back to marker doc.
-  let adminExists = false;
-  try {
-    const existingAdmin = await getDb().collectionGroup("ids").where("role", "==", "admin").limit(1).get();
-    adminExists = !existingAdmin.empty;
-  } catch (err) {
-    console.error("bootstrapAdmin admin lookup failed, falling back to marker doc:", err?.message || err);
-    const markerSnap = await getBootstrapAdminDoc().get();
-    adminExists = !!(markerSnap.exists && markerSnap.data()?.exists);
-  }
-  if (adminExists) throw new functions.https.HttpsError("failed-precondition", "Admin already exists");
-
   await getDb().runTransaction(async (tx) => {
+    // Atomically check for admin existence inside the transaction
     const bootstrapMarker = await tx.get(getBootstrapAdminDoc());
     if (bootstrapMarker.exists && bootstrapMarker.data()?.exists) {
       throw new functions.https.HttpsError("failed-precondition", "Admin already exists");
+    }
+    
+    // As a secondary guard, also check the collection group if supported.
+    const existingAdmin = await getDb().collectionGroup("ids").where("role", "==", "admin").limit(1).get();
+    if (!existingAdmin.empty) {
+        // If an admin exists but the marker doc doesn't, something is inconsistent.
+        // Set the marker and throw to prevent new admin creation.
+        tx.set(getBootstrapAdminDoc(), { exists: true, inconsistentState: true }, { merge: true });
+        throw new functions.https.HttpsError("failed-precondition", "Admin already exists (inconsistent state detected)");
     }
 
     const indexRef = getIdIndex().doc(idCode);

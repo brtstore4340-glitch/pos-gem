@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-
+import { auth, db } from './src/firebase/config.js';
 import App from "./App.jsx";
 import "./styles/globals.css";
 

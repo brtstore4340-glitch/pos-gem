@@ -48,15 +48,20 @@ export default function PosUploadModal({ open, onClose, isDarkMode = false }) {
     let cancelled = false;
 
     (async () => {
-      const keys = ["ItemMasterPrintOnDeph", "ProductAllDept", "ItemMaintananceEvent"];
-      const res = {};
-      await Promise.all(
-        keys.map(async (k) => {
-          const snap = await getDoc(doc(db, "upload_meta", k));
-          if (snap.exists()) res[k] = snap.data();
-        })
-      );
-      if (!cancelled) setUploadMeta(res);
+      try {
+        const keys = ["ItemMasterPrintOnDeph", "ProductAllDept", "ItemMaintananceEvent"];
+        const res = {};
+        await Promise.all(
+          keys.map(async (k) => {
+            const snap = await getDoc(doc(db, "upload_meta", k));
+            if (snap.exists()) res[k] = snap.data();
+          })
+        );
+        if (!cancelled) setUploadMeta(res);
+      } catch (err) {
+        console.error("Failed to fetch upload metadata:", err);
+        if (!cancelled) setErr("Could not load upload status.");
+      }
     })();
 
     return () => {

@@ -3,12 +3,16 @@ import { Search, Package, Tag, Barcode, Layers, Archive, Info } from "lucide-rea
 import { posService } from "../services/posService";
 import { cn } from "../utils/cn";
 
-export default function ProductSearchPage() {
-  // BEGIN: FUNCTION ZONE (DO NOT TOUCH)
+/**
+ * Custom hook to encapsulate product search logic, state, and effects.
+ * Handles debouncing, race conditions, loading/error states, and accessibility.
+ */
+function useProductSearch() {
   const [keyword, setKeyword] = useState("");
   const [results, setResults] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -16,30 +20,52 @@ export default function ProductSearchPage() {
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(async () => {
-      if (keyword.length >= 2) {
-        setLoading(true);
-        try {
-          const items = await posService.searchProducts(keyword);
-          setResults(items);
-          if (items.length > 0) {
-            setSelectedItem(items[0]);
-          } else {
-            setSelectedItem(null);
-          }
-        } catch (e) {
-          console.error(e);
-        } finally {
-          setLoading(false);
-        }
-      } else {
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    const searchProducts = async () => {
+      if (keyword.length < 2) {
         setResults([]);
         setSelectedItem(null);
+        setError(null);
+        return;
       }
-    }, 250);
-    return () => clearTimeout(t);
+
+      setLoading(true);
+      setError(null);
+      try {
+        const items = await posService.searchProducts(keyword, { signal });
+        if (!signal.aborted) {
+          setResults(items);
+          setSelectedItem(items.length > 0 ? items[0] : null);
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError' && !signal.aborted) {
+          console.error("Search failed:", err);
+          setError("Search failed. Please try again.");
+        }
+      } finally {
+        if (!signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(searchProducts, 250);
+
+    // Cleanup function to abort fetch and clear timeout
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [keyword]);
-  // END:   FUNCTION ZONE (DO NOT TOUCH)
+
+  return { keyword, setKeyword, results, selectedItem, setSelectedItem, loading, error, inputRef };
+}
+
+
+export default function ProductSearchPage() {
+  const { keyword, setKeyword, results, selectedItem, setSelectedItem, loading, error, inputRef } = useProductSearch();
 
   // Unity Theme Redesign
   return (
@@ -65,14 +91,16 @@ export default function ProductSearchPage() {
              value={keyword}
              onChange={(e) => setKeyword(e.target.value)}
              placeholder="Search products..."
-             aria-label="Search products"
+             aria-label="Search products by name, barcode, or SKU"
              className="glass-input pl-14 text-lg font-medium"
+             aria-busy={loading}
            />
            {loading && (
              <div className="absolute right-4 top-1/2 -translate-y-1/2">
-               <span className="flex h-3 w-3 relative">
+               <span className="flex h-3 w-3 relative" role="status" aria-live="polite">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                  <span className="sr-only">Searching...</span>
                </span>
              </div>
            )}
@@ -93,7 +121,12 @@ export default function ProductSearchPage() {
              {loading ? (
                 <div className="py-12 flex flex-col items-center text-slate-400 gap-3">
                    <div className="w-8 h-8 rounded-full border-2 border-slate-200 border-t-blue-500 animate-spin" />
-                   <span className="text-sm font-medium">Searching database...</span>
+                   <span className="text-sm font-medium" role="status">Searching database...</span>
+                </div>
+             ) : error ? (
+                <div className="py-20 flex flex-col items-center text-red-500 gap-4 opacity-80">
+                  <Info size={48} strokeWidth={1.5} />
+                  <span className="text-sm font-medium text-center">{error}</span>
                 </div>
              ) : results.length === 0 ? (
                 <div className="py-20 flex flex-col items-center text-slate-400 gap-4 opacity-70">

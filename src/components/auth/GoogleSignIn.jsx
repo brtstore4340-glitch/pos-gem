@@ -100,7 +100,8 @@ export default function GoogleSignIn() {
         <ServerStatus />
         <button 
           onClick={toggleTheme}
-          aria-label="Toggle theme"
+          aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+          title={isDark ? 'เปลี่ยนเป็นโหมดสว่าง' : 'เปลี่ยนเป็นโหมดมืด'}
           className="p-3 rounded-full bg-white/50 dark:bg-black/30 backdrop-blur-md border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 shadow-sm hover:scale-105 active:scale-95 transition-all"
         >
           {isDark ? <Moon size={20} className="fill-current" /> : <Sun size={20} className="fill-current" />}

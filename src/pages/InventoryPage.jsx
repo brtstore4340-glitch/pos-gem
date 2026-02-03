@@ -26,10 +26,10 @@ export default function InventoryPage() {
       <div className="glass-panel p-2 flex items-center gap-2">
          <div className="relative flex-1">
              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-             <input className="w-full pl-10 pr-4 py-2.5 bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder-slate-400" placeholder="Search inventory..." />
+             <input aria-label="Search inventory" className="w-full pl-10 pr-4 py-2.5 bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder-slate-400" placeholder="Search inventory..." />
          </div>
          <div className="h-8 w-[1px] bg-slate-200 dark:bg-white/10"></div>
-         <button className="p-2.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+         <button aria-label="Filter items" className="p-2.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
             <Filter size={18} />
          </button>
       </div>

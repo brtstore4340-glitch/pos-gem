@@ -1,0 +1,3 @@
+# Ignore all JS files in scripts folder (these are standalone Node scripts)
+*.js
+!.*.js

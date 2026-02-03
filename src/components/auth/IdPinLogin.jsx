@@ -109,7 +109,7 @@ export default function IdPinLogin() {
         <ServerStatus />
         <button 
           onClick={toggleTheme}
-          aria-label="Toggle theme"
+          aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
           className="p-3 rounded-full bg-white/50 dark:bg-black/30 backdrop-blur-md border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 shadow-sm hover:scale-105 active:scale-95 transition-all"
         >
           {isDark ? <Moon size={20} className="fill-current" /> : <Sun size={20} className="fill-current" />}
@@ -223,10 +223,11 @@ export default function IdPinLogin() {
             ) : (
                <form onSubmit={handleSubmit} className="space-y-6">
                  <div className="space-y-2">
-                   <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase ml-1">Select Profile</label>
+                   <label htmlFor="profile-select" className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase ml-1">Select Profile</label>
                    <div className="relative">
                       <User className="absolute left-4 top-3.5 text-slate-400" size={18} />
                       <select 
+                         id="profile-select"
                          className="glass-input pl-11 appearance-none cursor-pointer" 
                          value={selectedId}
                          onChange={(e) => setSelectedId(e.target.value)}
@@ -275,9 +276,9 @@ export default function IdPinLogin() {
                  </button>
 
                  <div className="text-center">
-                    <button type="button" className="text-xs text-slate-400 hover:text-blue-500 transition-colors">
+                    <span className="text-xs text-slate-400">
                        Forgot PIN? Contact Manager
-                    </button>
+                    </span>
                  </div>
                </form>
             )}

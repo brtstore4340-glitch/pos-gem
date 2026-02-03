@@ -157,8 +157,6 @@ export const posService = {
     __PRODUCT_DATE_CACHE__ = null;
     return processed;
   },
-
-  // 3. Upload Excel Helper (Generic)
   uploadExcelUpdate: async (file, mappingLogic, onProgress, uploadKey) => {
     // 3.1 Read File
     const buffer = await file.arrayBuffer();

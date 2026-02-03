@@ -215,10 +215,12 @@ export default function ManagementConsole() {
                         onChange={(e) => setNewIdCode(e.target.value)}
                       />
                       <input
+                        type="password"
                         className="glass-input"
                         placeholder="Initial PIN"
                         value={newPin}
                         onChange={(e) => setNewPin(e.target.value)}
+                        autoComplete="new-password"
                       />
                   </div>
                   <select 

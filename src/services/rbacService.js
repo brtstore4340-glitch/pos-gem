@@ -1,15 +1,6 @@
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase';
 
-function _requireIdCodePin(payload) {
-  const idCode = payload?.idCode ?? payload?.id ?? payload?.code;
-  const pin = payload?.pin ?? payload?.PIN;
-  if (!idCode || !pin) {
-    throw new Error("idCode and pin required");
-  }
-  return { idCode, pin };
-}
-
 // Reuse a single functions instance so callables don't re-init each call.
 const bootstrapAdminFn = httpsCallable(functions, 'bootstrapAdmin');
 const listMyIdsFn = httpsCallable(functions, 'listMyIds');
