@@ -15,16 +15,28 @@ const cors = require("cors")({
   }
 });
 
-admin.initializeApp();
-const db = admin.firestore();
+let cachedDb = null;
+function ensureAdmin() {
+  if (!admin.apps.length) {
+    admin.initializeApp();
+  }
+}
+
+function getDb() {
+  ensureAdmin();
+  if (!cachedDb) {
+    cachedDb = admin.firestore();
+  }
+  return cachedDb;
+}
 const { calculateCartSummary } = require("./src/services/cartService");
 
 const REGION = "asia-southeast1";
-const UPLOAD_DOC = db.collection("system_metadata").doc("upload_status");
-const BOOTSTRAP_ADMIN_DOC = db.collection("system_metadata").doc("bootstrap_admin_state");
-const ACCOUNTS = db.collection("accounts");
-const ID_INDEX = db.collection("idIndex");
-const AUDIT_LOGS = db.collection("auditLogs");
+const getUploadDoc = () => getDb().collection("system_metadata").doc("upload_status");
+const getBootstrapAdminDoc = () => getDb().collection("system_metadata").doc("bootstrap_admin_state");
+const getAccounts = () => getDb().collection("accounts");
+const getIdIndex = () => getDb().collection("idIndex");
+const getAuditLogs = () => getDb().collection("auditLogs");
 
 const PIN_ITERATIONS = 120000;
 const PIN_KEYLEN = 32;
@@ -52,7 +64,7 @@ function requireAppCheck(context) {
 }
 
 async function isAdmin(uid) {
-  const snap = await db.collection("users").doc(uid).get();
+  const snap = await getDb().collection("users").doc(uid).get();
   return snap.exists && (snap.data().role === "admin");
 }
 
@@ -96,11 +108,11 @@ function sanitizePermissions(input, role) {
 async function getIdDocByCode(idCode) {
   const cleanId = String(idCode || "").trim();
   if (!cleanId) throw new functions.https.HttpsError("invalid-argument", "idCode required");
-  const indexSnap = await ID_INDEX.doc(cleanId).get();
+  const indexSnap = await getIdIndex().doc(cleanId).get();
   if (!indexSnap.exists) throw new functions.https.HttpsError("not-found", "ID not found");
   const email = String(indexSnap.data()?.email || "").trim().toLowerCase();
   if (!email) throw new functions.https.HttpsError("failed-precondition", "ID email missing");
-  const idRef = ACCOUNTS.doc(email).collection("ids").doc(cleanId);
+  const idRef = getAccounts().doc(email).collection("ids").doc(cleanId);
   const idSnap = await idRef.get();
   if (!idSnap.exists) throw new functions.https.HttpsError("not-found", "ID not found");
   return { email, idRef, idSnap };
@@ -137,7 +149,7 @@ function assertMenuAccess(actor, menu) {
 }
 
 async function writeAuditLog(payload) {
-  await AUDIT_LOGS.add({
+  await getAuditLogs().add({
     ...payload,
     createdAt: nowTs()
   });
@@ -152,8 +164,8 @@ function normalizeType(type) {
 }
 
 async function acquireLock(lockOwner, type, fileMeta) {
-  await db.runTransaction(async (tx) => {
-    const s = await tx.get(UPLOAD_DOC);
+  await getDb().runTransaction(async (tx) => {
+    const s = await tx.get(getUploadDoc());
     const data = s.exists ? s.data() : {};
     const lock = data.lock || {};
 
@@ -167,12 +179,12 @@ async function acquireLock(lockOwner, type, fileMeta) {
       throw new functions.https.HttpsError("failed-precondition", "ItemMasterPrintOnDeph (pricing) not uploaded yet");
     }
 
-    tx.set(UPLOAD_DOC, {
+    tx.set(getUploadDoc(), {
       lock: { inProgress: true, by: lockOwner, type, startedAt: nowTs() },
       lastError: admin.firestore.FieldValue.delete()
     }, { merge: true });
 
-    tx.set(UPLOAD_DOC, {
+    tx.set(getUploadDoc(), {
       [type]: {
         ...(data[type] || {}),
         lastFileName: fileMeta?.fileName || null,
@@ -285,25 +297,25 @@ exports.bootstrapAdmin = functions.region(REGION).https.onCall(async (data, cont
   // Prefer collection group lookup; if unsupported, fall back to marker doc.
   let adminExists = false;
   try {
-    const existingAdmin = await db.collectionGroup("ids").where("role", "==", "admin").limit(1).get();
+    const existingAdmin = await getDb().collectionGroup("ids").where("role", "==", "admin").limit(1).get();
     adminExists = !existingAdmin.empty;
   } catch (err) {
     console.error("bootstrapAdmin admin lookup failed, falling back to marker doc:", err?.message || err);
-    const markerSnap = await BOOTSTRAP_ADMIN_DOC.get();
+    const markerSnap = await getBootstrapAdminDoc().get();
     adminExists = !!(markerSnap.exists && markerSnap.data()?.exists);
   }
   if (adminExists) throw new functions.https.HttpsError("failed-precondition", "Admin already exists");
 
-  await db.runTransaction(async (tx) => {
-    const bootstrapMarker = await tx.get(BOOTSTRAP_ADMIN_DOC);
+  await getDb().runTransaction(async (tx) => {
+    const bootstrapMarker = await tx.get(getBootstrapAdminDoc());
     if (bootstrapMarker.exists && bootstrapMarker.data()?.exists) {
       throw new functions.https.HttpsError("failed-precondition", "Admin already exists");
     }
 
-    const indexRef = ID_INDEX.doc(idCode);
+    const indexRef = getIdIndex().doc(idCode);
     if ((await tx.get(indexRef)).exists) throw new functions.https.HttpsError("already-exists", "ID already exists");
 
-    const accountRef = ACCOUNTS.doc(email);
+    const accountRef = getAccounts().doc(email);
     const idRef = accountRef.collection("ids").doc(idCode);
     const { pinHash, pinSalt, pinAlgo } = hashPin(pin);
     const permissions = sanitizePermissions(data?.permissions, "admin");
@@ -326,7 +338,7 @@ exports.bootstrapAdmin = functions.region(REGION).https.onCall(async (data, cont
         createdByUid: context.auth.uid
       });
       tx.set(indexRef, { idCode, email, createdAt: nowTs() });
-      tx.set(BOOTSTRAP_ADMIN_DOC, {
+      tx.set(getBootstrapAdminDoc(), {
         exists: true,
         email,
         idCode,
@@ -375,7 +387,7 @@ exports.bootstrapAdminHttp = functions.region(REGION).https.onRequest((req, res)
 
 exports.listMyIds = functions.region(REGION).https.onCall(async (data, context) => {
   const email = getAuthEmail(context);
-  const snap = await ACCOUNTS.doc(email).collection("ids").get();
+  const snap = await getAccounts().doc(email).collection("ids").get();
   const ids = snap.docs.map((doc) => {
     const { pinHash, pinSalt, pinAlgo, ...rest } = doc.data() || {};
     return rest;
@@ -444,11 +456,11 @@ exports.createId = functions.region(REGION).https.onCall(async (data, context) =
   if (!ROLES.includes(role)) throw new functions.https.HttpsError("invalid-argument", "Invalid role");
   assertManageScope(actor, targetEmail, null, role);
 
-  await db.runTransaction(async (tx) => {
-    const indexRef = ID_INDEX.doc(idCode);
+  await getDb().runTransaction(async (tx) => {
+    const indexRef = getIdIndex().doc(idCode);
     if ((await tx.get(indexRef)).exists) throw new functions.https.HttpsError("already-exists", "ID already exists");
 
-    const accountRef = ACCOUNTS.doc(targetEmail);
+    const accountRef = getAccounts().doc(targetEmail);
     const idRef = accountRef.collection("ids").doc(idCode);
     const { pinHash, pinSalt, pinAlgo } = hashPin(pin);
     const permissions = sanitizePermissions(data?.permissions, role);
@@ -494,9 +506,9 @@ exports.adminResetAllPins = functions.region(REGION).https.onCall(async (data, c
   const { pinHash, pinSalt, pinAlgo } = hashPin(newPin);
 
   const batchSize = 400;
-  const snapshot = await db.collectionGroup("ids").get();
+  const snapshot = await getDb().collectionGroup("ids").get();
   const batches = [];
-  let batch = db.batch();
+  let batch = getDb().batch();
   let count = 0;
 
   snapshot.docs.forEach((doc) => {
@@ -514,7 +526,7 @@ exports.adminResetAllPins = functions.region(REGION).https.onCall(async (data, c
     count++;
     if (count % batchSize === 0) {
       batches.push(batch);
-      batch = db.batch();
+      batch = getDb().batch();
     }
   });
 
@@ -664,7 +676,7 @@ exports.searchIds = functions.region(REGION).https.onCall(async (data, context) 
   if (!email) throw new functions.https.HttpsError("invalid-argument", "email or idCode required");
   assertManageScope(actor, email, null, null);
 
-  const snap = await ACCOUNTS.doc(email).collection("ids").get();
+  const snap = await getAccounts().doc(email).collection("ids").get();
   const ids = snap.docs.map((doc) => {
     const { pinHash, pinSalt, pinAlgo, ...rest } = doc.data() || {};
     return rest;
@@ -683,7 +695,7 @@ exports.getAuditLogs = functions.region(REGION).https.onCall(async (data, contex
     throw new functions.https.HttpsError("permission-denied", "Email scope violation");
   }
 
-  let query = AUDIT_LOGS.orderBy("createdAt", "desc").limit(limit);
+  let query = getAuditLogs().orderBy("createdAt", "desc").limit(limit);
   if (targetEmail) query = query.where("targetEmail", "==", targetEmail);
   if (actor.role === "SM-SGM" && !targetEmail) query = query.where("targetEmail", "==", actor.email);
 
@@ -726,7 +738,7 @@ exports.uploadChunk = functions.region(REGION).https.onCall(async (data, context
   const rows = Array.isArray(data?.rows) ? data.rows : [];
   if (rows.length === 0) return { ok: true, processed: 0, matched: 0, skipped: 0, invalid: 0 };
 
-  const st = await UPLOAD_DOC.get();
+  const st = await getUploadDoc().get();
   const lock = st.exists ? (st.data().lock || {}) : {};
   if (!lock.inProgress || lock.by !== actor.idCode || lock.type !== type) {
     throw new functions.https.HttpsError("failed-precondition", "No active lock for this upload");
@@ -742,10 +754,10 @@ exports.uploadChunk = functions.region(REGION).https.onCall(async (data, context
       if (!mapped) { invalid++; continue; }
       const { itemCode, barcode, doc } = mapped;
 
-      ops.push({ ref: db.collection("products").doc(itemCode), data: doc, merge: true });
+      ops.push({ ref: getDb().collection("products").doc(itemCode), data: doc, merge: true });
 
       if (barcode) {
-        ops.push({ ref: db.collection("barcode_index").doc(barcode), data: { itemCode, updatedAt: nowTs() }, merge: true });
+        ops.push({ ref: getDb().collection("barcode_index").doc(barcode), data: { itemCode, updatedAt: nowTs() }, merge: true });
       }
       processed++; matched++;
     }
@@ -756,10 +768,10 @@ exports.uploadChunk = functions.region(REGION).https.onCall(async (data, context
       if (!mapped) { invalid++; continue; }
       const { itemCode, barcode, upd } = mapped;
 
-      ops.push({ ref: db.collection("products").doc(itemCode), data: upd, merge: true });
+      ops.push({ ref: getDb().collection("products").doc(itemCode), data: upd, merge: true });
 
       if (barcode) {
-        ops.push({ ref: db.collection("barcode_index").doc(barcode), data: { itemCode, updatedAt: nowTs() }, merge: true });
+        ops.push({ ref: getDb().collection("barcode_index").doc(barcode), data: { itemCode, updatedAt: nowTs() }, merge: true });
       }
       processed++; matched++;
     }
@@ -777,21 +789,21 @@ exports.uploadChunk = functions.region(REGION).https.onCall(async (data, context
     const codeChunks = chunkArray(codes, 200);
     const existsSet = new Set();
     for (const c of codeChunks) {
-      const refs = c.map(code => db.collection("products").doc(code));
-      const snaps = await db.getAll(...refs);
+      const refs = c.map(code => getDb().collection("products").doc(code));
+      const snaps = await getDb().getAll(...refs);
       snaps.forEach((snap, idx) => { if (snap.exists) existsSet.add(c[idx]); });
     }
 
     for (const m of mappedRows) {
       if (!existsSet.has(m.itemCode)) { skipped++; continue; }
-      ops.push({ ref: db.collection("products").doc(m.itemCode), data: m.upd, merge: true });
+      ops.push({ ref: getDb().collection("products").doc(m.itemCode), data: m.upd, merge: true });
       processed++; matched++;
     }
   }
 
   const opChunks = chunkArray(ops, MAX_OPS_PER_BATCH);
   for (const part of opChunks) {
-    const batch = db.batch();
+    const batch = getDb().batch();
     for (const op of part) batch.set(op.ref, op.data, { merge: !!op.merge });
     await batch.commit();
   }
@@ -809,8 +821,8 @@ exports.finalizeUpload = functions.region(REGION).https.onCall(async (data, cont
   const type = normalizeType(data?.type);
   const summary = data?.summary || {};
 
-  await db.runTransaction(async (tx) => {
-    const s = await tx.get(UPLOAD_DOC);
+  await getDb().runTransaction(async (tx) => {
+    const s = await tx.get(getUploadDoc());
     const d = s.exists ? s.data() : {};
     const currentVersion = Number(d?.pricing?.version || 0);
 
@@ -838,8 +850,8 @@ exports.finalizeUpload = functions.region(REGION).https.onCall(async (data, cont
       patch.productsVersion = currentVersion;
     }
 
-    tx.set(UPLOAD_DOC, patch, { merge: true });
-    tx.set(UPLOAD_DOC, { lock: { inProgress: false, by: null, type: null, startedAt: null } }, { merge: true });
+    tx.set(getUploadDoc(), patch, { merge: true });
+    tx.set(getUploadDoc(), { lock: { inProgress: false, by: null, type: null, startedAt: null } }, { merge: true });
   });
 
   return { ok: true };
@@ -852,7 +864,7 @@ exports.abortUpload = functions.region(REGION).https.onCall(async (data, context
   const actor = await getActor(context, data?.actorIdCode);
   if (actor.role !== "admin") throw new functions.https.HttpsError("permission-denied", "Admin only");
 
-  await UPLOAD_DOC.set({
+  await getUploadDoc().set({
     lock: { inProgress: false, by: null, type: null, startedAt: null },
     lastError: { at: new Date().toISOString(), step: "abort", message: "aborted by admin" }
   }, { merge: true });
@@ -860,17 +872,12 @@ exports.abortUpload = functions.region(REGION).https.onCall(async (data, context
   return { ok: true };
 });
 
-const functions2 = require('firebase-functions');
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
 exports.setAdminRole = functions
   .region('asia-southeast1')
   .https.onCall(async (data, context) => {
     // Only existing admins can set roles
     if (!context.auth || !context.auth.token.admin) {
-      throw new functions2.https.HttpsError(
+      throw new functions.https.HttpsError(
         'permission-denied',
         'Only admins can set roles'
       );
@@ -879,13 +886,14 @@ exports.setAdminRole = functions
     const { uid, role } = data;
     
     if (!uid || !role) {
-      throw new functions2.https.HttpsError(
+      throw new functions.https.HttpsError(
         'invalid-argument',
         'uid and role are required'
       );
     }
     
     try {
+      ensureAdmin();
       await admin.auth().setCustomUserClaims(uid, { 
         role: role,
         admin: role === 'admin'
@@ -896,7 +904,7 @@ exports.setAdminRole = functions
         message: `Role ${role} set for user ${uid}` 
       };
     } catch (error) {
-      throw new functions2.https.HttpsError(
+      throw new functions.https.HttpsError(
         'internal',
         `Error setting role: ${error.message}`
       );
@@ -909,4 +917,3 @@ exports.setFirstAdmin = functions
   .https.onRequest((req, res) => {
     res.status(410).send("setFirstAdmin disabled");
   });
-
