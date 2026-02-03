@@ -113,15 +113,17 @@ export default function AdminSettingsPage({ onBack }) {
   };
 
   const handleClearDatabase = async () => {
-    if (!window.confirm('⚠️ Are you sure you want to DELETE ALL DATA?')) return;
-    updateStatus('master', { loading: true, log: { type: 'info', msg: 'Deleting...' } });
+    if (!window.confirm('⚠️ Are you sure you want to DELETE ALL DATA? This cannot be undone.')) return;
+    updateStatus('master', { loading: true, log: { type: 'info', msg: 'Deleting all product data...' } });
     try {
       await posService.clearDatabase();
-      updateStatus('master', { loading: false, log: { type: 'success', msg: 'Database Cleared' } });
-      loadStats();
+      updateStatus('master', { log: { type: 'success', msg: 'Database cleared successfully.' } });
+      await loadStats();
     } catch (e) {
       console.error('clearDatabase failed:', e);
-      updateStatus('master', { loading: false, log: { type: 'error', msg: e?.message || 'Failed to clear database' } });
+      updateStatus('master', { log: { type: 'error', msg: e?.message || 'Failed to clear database' } });
+    } finally {
+      updateStatus('master', { loading: false });
     }
   };
 
@@ -429,8 +431,14 @@ function UploadCard({ title, desc, accept, status, onChange, icon, active, requi
         )}
 
         {status.log && (
-          <div className={cn("mt-4 p-3 rounded-lg text-xs flex items-center gap-2 animate-in slide-in-from-bottom-2", status.log.type === 'success' ? "bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-500/20" : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-500/20")}>
-            {status.log.type === 'success' ? <CheckCircle size={16} className="shrink-0"/> : <AlertCircle size={16} className="shrink-0"/>}
+          <div className={cn("mt-4 p-3 rounded-lg text-xs flex items-center gap-2 animate-in slide-in-from-bottom-2", 
+            status.log.type === 'success' 
+              ? "bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-500/20" 
+              : status.log.type === 'info'
+              ? "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20"
+              : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-500/20"
+          )}>
+            {status.log.type === 'success' ? <CheckCircle size={16} className="shrink-0"/> : status.log.type === 'info' ? <Info size={16} className="shrink-0"/> : <AlertCircle size={16} className="shrink-0"/>}
             <span className="font-medium">{status.log.msg}</span>
           </div>
         )}

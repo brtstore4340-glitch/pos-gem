@@ -19,14 +19,31 @@ service cloud.firestore {
     
     // Products collection
     match /products/{productId} {
-      // Regular users: can read active products only
-      allow get: if isAuthenticated() && isActiveProduct();
+      // Authenticated users can read any product.
+      allow read: if isAuthenticated();
       
-      // All authenticated users: can list/count/aggregate products
-      allow list: if isAuthenticated();
-      
-      // Admin users: can write
-      allow create, update, delete: if isAdmin();
+      // Admins can create, update, and delete products, with validation.
+      allow create: if isAdmin()
+                    && request.resource.data.sku is string
+                    && request.resource.data.sku.size() > 0
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.unitPrice is number
+                    && request.resource.data.unitPrice >= 0;
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Usernames: Publicly readable for lookup, writable only by the user who owns it.
+    match /usernames/{uname} {
+      allow read: if true;
+      allow write: if isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+    
+    // User profiles: Can only be read or written by the owner.
+    match /users/{uid} {
+      allow read, write: if isAuthenticated() && request.auth.uid == uid;
     }
     
     // Upload metadata

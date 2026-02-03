@@ -1,5 +1,4 @@
-﻿/* THAM_APPCHECK_DISABLED_NOTE: AppCheck is disabled via VITE_ENABLE_APPCHECK=false to unblock Admin Console. */
-import { initializeApp, getApps, getApp } from 'firebase/app';
+﻿import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';

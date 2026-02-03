@@ -6,10 +6,10 @@
         "source": "functions",
         "runtime": "nodejs20",
         "region": "asia-southeast1",
-        "predeploy": [
-            "npm --prefix \"$RESOURCE_DIR\" ci",
-            "npm --prefix \"$RESOURCE_DIR\" run build --if-present"
-        ]
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" ci",
+      "npm --prefix \"$RESOURCE_DIR\" run lint"
+    ]
     },
     "hosting": {
         "public": "dist",
