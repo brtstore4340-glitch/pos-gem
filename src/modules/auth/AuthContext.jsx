@@ -113,9 +113,10 @@ export function AuthProvider({ children }) {
     // For demo purposes, accept "1234" as the default PIN
     // In production, this should verify against stored hash
     if (pin === "1234") {
+      setSelectedProfile({ id: profile.id ?? idCode, ...profile, idCode });
       setSession({ idCode, profile });
       setLastIdCode(idCode);
-      return;
+      return profile;
     }
     
     throw new Error("Invalid PIN");
@@ -228,6 +229,7 @@ export function AuthProvider({ children }) {
       // User
       firebaseUser: fbUser,
       fbUser,
+      authReady: !loading,
       loading,
       reason,
       
