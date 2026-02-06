@@ -10,7 +10,7 @@ import {
   signInAnonymously
 } from "firebase/auth";
 import { doc, onSnapshot, getDoc, setDoc, serverTimestamp, collection, getDocs, query, orderBy } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { auth, db, firebaseConfigured } from "@/lib/firebase";
 
 /**
  * AuthContext
@@ -156,10 +156,35 @@ export function AuthProvider({ children }) {
 
   // Auth state
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setFbUser(u ?? null);
+    if (!firebaseConfigured || !auth) {
+      setFbUser(null);
       setLoading(false);
-    });
+      setReason("firebase-not-configured");
+      return () => {};
+    }
+
+    let unsub = () => {};
+    try {
+      unsub = onAuthStateChanged(
+        auth,
+        (u) => {
+          setFbUser(u ?? null);
+          setLoading(false);
+        },
+        (err) => {
+          console.error("onAuthStateChanged failed:", err);
+          setReason("firebase-auth-init-failed");
+          setFbUser(null);
+          setLoading(false);
+        }
+      );
+    } catch (err) {
+      console.error("Failed to initialize Firebase auth listener:", err);
+      setReason("firebase-auth-init-failed");
+      setFbUser(null);
+      setLoading(false);
+    }
+
     return () => {
       try { unsub(); } catch (_e) { void _e; }
     };
