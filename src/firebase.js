@@ -7,14 +7,17 @@ import {
   functions,
   googleProvider,
   appCheck,
+  firebaseConfigured,
 } from "./lib/firebase";
 
 // Ensure auth state is kept across refresh
-setPersistence(auth, browserLocalPersistence).catch(() => {
-  /* ignore storage errors */
-});
+if (auth) {
+  setPersistence(auth, browserLocalPersistence).catch(() => {
+    /* ignore storage errors */
+  });
+}
 
-export { app, auth, db, functions, googleProvider, appCheck };
+export { app, auth, db, functions, googleProvider, appCheck, firebaseConfigured };
 // dev-only diagnostics
 if (import.meta?.env?.DEV) {
   window.__APP_DIAG__ = window.__APP_DIAG__ || {};

@@ -5,6 +5,12 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 import { firebaseConfig, firebaseRegion } from '../config/firebaseConfig';
 
+const firebaseConfigured = Boolean(
+  firebaseConfig?.apiKey &&
+  firebaseConfig?.authDomain &&
+  firebaseConfig?.projectId
+);
+
 // Force App Check on (ignore env override unless explicitly disabled in code).
 const __ENABLE_APPCHECK__ =
   String(import.meta.env.VITE_ENABLE_APPCHECK ?? 'false').toLowerCase() === 'true';
@@ -20,21 +26,23 @@ console.log('🔥 Firebase Config Debug:', {
   enableAppCheck: __ENABLE_APPCHECK__,
 });
 
-if (!firebaseConfig.apiKey) {
+if (!firebaseConfigured) {
   console.error('❌ Firebase Config is missing. Please check env files');
   console.error('Available env vars:', Object.keys(import.meta.env));
 }
 
 // Prevent double init (Vite HMR)
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const app = firebaseConfigured ? (getApps().length ? getApp() : initializeApp(firebaseConfig)) : null;
 
-const db = getFirestore(app);
-const functions = getFunctions(app, firebaseRegion);
-const auth = getAuth(app);
-const storage = getStorage(app);
+const db = app ? getFirestore(app) : null;
+const functions = app ? getFunctions(app, firebaseRegion) : null;
+const auth = app ? getAuth(app) : null;
+const storage = app ? getStorage(app) : null;
 
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: 'select_account' });
+const googleProvider = auth ? new GoogleAuthProvider() : null;
+if (googleProvider) {
+  googleProvider.setCustomParameters({ prompt: 'select_account' });
+}
 
 // App Check (reCAPTCHA v3) — gated by VITE_ENABLE_APPCHECK
 const appCheckSiteKey = import.meta.env.VITE_APPCHECK_SITE_KEY;
@@ -42,6 +50,7 @@ const appCheckProviderKind = (import.meta.env.VITE_APPCHECK_PROVIDER || 'enterpr
 let appCheck = null;
 
 const initAppCheck = async () => {
+  if (!app) return null;
   if (!__ENABLE_APPCHECK__) {
     console.warn('⚠️ App Check is disabled (VITE_ENABLE_APPCHECK=false).');
     return null;
@@ -77,7 +86,7 @@ const initAppCheck = async () => {
 
 void initAppCheck();
 
-export { app, db, functions, auth, storage, googleProvider, appCheck };
+export { app, db, functions, auth, storage, googleProvider, appCheck, firebaseConfigured };
 // dev-only diagnostics
 if (import.meta?.env?.DEV) {
   window.__APP_DIAG__ = window.__APP_DIAG__ || {};

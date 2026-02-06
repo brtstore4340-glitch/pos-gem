@@ -6,7 +6,7 @@ import { ServerStatus } from '@/components/ui/ServerStatus';
 
 export default function IdPinLogin() {
   // BEGIN: FUNCTION ZONE (DO NOT TOUCH)
-  const { firebaseUser, ids, lastIdCode, setSelectedProfile, loadIds, verifyPin, signOut } = useAuth();
+  const { firebaseUser, ids, lastIdCode, loadIds, verifyPin, signOut } = useAuth();
   const [selectedId, setSelectedId] = useState(lastIdCode || '');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
@@ -66,7 +66,6 @@ export default function IdPinLogin() {
     setLoading(true);
     try {
       await verifyPin(selectedId, pin);
-      setSelectedProfile({ idCode: selectedId });
       setPin('');
     } catch (err) {
       setError(err?.message || 'Invalid PIN');
