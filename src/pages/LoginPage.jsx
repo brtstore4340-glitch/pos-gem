@@ -1,2 +1,2 @@
-﻿import LoginLegacy from "./_legacy_oldgit/LoginLegacy";
-export default function LoginPage(props) { return <LoginLegacy {...props} />; }
+import GoogleSignIn from "@/components/auth/GoogleSignIn";
+export default function LoginPage(props) { return <GoogleSignIn {...props} />; }
