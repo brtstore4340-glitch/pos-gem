@@ -1,10 +1,13 @@
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore } = require("firebase-admin/firestore");
+const { ensureAdminApp } = require("../utils/adminApp");
 
 const syncClaims = onDocumentWritten(
   { region: "asia-southeast1", document: "user_roles/{uid}" },
   async (event) => {
+    ensureAdminApp();
+
     const uid = event.params.uid;
     const after = event.data?.after;
 

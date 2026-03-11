@@ -1,6 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { FieldValue, getFirestore } = require("firebase-admin/firestore");
 const { GoogleAuth } = require("google-auth-library");
+const { ensureAdminApp } = require("../utils/adminApp");
 
 const {
   OrchestratorRequestSchema,
@@ -102,6 +103,8 @@ async function runProvider(provider, cfg) {
 const aiOrchestrator = onCall(
   { region: "asia-southeast1", cors: true, timeoutSeconds: 120, memory: "512MiB" },
   async (req) => {
+    ensureAdminApp();
+
     const uid = req.auth?.uid;
     const roles = req.auth?.token?.roles;
 

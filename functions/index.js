@@ -30,6 +30,9 @@ function getDb() {
   return cachedDb;
 }
 const { calculateCartSummary } = require("./src/services/cartService");
+const { aiOrchestrator } = require("./src/ai/orchestrator");
+const { schemaSnapshot } = require("./src/schema/snapshot");
+const { syncClaims } = require("./src/rbac/claims");
 
 const REGION = "asia-southeast1";
 const getUploadDoc = () => getDb().collection("system_metadata").doc("upload_status");
@@ -48,6 +51,18 @@ const DEFAULT_ALLOWED_MENUS = Object.freeze({
   "SM-SGM": ["dashboard", "pos", "search", "report", "inventory", "orders", "settings", "Upload", "management"],
   user: ["pos", "search", "dashboard"]
 });
+
+exports.healthCheck = functions.region(REGION).https.onRequest((req, res) => {
+  res.status(200).json({
+    ok: true,
+    service: "boots-pos-gemini-functions",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+exports.aiOrchestrator = aiOrchestrator;
+exports.schemaSnapshot = schemaSnapshot;
+exports.syncRBACClaims = syncClaims;
 
 function requireAuth(context) {
   if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required");

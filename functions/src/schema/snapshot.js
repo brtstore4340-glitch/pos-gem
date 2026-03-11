@@ -3,6 +3,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getFirestore } = require("firebase-admin/firestore");
 const { SchemaSnapshotSchema } = require("../ai/types");
+const { ensureAdminApp } = require("../utils/adminApp");
 
 function inferType(value) {
   if (value === null) return "null";
@@ -46,6 +47,8 @@ async function buildSchemaSnapshot(db, sampleLimit = 10) {
 }
 
 const schemaSnapshot = onCall({ region: "asia-southeast1", cors: true }, async (req) => {
+  ensureAdminApp();
+
   const uid = req.auth?.uid;
   const roles = req.auth?.token?.roles;
   if (!uid) throw new HttpsError("unauthenticated", "Auth required.");
